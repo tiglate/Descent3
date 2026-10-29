@@ -35,6 +35,11 @@ vcpkg_cmake_configure(
         -DTHREADS_PREFER_PTHREAD_FLAG=ON
         -DXSLTPROC_EXECUTABLE=FALSE
         "-DCMAKE_INSTALL_SYSCONFDIR=${CURRENT_PACKAGES_DIR}/etc/${PORT}"
+        # CMake 4 expands the default relative local state directory against
+        # /var here, which makes D-Bus try to install to /var/<package path>.
+        # Keep this transient packaging directory inside the vcpkg stage; it
+        # is removed below along with the other daemon-only files.
+        "-DCMAKE_INSTALL_LOCALSTATEDIR=${CURRENT_PACKAGES_DIR}/var"
         "-DWITH_SYSTEMD_SYSTEMUNITDIR=lib/systemd/system"
         "-DWITH_SYSTEMD_USERUNITDIR=lib/systemd/user"
         "-DDBUS_SESSION_SOCKET_DIR=/tmp" # cf vcpkg #40031 / #40038

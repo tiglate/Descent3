@@ -1,6 +1,52 @@
 # Descent 3 Open Source - Changelog
 
-## 1.6.0 - TBD
+## 1.6.0 - Unreleased
+
+### Added
+
+- Native first-run folder selection for the original game installation, with
+  validation, retry/cancel handling, and a saved `game-assets.cfg` location.
+- `-assetdir` to configure or change the original game location without a
+  folder chooser, including for dedicated servers.
+- A Linux `make.sh` workflow and Makefile proxy for configuring, building,
+  testing, installing, and running. User-local installation defaults to
+  `~/Apps/Descent3`.
+- Modern/Classic/Custom control-preset selection with binding previews,
+  Replace/Swap/Cancel conflict handling, and Restore Settings support.
+- An explicit Invert Mouse Y checkbox in Joystick/Mouse Settings.
+- Regression tests for presets, binding conflicts, mouse-button mapping,
+  and asset-location validation and persistence.
+- A contributor guide and expanded build, usage, and README documentation.
+
+### Changed
+
+- New pilots default to WASD movement, Space/Left Ctrl vertical thrust,
+  Shift afterburner, and mouse firing. Existing pilot bindings remain saved;
+  choose Modern explicitly to apply the preset.
+- Mouse Y inversion is enabled for new/default controls. Preset switching
+  preserves existing inversion and sensitivity preferences.
+- Gameplay mouse sensitivity sliders now extend to 16×; direct mouselook
+  uses the full sensitivity value instead of the ship-thrust clamp.
+- Startup selects desktop resolution unless both width and height are supplied.
+  Video Settings can still change resolution during play.
+- Build and installation no longer require commercial assets. The application
+  remembers their runtime location instead of embedding a workstation path.
+
+### Fixed
+
+- Removed the UI's 20× cursor slowdown and preserved fractional SDL3 motion.
+- Stopped reapplying accumulated motion to absolute cursor coordinates.
+- Restored mouse capture and cursor visibility according to the user's
+  Ctrl+G choice after focus/window changes.
+- Corrected right/middle mouse mappings, advertised wheel capabilities, and
+  separated side-button inputs from the reserved wheel slots.
+- Restored complete binding snapshots instead of reading invalid configuration
+  heading IDs or overrunning the joystick revert array.
+- Kept D-Bus vcpkg runtime-state installation inside its package staging
+  directory when using newer CMake versions.
+- Corrected build examples, output/install paths, test instructions,
+  asset troubleshooting, base-directory precedence, desktop-resolution
+  defaults, and logging documentation. Marked ignored legacy options explicitly.
 
 ## 1.5.0 - August 2024
 

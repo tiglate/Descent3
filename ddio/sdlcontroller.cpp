@@ -1112,7 +1112,9 @@ float sdlgameController::get_button_value(int8_t controller, ct_format format, u
 
 // rot: fraction of one full circle (1.0 == 360 degrees)
 static constexpr angle rotationToFixAngle(double rot) {
-  return static_cast<angle>(std::numeric_limits<angle>::max() * rot);
+  // Keep even large/negative mouse rotations in the unsigned angle range.
+  const double wrapped = rot - std::floor(rot);
+  return static_cast<angle>(std::numeric_limits<angle>::max() * wrapped);
 }
 
 //	note controller is index into ControlList.
@@ -1192,6 +1194,7 @@ float sdlgameController::get_axis_value(int8_t controller, uint8_t axis, ct_form
     val = 0.0f;
   }
   val = ctldev->sensmod[axis] * ctldev->sens[axis] * val;
+  const float mouselook_value = val;
   val = val + 1.0f;
 
   val = std::clamp(val, 0.0f, 2.0f);
@@ -1224,6 +1227,11 @@ float sdlgameController::get_axis_value(int8_t controller, uint8_t axis, ct_form
         // we're in guided missile control
         Players[Player_num].guided_obj
       )) {
+
+    // Direct mouselook rotates the view itself, so sensitivity must not be
+    // clipped to the flight-sim/joystick thrust range above.
+    if (ctldev->id == CTID_MOUSE && format == ctAnalog)
+      val = mouselook_value;
 
     axis++;
 

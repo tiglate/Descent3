@@ -295,6 +295,8 @@
 #include "pserror.h"
 #include "networking.h"
 #include "appdatabase.h"
+#include "control_bindings.h"
+#include "control_presets.h"
 
 //////////////////////////////////////////////////////////////////////////////
 #define IDV_KCONFIG 10
@@ -423,6 +425,131 @@ static int weapon_select_dialog(int wpn, bool is_secondary);
 #define UID_CFGSETTINGS 0x2001
 #define UID_CLEAR_SLOT 0x2002
 #define UID_REVERT 0x2003
+#define UID_PRESET 0x2004
+
+using BindingFunctions = std::vector<control_bindings::Function>;
+
+static BindingFunctions ReadBindings() {
+  BindingFunctions result;
+  for (const auto &need : Controller_needs) {
+    ct_type types[2];
+    uint8_t flags[2];
+    ct_config_data data;
+    Controller->get_controller_function(need.id, types, &data, flags);
+    control_bindings::Function function{need.id, {}};
+    for (int slot = 0; slot < CTLBINDS_PER_FUNC; ++slot)
+      function.inputs[slot] = {types[slot], static_cast<uint8_t>(CONTROLLER_INFO(data) >> (8 * slot)),
+                              static_cast<uint8_t>(CONTROLLER_VALUE(data) >> (8 * slot)), flags[slot]};
+    result.push_back(function);
+  }
+  return result;
+}
+
+static void WriteBindings(const BindingFunctions &functions) {
+  for (const auto &function : functions) {
+    ct_type types[2] = {function.inputs[0].type, function.inputs[1].type};
+    uint8_t flags[2] = {function.inputs[0].flags, function.inputs[1].flags};
+    auto data = MAKE_CONFIG_DATA(CONTROLLER_CTL_INFO(function.inputs[0].controller, function.inputs[1].controller),
+                                CONTROLLER_CTL_VALUE(function.inputs[0].value, function.inputs[1].value));
+    Controller->set_controller_function(function.id, types, data, flags);
+  }
+}
+
+static BindingFunctions PresetBindings(ControlPreset preset, BindingFunctions functions) {
+  for (auto &binding : functions) {
+    for (const auto &need : Controller_needs) {
+      if (need.id != binding.id)
+        continue;
+      const auto defaults = ControlPresetFunction(need, preset);
+      for (int slot = 0; slot < CTLBINDS_PER_FUNC; ++slot) {
+        if (IsPresetInput(defaults.ctype[slot]) || IsPresetInput(binding.inputs[slot].type)) {
+          // Preserve joystick slots even on actions shared with mouse axes.
+          const auto type = defaults.ctype[slot];
+          const auto flags = type == ctMouseAxis && binding.inputs[slot].type == ctMouseAxis ?
+                             binding.inputs[slot].flags : defaults.flags[slot];
+          binding.inputs[slot] = {type, static_cast<uint8_t>(type == ctKey ? 0 :
+                                  (type == ctMouseAxis || type == ctMouseButton ? 1 : NULL_CONTROLLER)),
+                                  defaults.value[slot], flags};
+        }
+      }
+      break;
+    }
+  }
+  return functions;
+}
+
+static ControlPreset DetectPreset(const BindingFunctions &functions) {
+  for (auto preset : {ControlPreset::Modern, ControlPreset::Classic}) {
+    const auto expected = PresetBindings(preset, functions);
+    bool matches = true;
+    for (size_t f = 0; f < functions.size(); ++f) {
+      for (int slot = 0; slot < CTLBINDS_PER_FUNC; ++slot) {
+        const auto &actual = functions[f].inputs[slot];
+        const auto &input = expected[f].inputs[slot];
+        // Inversion and sensitivity are separate user preferences.
+        if (actual.bound() != input.bound() || (input.bound() && !actual.same_input(input)))
+          matches = false;
+      }
+    }
+    if (matches)
+      return preset;
+  }
+  return ControlPreset::Custom;
+}
+
+static BindingFunctions OriginalBindings;
+
+static void control_preset_dialog() {
+  newuiTiledWindow wnd;
+  wnd.Create("Control preset", 0, 0, 512, 384);
+  auto *sheet = wnd.GetSheet();
+  const auto original = ReadBindings();
+  const int initial = static_cast<int>(DetectPreset(original));
+  sheet->NewGroup("Keyboard and mouse", 0, 0);
+  int *choice = sheet->AddFirstLongRadioButton("Modern");
+  sheet->AddLongRadioButton("Classic");
+  sheet->AddLongRadioButton("Custom (keep current)");
+  *choice = initial;
+  sheet->NewGroup("Modern", 0, 90);
+  sheet->AddText("W/S: forward / reverse");
+  sheet->AddText("A/D: strafe left / right");
+  sheet->AddText("Space/Ctrl: up / down");
+  sheet->AddText("Shift: afterburner");
+  sheet->AddText("Q/E: roll left / right");
+  sheet->AddText("Mouse: aim and fire");
+  sheet->NewGroup("Classic", 250, 90);
+  sheet->AddText("A/Z: forward / reverse");
+  sheet->AddText("Numpad 1/3: strafe");
+  sheet->AddText("Numpad -/+: up / down");
+  sheet->AddText("S: afterburner");
+  sheet->AddText("Ctrl/Space: fire");
+  sheet->NewGroup(NULL, 0, 210);
+  sheet->AddText("Wheel up: weapons; down: missiles");
+  sheet->AddText("F/middle mouse: flare; Tab: map; H: light");
+  sheet->AddText("Joystick and mouse settings are kept.");
+  sheet->AddText("Restore Settings undoes changes from this menu.");
+  sheet->NewGroup(NULL, 290, 288, NEWUI_ALIGN_HORIZ);
+  sheet->AddButton(TXT_OK, UID_OK);
+  sheet->AddButton(TXT_CANCEL, UID_CANCEL);
+  wnd.Open();
+  int res;
+  do { res = wnd.DoUI(); } while (res != UID_OK && res != UID_CANCEL && res != NEWUIRES_FORCEQUIT);
+  const int selected = *choice;
+  wnd.Close();
+  wnd.Destroy();
+  if (res == UID_OK && selected != initial && selected != static_cast<int>(ControlPreset::Custom))
+    WriteBindings(PresetBindings(static_cast<ControlPreset>(selected), original));
+}
+
+static const char *BindingActionName(int id) {
+  for (const auto &element : Cfg_key_elements)
+    if (element.fn_id == id)
+      return TXT(element.text);
+  for (const auto &element : Cfg_joy_elements)
+    if (element.fn_id == id)
+      return TXT(element.text);
+  return "another action";
+}
 //////////////////////////////////////////////////////////////////////////////
 //
 class cfg_screen {
@@ -449,7 +576,6 @@ class key_cfg_screen : public cfg_screen {
   newuiButton m_revert_btn;
   UIText m_help1_txt;
   UIText m_help2_txt;
-  cntrldata m_old_controls[N_KEY_CFG_FN];
 
 public:
   virtual void setup(newuiLargeMenu *menu);
@@ -459,14 +585,8 @@ public:
   virtual void unrealize();
 };
 void key_cfg_screen::setup(newuiLargeMenu *menu) {
-  int i;
   m_menu = menu;
   m_sheet = menu->AddOption(IDV_KCONFIG, TXT_OPTCUSTKEYB);
-  // save original settings.
-  for (i = 0; i < N_KEY_CFG_FN; i++) {
-    Controller->get_controller_function(Cfg_key_elements[i].fn_id, m_old_controls[i].type, &m_old_controls[i].value,
-                                        m_old_controls[i].flags);
-  }
 }
 void key_cfg_screen::finish() {}
 void key_cfg_screen::process(int res) {
@@ -487,30 +607,21 @@ void key_cfg_screen::process(int res) {
   }
   switch (res) {
   case UID_RESETDEFAULTS:
-    for (i = 0; i < NUM_CONTROLLER_FUNCTIONS; i++) {
-      if (Controller_needs[i].ctype[0] == ctKey) {
-        ASSERT(Controller_needs[i].ctype[1] == ctKey);
-        Controller->assign_function(&Controller_needs[i]);
-      }
-    }
+    control_preset_dialog();
     break;
   case UID_CFGSETTINGS:
     key_settings_dialog();
     break;
   case UID_REVERT:
-    // restore original settings.
-    for (i = 0; i < N_KEY_CFG_FN; i++) {
-      Controller->set_controller_function(Cfg_key_elements[i].fn_id, m_old_controls[i].type, m_old_controls[i].value,
-                                          m_old_controls[i].flags);
-    }
+    WriteBindings(OriginalBindings);
     break;
   }
 }
 void key_cfg_screen::realize() {
   // create controls
-  int i, x = 0, y;
+  int i, x = 0, y = 0;
   t_cfg_element *cfg_elem = &Cfg_key_elements[0];
-  m_reset_btn.Create(m_menu, UID_RESETDEFAULTS, TXT_RESETTODEFAULT, KEYCFG_EXTRAS_X + m_sheet->X(),
+  m_reset_btn.Create(m_menu, UID_RESETDEFAULTS, "Control preset...", KEYCFG_EXTRAS_X + m_sheet->X(),
                      KEYCFG_EXTRAS_Y + m_sheet->Y(), NEWUI_BTNF_LONG);
   m_key_settings.Create(m_menu, UID_CFGSETTINGS, TXT_ADJUSTSETTINGS, KEYCFG_EXTRAS_X + m_sheet->X() + KEYCFG_EXTRAS_W,
                         KEYCFG_EXTRAS_Y + m_sheet->Y(), NEWUI_BTNF_LONG);
@@ -552,7 +663,6 @@ class joy_cfg_screen : public cfg_screen {
   newuiButton m_reset_btn;
   newuiButton m_controller_settings;
   newuiButton m_revert_btn;
-  cntrldata m_old_controls[N_JOY_CFG_FN];
   UIText m_help1_txt;
   UIText m_help2_txt;
 
@@ -565,15 +675,8 @@ public:
 };
 // setup user interfaces for each screen.
 void joy_cfg_screen::setup(newuiLargeMenu *menu) {
-  int i;
   m_menu = menu;
   m_sheet = menu->AddOption(IDV_CCONFIG, TXT_OPTCUSTCONT);
-
-  // save original settings.
-  for (i = 0; i < N_JOY_CFG_FN; i++) {
-    Controller->get_controller_function(Cfg_joy_elements[i].fn_id, m_old_controls[i].type, &m_old_controls[i].value,
-                                        m_old_controls[i].flags);
-  }
 }
 void joy_cfg_screen::finish() {}
 void joy_cfg_screen::process(int res) {
@@ -606,17 +709,13 @@ void joy_cfg_screen::process(int res) {
     joystick_settings_dialog();
     break;
   case UID_REVERT:
-    // restore original settings.
-    for (i = 0; i < N_KEY_CFG_FN; i++) {
-      Controller->set_controller_function(Cfg_joy_elements[i].fn_id, m_old_controls[i].type, m_old_controls[i].value,
-                                          m_old_controls[i].flags);
-    }
+    WriteBindings(OriginalBindings);
     break;
   }
 }
 
 void joy_cfg_screen::realize() {
-  int i, x = 0, y;
+  int i, x = 0, y = 0;
   t_cfg_element *cfg_elem = &Cfg_joy_elements[0];
   m_reset_btn.Create(m_menu, UID_RESETDEFAULTS, TXT_RESETTODEFAULT, KEYCFG_EXTRAS_X + m_sheet->X(),
                      KEYCFG_EXTRAS_Y + m_sheet->Y(), NEWUI_BTNF_LONG);
@@ -904,71 +1003,34 @@ void wpnsel_cfg_screen::unrealize() {
 //////////////////////////////////////////////////////////////////////////////
 // this will take out any repeats of element and slot in function id.
 void ctl_cfg_set_and_verify_changes(int16_t fnid, ct_type elem_type, uint8_t ctrl, uint8_t elem, int8_t slot) {
-  ct_type ctype_fn[CTLBINDS_PER_FUNC];
-  uint8_t cfgflags_fn[CTLBINDS_PER_FUNC];
-  ct_config_data ccfgdata_fn;
-  t_cfg_element *fn_list;
-  tCfgDataParts cfgparts;
-  int i, n_fn;
-  if (fnid == -1) {
-    Int3(); // get samir
-    return;
-  }
-  ASSERT(slot < N_CFGELEM_SLOTS && slot >= 0);
-  if (ctrl == NULL_CONTROLLER) {
-    return;
-  }
-  // if element is repeated anywhere in function list other than 'fnid'[slot] of elem_type, then remove that
-  // binding.
-  if (elem_type == ctNone) {
-    Int3();
-    return;
-  } else if (elem_type == ctKey) {
-    n_fn = N_KEY_CFG_FN;
-    fn_list = Cfg_key_elements;
-  } else {
-    n_fn = N_JOY_CFG_FN;
-    fn_list = Cfg_joy_elements;
-  }
-  for (i = 0; i < n_fn; i++) {
-    // get current function.  if element in any slot matches elem_type, and elem, then remove it.
-    bool match_found = false;
-    Controller->get_controller_function(fn_list[i].fn_id, ctype_fn, &ccfgdata_fn, cfgflags_fn);
-
-    parse_config_data(&cfgparts, ctype_fn[0], ctype_fn[1], ccfgdata_fn);
-    if (elem_type == ctype_fn[0] && elem == cfgparts.bind_0 && cfgparts.ctrl_0 == ctrl) {
-      // match found! clear this part out.
-      cfgparts.bind_0 = NULL_BINDING;
-      cfgparts.ctrl_0 = NULL_CONTROLLER;
-      match_found = true;
+  auto functions = ReadBindings();
+  const control_bindings::Input input{elem_type, ctrl, elem, 0};
+  const auto matches = control_bindings::conflicts(functions, fnid, slot, input);
+  auto resolution = control_bindings::Resolution::Replace;
+  if (!matches.empty()) {
+    char message[256];
+    snprintf(message, sizeof(message), "%s is assigned to %s. Assign it to %s?%s",
+             cfg_binding_text(elem_type, ctrl, elem), BindingActionName(functions[matches.front().function].id),
+             BindingActionName(fnid), matches.size() > 1 ? " Multiple bindings will be cleared by Replace." : "");
+    int result;
+    if (matches.size() == 1) {
+      result = DoMessageBoxAdvanced("Binding conflict", message, "Replace", KEY_R,
+                                    "Swap", KEY_S, TXT_CANCEL, KEY_ESC, nullptr);
+    } else {
+      result = DoMessageBoxAdvanced("Binding conflict", message, "Replace", KEY_R,
+                                    TXT_CANCEL, KEY_ESC, nullptr);
+      if (result != 0)
+        return;
     }
-    if (elem_type == ctype_fn[1] && elem == cfgparts.bind_1 && cfgparts.ctrl_1 == ctrl) {
-      // match found! clear this part out.
-      cfgparts.bind_1 = NULL_BINDING;
-      cfgparts.ctrl_1 = NULL_CONTROLLER;
-      match_found = true;
-    }
-    if (match_found) {
-      // this will effectively clear any matches found.
-      ccfgdata_fn = unify_config_data(&cfgparts);
-      Controller->set_controller_function(fn_list[i].fn_id, ctype_fn, ccfgdata_fn, cfgflags_fn);
-    }
+    if (result == 0)
+      resolution = control_bindings::Resolution::Replace;
+    else if (result == 1 && matches.size() == 1)
+      resolution = control_bindings::Resolution::Swap;
+    else
+      return;
   }
-  Controller->get_controller_function(fnid, ctype_fn, &ccfgdata_fn, cfgflags_fn);
-
-  parse_config_data(&cfgparts, ctype_fn[0], ctype_fn[1], ccfgdata_fn);
-
-  ctype_fn[slot] = elem_type;
-  cfgflags_fn[slot] = 0;
-  if (slot == 1) {
-    cfgparts.bind_1 = elem;
-    cfgparts.ctrl_1 = ctrl;
-  } else {
-    cfgparts.bind_0 = elem;
-    cfgparts.ctrl_0 = ctrl;
-  }
-  ccfgdata_fn = unify_config_data(&cfgparts);
-  Controller->set_controller_function(fnid, ctype_fn, ccfgdata_fn, cfgflags_fn);
+  if (control_bindings::assign(functions, fnid, slot, input, resolution))
+    WriteBindings(functions);
 }
 // used as a help/options dialog for each controller config element
 void ctl_cfg_element_options_dialog(int16_t fnid) {
@@ -1148,7 +1210,23 @@ void joystick_settings_dialog() {
   bool ff_found = false;
   bool *joy_enabled;
   bool *mse_enabled;
+  bool *mse_invert_y;
   int *msectl;
+
+  // Use the existing pitch-binding flags so the setting is saved with the
+  // pilot and works in both flight-sim and mouselook modes.
+  ct_type pitch_types[CTLBINDS_PER_FUNC];
+  uint8_t pitch_flags[CTLBINDS_PER_FUNC];
+  ct_config_data pitch_data;
+  tCfgDataParts pitch_parts;
+  Controller->get_controller_function(ctfPITCH_DOWNAXIS, pitch_types, &pitch_data, pitch_flags);
+  parse_config_data(&pitch_parts, pitch_types[0], pitch_types[1], pitch_data);
+  const uint8_t pitch_axes[CTLBINDS_PER_FUNC] = {pitch_parts.bind_0, pitch_parts.bind_1};
+  bool invert_y = false;
+  for (i = 0; i < CTLBINDS_PER_FUNC; ++i) {
+    if (pitch_types[i] == ctMouseAxis && pitch_axes[i] == CT_Y_AXIS)
+      invert_y |= (pitch_flags[i] & CTFNF_INVERT) != 0;
+  }
 
   wnd.Create(TXT_JOYMOUSESETTINGS, 0, 0, 480, 384);
   sheet = wnd.GetSheet();
@@ -1192,7 +1270,8 @@ void joystick_settings_dialog() {
   msectl = sheet->AddFirstLongRadioButton(TXT_MOUSEFLIGHTSIM);
   sheet->AddLongRadioButton(TXT_MOUSELOOK);
   *msectl = Current_pilot.mouselook_control ? 1 : 0;
-  y += 50;
+  mse_invert_y = sheet->AddLongCheckBox("Invert mouse Y", invert_y);
+  y += 70;
   sheet->NewGroup(NULL, 210, y);
   sheet->AddLongButton(TXT_CALIBJOYSTICK, UID_JOYCFG);
   // force feedback stuff
@@ -1235,6 +1314,15 @@ void joystick_settings_dialog() {
       Controller->set_axis_sensitivity(ctMouseAxis, i + 1, val);
     }
     Current_pilot.mouselook_control = (*msectl) ? true : false;
+    for (i = 0; i < CTLBINDS_PER_FUNC; ++i) {
+      if (pitch_types[i] == ctMouseAxis && pitch_axes[i] == CT_Y_AXIS) {
+        if (*mse_invert_y)
+          pitch_flags[i] |= CTFNF_INVERT;
+        else
+          pitch_flags[i] &= ~CTFNF_INVERT;
+      }
+    }
+    Controller->set_controller_function(ctfPITCH_DOWNAXIS, pitch_types, pitch_data, pitch_flags);
     // force feedback stuff
     if (ff_enabled) {
       if (*ff_enabled) {
@@ -1267,6 +1355,7 @@ void key_settings_dialog() {
   int16_t curpos;
   tSliderSettings slider_set;
   int16_t *key_ramp_speed;
+  const auto original_bindings = ReadBindings();
   wnd.Create(TXT_KEYSETTINGS, 0, 0, 384, 256);
   sheet = wnd.GetSheet();
   sheet->NewGroup(NULL, 0, 30);
@@ -1275,18 +1364,24 @@ void key_settings_dialog() {
   slider_set.type = SLIDER_UNITS_FLOAT;
   curpos = CALC_SLIDER_POS_FLOAT(Key_ramp_speed, &slider_set, CFG_KEY_RAMP_RANGE);
   key_ramp_speed = sheet->AddSlider(TXT_KEYRAMPINGTIME, CFG_KEY_RAMP_RANGE, curpos, &slider_set);
+  sheet->NewGroup(NULL, 0, 80);
+  sheet->AddLongButton("Control preset...", UID_PRESET);
   sheet->NewGroup(NULL, 180, 160, NEWUI_ALIGN_HORIZ);
   sheet->AddButton(TXT_OK, UID_OK);
   sheet->AddButton(TXT_CANCEL, UID_CANCEL);
   wnd.Open();
   do {
     res = wnd.DoUI();
+    if (res == UID_PRESET)
+      control_preset_dialog();
     if (res == NEWUIRES_FORCEQUIT) {
       break;
     }
   } while (res != UID_OK && res != UID_CANCEL);
   if (res == UID_OK) {
     Key_ramp_speed = CALC_SLIDER_FLOAT_VALUE(*key_ramp_speed, 0.0f, CFG_KEY_RAMP_MAX, CFG_KEY_RAMP_RANGE);
+  } else {
+    WriteBindings(original_bindings);
   }
   wnd.Close();
   wnd.Destroy();
@@ -1410,6 +1505,7 @@ void CtlConfig(int mode) {
   // must switch to standard resolution for large window
   SetScreenMode(SM_MENU);
   LoadControlConfig();
+  OriginalBindings = ReadBindings();
   // open menu
   menu.Create();
   menu.Open();

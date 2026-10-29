@@ -1,9 +1,14 @@
-
-# Building Descent 3 Open Source 
+# Building Descent 3 Open Source
 
 ## Dependencies
+
+Builds require a C++17 compiler. Commercial game assets are not needed to
+compile or install the engine: [first-run setup](USAGE.md#first-run-asset-setup)
+asks for their location when you launch the game.
+
 The build process uses [**CMake**](https://cmake.org/) and, by default, [**Ninja**](https://ninja-build.org/). You must install these; the project cannot locate them for you. The source code also depends on third-party libraries that are not provided as part of the repository:
-- [**SDL3**](https://wiki.libsdl.org/SDL3/FrontPage) which is used as the base to handle video, audio and input.
+
+- [**SDL3**](https://wiki.libsdl.org/SDL3/FrontPage) >= 3.2.6 for video, audio, input, and native dialogs.
 - [**cpp-httplib**](https://github.com/yhirose/cpp-httplib) >= 0.23 as a HTTP client to download levels.
 - [**glm**](https://github.com/g-truc/glm) providing useful additions to OpenGL.
 - [**plog**](https://github.com/SergiusTheBest/plog) for logging
@@ -13,10 +18,19 @@ The build process uses [**CMake**](https://cmake.org/) and, by default, [**Ninja
 You can supply these dependencies yourself via your system's library management tools, or the build system can locate the dependencies for you using [vcpkg](https://github.com/microsoft/vcpkg), a cross-platform dependency-management system developed by Microsoft. The official builds source their dependencies from vcpkg.
 
 ## Installing and using vcpkg
-* When building for Windows, vcpkg is already installed and configured when using any of the Visual Studio command prompts (either actual Command Prompt, or PowerShell).
-* For Android, Linux or Mac (or non-standard-Windows) configurations, you will need to install vcpkg locally by cloning https://github.com/microsoft/vcpkg and setting your `VCPKG_ROOT` env var to the repository location. With this environment variable set, the build will automatically locate its dependencies.
+
+Set `VCPKG_ROOT` to a bootstrapped vcpkg checkout on every platform. An existing
+Visual Studio installation may provide vcpkg, but the build still needs its
+location in this environment variable. Otherwise clone
+https://github.com/microsoft/vcpkg and run `bootstrap-vcpkg.bat` on Windows or
+`./bootstrap-vcpkg.sh` on Linux/macOS.
+
+The Linux `make.sh` wrapper selects vcpkg explicitly. Manual CMake builds use
+it when `VCPKG_ROOT` is set; use `-DUSE_VCPKG=OFF` to select system libraries.
+Do not embed an individual's game installation path in CMake defaults.
 
 ## Building - Windows
+
 1. **Install the prerequisite build tools.**
 
     Make sure that you have Git and Visual Studio 2022 with the “Desktop development with C++” workload and the “C++ MFC for latest v143 build tools (x86 & x64)” component. If you don’t already have those installed or you aren’t sure, then open an elevated Command Prompt and run:
@@ -39,23 +53,27 @@ You can supply these dependencies yourself via your system's library management 
     ```
 
     **NOTE:**
-    Builds _must_ be performed in one of the Visual Studio-provided **x64 Native Tools** command prompts ("x64 Native Tools Command Prompt" or "x64 Native Tools PowerShell"), _not_ a standard Command Prompt or PowerShell. The VS prompts will already have vcpkg installed and configured for use, so no dependency management is needed.
+    Run the commands below in a Visual Studio **x64 Native Tools Command Prompt**
+    so the compiler is available. Ensure vcpkg is bootstrapped and set
+    `VCPKG_ROOT` to its location; do not assume the prompt configured it.
 
 2. **Clone the Descent3 source code.**
 
     Open a "x64 Native Tools Command Prompt" or "x64 Native Tools PowerShell" and run:
     ```batch
-    git clone https://github.com/DescentDevelopers/Descent3
+    git clone https://github.com/tiglate/Descent3.git
     ```
 
 3. **Build Descent3.**
 
     ```batch
     cd Descent3
+    set "VCPKG_ROOT=C:\path\to\vcpkg"
     cmake --preset win
-    cmake --build --preset win --config [Debug|Release]
+    cmake --build --preset win --config Release
     ```
-    See [Build Options](#build-options) below for more information on `Debug` vs `Release`.
+    Replace the example vcpkg path with your checkout. Use `--config Debug`
+    instead for a Debug build; see [Build Options](#build-options).
 
 Once CMake finishes, the built files will be put in `builds\win\build\Debug` or `builds\win\build\Release`.
 
@@ -88,37 +106,38 @@ Once CMake finishes, the built files will be put in `builds\win\build\Debug` or 
 3. **Clone the Descent3 source code.**
 
     ```sh
-    git clone https://github.com/DescentDevelopers/Descent3
+    git clone https://github.com/tiglate/Descent3.git
     ```
 
 4. **Build Descent3.**
 
     * Install the build tools.
       ```sh
+      cd Descent3
       brew bundle install
       ```
     * Compile Descent 3.
       ```sh
-      cd Descent3
       cmake --preset mac
-      cmake --build --preset mac --config [Debug|Release]
+      cmake --build --preset mac --config Release
       ```
-      See [Build Options](#build-options) below for more information on `Debug` vs `Release`.
+      Use `--config Debug` instead for a Debug build. See [Build Options](#build-options).
 
 Once CMake finishes, the built files will be put in `builds/mac/build/Debug` or `builds/mac/build/Release`.
 
 ## Building - Linux
+
 1. **Install the prerequisite build tools.**
 
     * APT users (Debian, Ubuntu)
         ```sh
         sudo apt update
-        sudo apt install -y --no-install-recommends git ninja-build cmake g++ ca-certificates curl zip unzip tar
+        sudo apt install -y --no-install-recommends git ninja-build make cmake g++ ca-certificates curl zip unzip tar
         ```
     * DNF users (Red Hat, Fedora)
         ```sh
         sudo dnf update --refresh
-        sudo dnf install -y git ninja-build cmake gcc-c++
+        sudo dnf install -y git ninja-build make cmake gcc-c++
         ```
 
 2. **Acquire the library dependencies.**
@@ -137,7 +156,7 @@ Once CMake finishes, the built files will be put in `builds/mac/build/Debug` or 
         2. Install vcpkg-needed build tools and dependencies:
             * APT users
                 ```sh
-                sudo apt install -y --no-install-recommends curl pkg-config autoconf automake libtool libltdl-dev make python3-jinja2 libx11-dev libxft-dev libxext-dev libwayland-dev libxkbcommon-dev libegl1-mesa-dev libibus-1.0-dev libasound2-dev libpulse-dev libaudio-dev libjack-dev libsndio-dev libxcursor-dev libxfixes-dev libxi-dev libxrandr-dev libxss-dev
+                sudo apt install -y --no-install-recommends curl pkg-config autoconf autoconf-archive automake libtool libltdl-dev make python3-jinja2 libx11-dev libxft-dev libxext-dev libwayland-dev libxkbcommon-dev libegl1-mesa-dev libibus-1.0-dev libasound2-dev libpulse-dev libaudio-dev libjack-dev libsndio-dev libxcursor-dev libxfixes-dev libxi-dev libxrandr-dev libxss-dev
                 ```
             * DNF users
                 ```sh
@@ -148,20 +167,77 @@ Once CMake finishes, the built files will be put in `builds/mac/build/Debug` or 
 3. **Clone the Descent3 source code.**
 
     ```sh
-    git clone https://github.com/DescentDevelopers/Descent3
+    git clone https://github.com/tiglate/Descent3.git
     ```
 
-4. **Build Descent3.**
+4. **Build and run using the wrapper.**
 
     ```sh
     cd Descent3
-    cmake --preset linux
-    cmake --build --preset linux --config [Debug|Release]
+    make release
+    make run ARGS="-windowed"
     ```
 
-    See [Build Options](#build-options) below for more information on `Debug` vs `Release`.
+    The root Makefile forwards to `make.sh`. Plain `make` or `make build`
+    compiles Debug; `make release` compiles Release. `make install` builds
+    Release and installs to `~/Apps/Descent3`. `make run` builds, installs,
+    and launches Release. First-run setup selects your commercial game assets.
 
-Once CMake finishes, the built files will be put in `builds/linux/build/Debug` or `builds/linux/build/Release`.
+    Wrapper outputs are in `build/build/Debug` or `build/build/Release`.
+    Use `make help` or `./make.sh --help` to see all actions. Examples:
+
+    ```sh
+    make release ARGS="-j 4"
+    make run ARGS='-assetdir "/path/to/Descent 3" -windowed'
+    make install ARGS='--prefix "/path/to/install"'
+    ```
+
+    `ARGS` forwards options to the wrapper for build/install actions, or
+    directly to the game for `run`. `make -j` does not set CMake's job count;
+    use `ARGS="-j 4"` with a build action. `make run` always uses the wrapper's
+    default install prefix; to run a custom installation, launch its executable
+    directly. Do not use `sudo` for a user-local installation.
+
+### Linux CMake preset alternative
+
+To use system libraries or work directly with the provided preset instead of
+the Linux wrapper:
+
+```sh
+cmake --preset linux
+cmake --build --preset linux --config Release
+```
+
+Use `--config Debug` for Debug. These outputs are in
+`builds/linux/build/Release` or `builds/linux/build/Debug`, separate from the
+wrapper's `build/` tree. Add `-DUSE_VCPKG=OFF` to the configure command if using
+system libraries. Never run `cmake .` in the source root.
+
+## Tests
+
+GoogleTest tests are disabled unless `BUILD_TESTING=ON`. For the Linux wrapper:
+
+```sh
+make configure
+cmake -S . -B build -DBUILD_TESTING=ON
+make release
+ctest --test-dir build -C Release --output-on-failure
+```
+
+After enabling tests, `make test` builds Debug and runs its suite. For a
+focused Release run, use
+`ctest --test-dir build -C Release -R 'Control(Presets|Bindings)|GameAssets' --output-on-failure`.
+
+With CMake presets, enable tests in the corresponding build tree. For example:
+
+```sh
+cmake --preset linux -DBUILD_TESTING=ON
+cmake --build --preset linux --config Release
+ctest --preset linux -C Release
+```
+
+Use `win` or `mac` instead of `linux` on those platforms. Match the test
+configuration to the one you built.
 
 ## Cross-compilation
 
@@ -187,26 +263,36 @@ cmake --build .
 ## Build Options
 
 The Descent3 build can be customized by [setting CMake variables on the command line](https://cmake.org/cmake/help/latest/manual/cmake.1.html#cmdoption-cmake-D) during its "Configuration" phase (the command without the `--build` option). To set a variable, you prepend the variable name with `-D` and then append the value, all as one single parameter. For example:
+
 ```sh
 cmake --preset linux -DBUILD_TESTING=ON
 ```
 
 **NOTE:** CMake variables, or more technically _CMake cache entries_, will persist in their values until they are explicitly cleared. So, if you set a variable and then run another CMake command _without_ that variable specified, the variable will still be set. Variables must be explicitly unset, or the `builds/` directory cleaned, in order to be cleared.
 
-You can also use the [cmake-gui](https://cmake.org/cmake/help/latest/manual/cmake-gui.1.html) front-end to easily set and view CMake cache variable values, and generate build
+You can also use [cmake-gui](https://cmake.org/cmake/help/latest/manual/cmake-gui.1.html)
+to view or edit cache entries and generate build files.
 
-| Option                    | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                    | Default                                                                                      |
-|---------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------|
-| `CMAKE_BUILD_TYPE`        | `Debug` builds are generally larger, slower and contain extra correctness checks that will validate game data and interrupt gameplay when problems are detected.<br>`Release` builds are optimized for size and speed and do not include debugging information, which makes it harder to find problems. The build type can also be set using the `--config` argument with a preset.                                                                            | `Debug`                                                                                      |
-| `BUILD_EDITOR`            | _(Windows-only)_ Build internal editor.                                                                                                                                                                                                                                                                                                                                                                                                                        | `OFF`                                                                                        |
-| `BUILD_TESTING`           | Enable testing. Requires GTest.                                                                                                                                                                                                                                                                                                                                                                                                                                | `OFF`                                                                                        |
-| `DEFAULT_ADDITIONAL_DIRS` | A semi-colon separated list of paths that Descent 3 will use as read-only base directories (see [USAGE.md’s Base directories section][1]). Each item in this list is placed between quotation marks in order to form a C++ expression. This will cause issues if the items in the list are not properly escaped. You can use C++ escape sequences in order to embed special characters (like `\`, `"` and `;`) in paths. Example: `C:\\Games\\Descent3\\;D:\\` | A list with one item in it. The item is an empty string.                                     |
-| `ENABLE_LOGGER`           | Enable logging to the terminal.                                                                                                                                                                                                                                                                                                                                                                                                                                | `OFF`                                                                                        |
-| `ENABLE_MEM_RTL`          | Enable Real-time library memory management functions (disable to verbose memory allocations).                                                                                                                                                                                                                                                                                                                                                                  | `ON`                                                                                         |
-| `FORCE_COLORED_OUTPUT`    | Always produce ANSI-colored compiler warnings/errors (GCC/Clang only; esp. useful with Ninja).                                                                                                                                                                                                                                                                                                                                                                 | `OFF`                                                                                        |
-| `FORCE_PORTABLE_INSTALL`  | Install all files into local directory defined by `CMAKE_INSTALL_PREFIX`.                                                                                                                                                                                                                                                                                                                                                                                      | `ON`                                                                                         |
-      | `OFF`                                                                                        |
-| `USE_VCPKG`               | Explicitly control whether or not to use vcpkg for dependency resolution. `ON` requires the environment variable `VCPKG_ROOT` to be set.                                                                                                                                                                                                                                                                                                                       | Determined by the existence of `VCPKG_ROOT` in the environment: If it exists, vcpkg is used. |
-| `CODESIGN_IDENTITY`       | Sets the macOS code signing identity. If set to something besides the empty string, then the dynamic libraries put into the hog files will be signed using this identity.                                                                                                                                                                                                                                                                                      | The empty string, `""`.                                                                      |
+| Option | Description | Default |
+| --- | --- | --- |
+| `CMAKE_BUILD_TYPE` | Configuration for single-config generators. Ninja Multi-Config (all provided presets and the wrapper) uses `--config Debug`, `Release`, or `RelWithDebInfo` at build time instead. | `Debug` for single-config builds |
+| `CMAKE_INSTALL_PREFIX` | Installation directory; independent of the user preferences and saved asset location. | `<build-directory>/installed`; wrapper: `~/Apps/Descent3` |
+| `BUILD_EDITOR` | Build the internal editor (Windows only). | `OFF` |
+| `BUILD_TESTING` | Build GoogleTest tests and enable CTest discovery. | `OFF` |
+| `DEFAULT_ADDITIONAL_DIRS` | Optional semicolon-separated, compiled-in read-only directories for packagers. See [base directories](USAGE.md#base-directories). Prefer runtime asset setup for individual installations. The wrapper clears this value. | Empty |
+| `ENABLE_LOGGER` | Enable the legacy `LOGGER` compile definition. Runtime logging is configured with `-loglevel` and `-logfile`. | `OFF` |
+| `ENABLE_MEM_RTL` | Use real-time-library memory management. | `ON` |
+| `FATAL_GL_ERRORS` | Check OpenGL calls and raise exceptions on errors. | `OFF` |
+| `FORCE_COLORED_OUTPUT` | Force colored diagnostics for supported compilers. | `OFF` |
+| `FORCE_PORTABLE_INSTALL` | Put installed engine files together under the prefix. This does not relocate user preferences. | `ON` |
+| `USE_VCPKG` | `DEFAULT` follows `VCPKG_ROOT`; `OFF` selects system dependencies. Set `VCPKG_ROOT` when requesting `ON`. | `DEFAULT`; wrapper: `ON` |
+| `CODESIGN_IDENTITY` | macOS signing identity for dynamic libraries embedded in HOG files. | Empty |
 
-[1]: ./USAGE.md#base-directories
+Debug enables additional checks. Release optimizes gameplay performance;
+RelWithDebInfo adds debug information to an optimized build.
+
+For manual builds, `cmake --install <build-directory> --config Release` installs
+the built engine. Run the build first: `cmake --install` does not compile it.
+For packaging directories containing backslashes, quotes, or semicolons in
+`DEFAULT_ADDITIONAL_DIRS`, remember that the value is emitted into a C++ string
+literal; escape it accordingly.

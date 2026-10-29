@@ -29,6 +29,9 @@ x86/
 bld/
 [Bb]in/
 [Bb]uilds/
+# Local CMake/Ninja workflow outputs produced by ./make.sh.
+/build/
+/install/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/

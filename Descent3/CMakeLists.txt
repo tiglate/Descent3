@@ -199,6 +199,8 @@ set(CPPS
   huddisplay.cpp
   hudmessage.cpp
   init.cpp
+  game_assets.cpp
+  game_asset_setup.cpp
   Inventory.cpp
   levelgoal.cpp
   lighting.cpp

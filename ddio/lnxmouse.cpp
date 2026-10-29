@@ -88,6 +88,7 @@
 #include "psclass.h"
 #include "ddio.h"
 #include "ddio_lnx.h"
+#include "mouse_buttons.h"
 
 static bool ddio_mouseGrabbed = true;
 static bool DDIO_mouse_init = false;
@@ -95,7 +96,10 @@ static bool DDIO_mouse_init = false;
 static struct mses_state {
   int fd;                   // file descriptor of mouse
   int t, l, b, r;           // limit rectangle of absolute mouse coords
-  int x, y, cx, cy;         // current x,y,z in absolute mouse coords
+  // SDL3 reports mouse coordinates and relative motion as floats.  Retain
+  // fractional cursor motion here so high-DPI/scaled displays do not lose
+  // every sub-pixel event when the legacy integer API is queried.
+  float x, y, cx, cy;       // current x,y,z in absolute mouse coords
   float dx, dy;             
   int btn_mask;
 } DDIO_mouse_state;
@@ -135,9 +139,9 @@ void ddio_MouseSetGrab(bool grab) {
 }
 
 int ddio_MouseGetCaps(int *buttons, int *axes) {
-  *buttons = 6;
+  *buttons = 8;
   *axes = 2;
-  return MOUSE_LB | MOUSE_CB | MOUSE_RB;
+  return MOUSE_LB | MOUSE_CB | MOUSE_RB | MOUSE_B4 | MOUSE_B5 | MOUSE_B6 | MOUSE_B7 | MOUSE_B8;
 }
 
 void ddio_MouseClose() { DDIO_mouse_init = false; }
@@ -192,147 +196,29 @@ void ddio_MouseSetVCoords(int width, int height) { ddio_MouseSetLimits(0, 0, wid
 
 bool sdlMouseButtonDownFilter(SDL_Event const *event) {
   ASSERT(event->type == SDL_EVENT_MOUSE_BUTTON_DOWN);
-
-  const SDL_MouseButtonEvent *ev = &event->button;
-  t_mse_event mevt;
-
-  if (ev->button == 1) {
-    DDIO_mouse_state.btn_mask |= MOUSE_LB;
-    DIM_buttons.down_count[0]++;
-    DIM_buttons.time_down[0] = timer_GetTime();
-    DIM_buttons.is_down[0] = true;
-    mevt.btn = 0;
-    mevt.state = true;
-    MB_queue.send(mevt);
-    //		mprintf(0, "MOUSE Button 0: Down\n");
-  } else if (ev->button == 2) {
-    DDIO_mouse_state.btn_mask |= MOUSE_RB;
-    DIM_buttons.down_count[1]++;
-    DIM_buttons.time_down[1] = timer_GetTime();
-    DIM_buttons.is_down[1] = true;
-    mevt.btn = 1;
-    mevt.state = true;
-    MB_queue.send(mevt);
-    //     	mprintf(0, "MOUSE Button 1: Down\n");
-  }
-  else if (ev->button == 3) {
-    DDIO_mouse_state.btn_mask |= MOUSE_CB;
-    DIM_buttons.down_count[2]++;
-    DIM_buttons.time_down[2] = timer_GetTime();
-    DIM_buttons.is_down[2] = true;
-    mevt.btn = 2;
-    mevt.state = true;
-    MB_queue.send(mevt);
-    //		mprintf(0, "MOUSE Button 2: Down\n");
-  }
-
-  // buttons 4 and 5 are reserved for the mouse wheel...that's how the engine works...adjust in here.
-
-  else if (ev->button == 4) {
-    DDIO_mouse_state.btn_mask |= MOUSE_B6;
-    DIM_buttons.down_count[5]++;
-    DIM_buttons.time_down[5] = timer_GetTime();
-    DIM_buttons.is_down[5] = true;
-    mevt.btn = 5;
-    mevt.state = true;
-    MB_queue.send(mevt);
-    //		mprintf(0, "MOUSE Button 5: Down\n");
-  }
-  else if (ev->button == 5) {
-    DDIO_mouse_state.btn_mask |= MOUSE_B7;
-    DIM_buttons.down_count[6]++;
-    DIM_buttons.time_down[6] = timer_GetTime();
-    DIM_buttons.is_down[6] = true;
-    mevt.btn = 6;
-    mevt.state = true;
-    MB_queue.send(mevt);
-    //		mprintf(0, "MOUSE Button 6: Down\n");
-  }
-  else if (ev->button == 6) {
-    DDIO_mouse_state.btn_mask |= MOUSE_B8;
-    DIM_buttons.down_count[7]++;
-    DIM_buttons.time_down[7] = timer_GetTime();
-    DIM_buttons.is_down[7] = true;
-    mevt.btn = 7;
-    mevt.state = true;
-    MB_queue.send(mevt);
-    //		mprintf(0, "MOUSE Button 7: Down\n");
-  }
-
+  const int button = EngineMouseButtonIndex(event->button.button);
+  if (button < 0)
+    return false;
+  DDIO_mouse_state.btn_mask |= 1 << button;
+  DIM_buttons.down_count[button]++;
+  DIM_buttons.time_down[button] = timer_GetTime();
+  DIM_buttons.is_down[button] = true;
+  t_mse_event queued{static_cast<int16_t>(button), true};
+  MB_queue.send(queued);
   return false;
 }
 
 bool sdlMouseButtonUpFilter(SDL_Event const *event) {
   ASSERT(event->type == SDL_EVENT_MOUSE_BUTTON_UP);
-
-  const SDL_MouseButtonEvent *ev = &event->button;
-  t_mse_event mevt;
-
-  if (ev->button == 1) {
-    DDIO_mouse_state.btn_mask &= (~MOUSE_LB);
-    DIM_buttons.up_count[0]++;
-    DIM_buttons.is_down[0] = false;
-    DIM_buttons.time_up[0] = timer_GetTime();
-    mevt.btn = 0;
-    mevt.state = false;
-    MB_queue.send(mevt);
-    //		mprintf(0, "MOUSE Button 0: Up\n");
-  }
-  else if (ev->button == 2) {
-    DDIO_mouse_state.btn_mask &= (~MOUSE_RB);
-    DIM_buttons.up_count[1]++;
-    DIM_buttons.is_down[1] = false;
-    DIM_buttons.time_up[1] = timer_GetTime();
-    mevt.btn = 1;
-    mevt.state = false;
-    MB_queue.send(mevt);
-    //		mprintf(0, "MOUSE Button 1: Up\n");
-  }
-  else if (ev->button == 3) {
-    DDIO_mouse_state.btn_mask &= (~MOUSE_CB);
-    DIM_buttons.up_count[2]++;
-    DIM_buttons.is_down[2] = false;
-    DIM_buttons.time_up[2] = timer_GetTime();
-    mevt.btn = 2;
-    mevt.state = false;
-    MB_queue.send(mevt);
-    //		mprintf(0, "MOUSE Button 2: Up\n");
-
-  }
-
-  // buttons 4 and 5 are reserved for the mouse wheel...that's how the engine works...adjust in here.
-
-  else if (ev->button == 4) {
-    DDIO_mouse_state.btn_mask &= (~MOUSE_B6);
-    DIM_buttons.up_count[5]++;
-    DIM_buttons.is_down[5] = false;
-    DIM_buttons.time_up[5] = timer_GetTime();
-    mevt.btn = 5;
-    mevt.state = false;
-    MB_queue.send(mevt);
-    //		mprintf(0, "MOUSE Button 5: Up\n");
-  }
-  else if (ev->button == 5) {
-    DDIO_mouse_state.btn_mask &= (~MOUSE_B7);
-    DIM_buttons.up_count[6]++;
-    DIM_buttons.is_down[6] = false;
-    DIM_buttons.time_up[6] = timer_GetTime();
-    mevt.btn = 6;
-    mevt.state = false;
-    MB_queue.send(mevt);
-    //		mprintf(0, "MOUSE Button 6: Up\n");
-  }
-  else if (ev->button == 6) {
-    DDIO_mouse_state.btn_mask &= (~MOUSE_B8);
-    DIM_buttons.up_count[7]++;
-    DIM_buttons.is_down[7] = false;
-    DIM_buttons.time_up[7] = timer_GetTime();
-    mevt.btn = 7;
-    mevt.state = false;
-    MB_queue.send(mevt);
-    //		mprintf(0, "MOUSE Button 7: Up\n");
-  }
-
+  const int button = EngineMouseButtonIndex(event->button.button);
+  if (button < 0)
+    return false;
+  DDIO_mouse_state.btn_mask &= ~(1 << button);
+  DIM_buttons.up_count[button]++;
+  DIM_buttons.is_down[button] = false;
+  DIM_buttons.time_up[button] = timer_GetTime();
+  t_mse_event queued{static_cast<int16_t>(button), false};
+  MB_queue.send(queued);
   return false;
 }
 
@@ -396,8 +282,12 @@ bool sdlMouseMotionFilter(SDL_Event const *event) {
   } else {
     DDIO_mouse_state.dx += event->motion.xrel;
     DDIO_mouse_state.dy += event->motion.yrel;
-    DDIO_mouse_state.x += DDIO_mouse_state.dx;
-    DDIO_mouse_state.y += DDIO_mouse_state.dy;
+    // Keep the cursor's absolute position in step with this event.  dx/dy
+    // intentionally accumulate until ddio_MouseGetState() consumes them, but
+    // using those accumulated values here applies earlier motion again for
+    // every event and makes the cursor accelerate unpredictably.
+    DDIO_mouse_state.x += event->motion.xrel;
+    DDIO_mouse_state.y += event->motion.yrel;
   }
 
   if (DDIO_mouse_state.x < DDIO_mouse_state.l)
@@ -416,6 +306,20 @@ bool sdlMouseMotionFilter(SDL_Event const *event) {
 void ddio_InternalMouseFrame(void) {
   static unsigned frame_count = 0;
   SDL_PumpEvents();
+  // Window creation, focus changes and fullscreen transitions can change SDL
+  // mouse state. Reconcile it on the main thread after pumping events rather
+  // than relying solely on the one-time renderer setup.
+  extern SDL_Window *GSDLWindow;
+  if (GSDLWindow && SDL_GetKeyboardFocus() == GSDLWindow) {
+    if (SDL_GetWindowRelativeMouseMode(GSDLWindow) != ddio_mouseGrabbed)
+      SDL_SetWindowRelativeMouseMode(GSDLWindow, ddio_mouseGrabbed);
+    // The game draws a software cursor. Never leave the desktop cursor drawn
+    // over it while captured; Ctrl+G intentionally restores the desktop one.
+    if (ddio_mouseGrabbed && SDL_CursorVisible())
+      SDL_HideCursor();
+    else if (!ddio_mouseGrabbed && !SDL_CursorVisible())
+      SDL_ShowCursor();
+  }
   frame_count++;
 }
 
@@ -429,9 +333,9 @@ int ddio_MouseGetState(int *x, int *y, int *dx, int *dy, int *z, int *dz) {
 
   //	get return values.
   if (x)
-    *x = DDIO_mouse_state.x;
+    *x = static_cast<int>(DDIO_mouse_state.x);
   if (y)
-    *y = DDIO_mouse_state.y;
+    *y = static_cast<int>(DDIO_mouse_state.y);
   if (z)
     *z = 0;
   if (dx)

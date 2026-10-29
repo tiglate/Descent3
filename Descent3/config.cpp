@@ -349,7 +349,8 @@ int Display_id = 0;
 void ConfigureDisplayResolutions() {
   int display_count = 0;
   SDL_DisplayID *displays = SDL_GetDisplays(&display_count);
-  if (!displays) {
+  if (!displays || display_count == 0) {
+    SDL_free(displays);
     return;
   }
 
@@ -359,9 +360,8 @@ void ConfigureDisplayResolutions() {
 
     int modes_count = 0;
     SDL_DisplayMode **modes = SDL_GetFullscreenDisplayModes(display_id, &modes_count);
-    if (!modes) {
-      return;
-    }
+    if (!modes)
+      continue;
     for (int modes_id = 0; modes_id < modes_count; modes_id++) {
       SDL_DisplayMode *mode = modes[modes_id];
       resolutions.emplace(tVideoResolution{static_cast<uint16_t>(mode->w), static_cast<uint16_t>(mode->h)});
@@ -406,10 +406,17 @@ void ConfigureDisplayResolutions() {
     current_resolution.height = static_cast<unsigned short>(atoi(GameArgs[heightarg + 1]));
     resolutions.emplace(current_resolution);
   } else {
-    const SDL_DisplayMode *current_mode = SDL_GetCurrentDisplayMode(Display_id);
+    const SDL_DisplayMode *current_mode = SDL_GetDesktopDisplayMode(Display_id);
+    if (!current_mode) {
+      LOG_WARNING << "Unable to determine desktop resolution; keeping fallback resolution.";
+      SDL_free(displays);
+      return;
+    }
     current_resolution.width = static_cast<unsigned short>(current_mode->w);
     current_resolution.height = static_cast<unsigned short>(current_mode->h);
   }
+  // The desktop mode need not appear in the exclusive-fullscreen mode list.
+  resolutions.emplace(current_resolution);
 
   // Fill in Video_res_list from the set of unique resolutions
   std::vector<tVideoResolution> resolutions_vec;
@@ -428,11 +435,10 @@ void ConfigureDisplayResolutions() {
     Default_resolution_id = Video_res_list.size() - 1; // default to the highest supported resolution
   }
 
-  int tmp;
-  if (!Database->read_int("RS_resolution", &tmp)) {
-    // Only override resolution id if the value was not found in the settings
-    Current_video_resolution_id = Default_resolution_id;
-  }
+  // Start at desktop resolution (or an explicit CLI override) every launch.
+  // A saved list index is unstable when monitors or available modes change.
+  // The video settings can still select another resolution during play.
+  Current_video_resolution_id = Default_resolution_id;
 
   LOG_DEBUG << "Resolution configured to w=" << Video_res_list[Current_video_resolution_id].width
             << "h=" << Video_res_list[Current_video_resolution_id].height << " (id " << Current_video_resolution_id

@@ -1,12 +1,61 @@
-# Descent 3 Open source usage instructions
+# Descent 3 Open Source Usage
 
 **Important note**: This open source distribution of Descent 3 DOES NOT CONTAIN
 GAME ASSETS. Assets must be acquired separately from an official copy of the
-game, and copied as described in the next section.
+game. See [BUILD.md](BUILD.md) for prerequisites and build instructions.
 
-This is the first release of the Descent 3 open source engine, that should be
-considered a beta version. If you find a bug that has not been reported before,
-please open a new ticket it on our [online issue tracker](https://github.com/DescentDevelopers/Descent3/issues).
+## Run locally
+
+After setting up the build dependencies, run these commands from the checkout:
+
+```sh
+make run
+make run ARGS="-windowed"
+```
+
+The Makefile forwards to `make.sh`; `make run` builds and installs Release
+before launching it from `~/Apps/Descent3`. Arguments in `ARGS` go to the game.
+The direct equivalent is `./make.sh run -windowed`. To launch an installed
+copy without building, run its `Descent3` executable from its installation
+directory.
+
+## First-run asset setup
+
+The application asks you to locate the original game's installation on its
+first launch. Select the folder containing `d3.hog` and `missions/`. The
+location is validated and saved in `game-assets.cfg` alongside your user
+preferences and pilots. Assets are read directly from the original installation.
+Later launches reuse the saved path; a missing or moved installation triggers
+setup again. Cancelling setup closes the application without starting the game.
+
+To choose another installation or configure a headless server, pass
+`-assetdir "/path/to/Descent 3"`. This validates and saves the path without
+opening the chooser. If a native folder chooser is unavailable, use this option.
+Delete `game-assets.cfg` to repeat setup while retaining your other settings.
+
+On Linux the file normally lives under
+`~/.local/share/Outrage Entertainment/Descent 3/`, respecting `XDG_DATA_HOME`.
+Building the engine does not require the commercial assets.
+
+For example:
+
+```sh
+make run ARGS='-assetdir "/path/to/Descent 3" -windowed'
+```
+
+On a desktop, the chooser uses the native dialog backend available to SDL.
+If that backend is unavailable, use `-assetdir` as above. Dedicated servers
+need either a valid saved location or an explicit `-assetdir` argument.
+
+## Manual portable installation
+
+The following steps describe assembling a separate portable game directory.
+When building locally with the wrapper, you can instead run `make run` and
+point first-run setup at the original installation without copying its assets.
+
+Report reproducible issues with the engine version, platform, and relevant
+logs. The upstream project uses its
+[online issue tracker](https://github.com/DescentDevelopers/Descent3/issues).
 
 1. Make sure that you have a copy of Descent 3. You can purchase a copy of
 Descent 3 from [GOG](https://www.gog.com/game/descent_3_expansion) or
@@ -44,11 +93,13 @@ context menu.
       more cutting-edge experience with the latest features, use the artifacts
       from the latest automated build. You can find the list of automated
       builds [here](https://github.com/DescentDevelopers/Descent3/actions/workflows/build.yml?query=branch%3Amain+event%3Apush).
+      These are upstream builds and may not include this fork's asset setup,
+      presets, and wrapper. Build this checkout to use the features described here.
     - If you want to build the engine files yourself, the follow the
-      instructions in [BUILD.md](BUILD.md). Once you build the engine files,
-      they’ll be put in `builds/<platform>/build/<build-type>/`. For example, if
-      you’re using Linux and you create a “Release” build, then the files will
-      be located at `builds/linux/build/Release`.
+      instructions in [BUILD.md](BUILD.md). Preset builds put engine files in
+      `builds/<platform>/build/<configuration>/`; the Linux wrapper uses
+      `build/build/<configuration>/`. `make install` assembles the installed
+      engine under `~/Apps/Descent3`.
 
 9. Copy all the new engine files into `D3-open-source` and overwrite any
 conflicts.
@@ -65,47 +116,94 @@ conflicts.
       launching the game.
     - On macOS, open the terminal, `cd` to `D3-open-source`, and run `./Descent3.app/Contents/MacOS/Descent3`.
 
+    On first launch, select `D3-open-source` in asset setup if you copied the
+    original data there. A portable engine directory does not relocate your
+    user preferences or remove the need to configure the asset location.
+
+## Keyboard and mouse presets
+
+Open **Configure Keyboard > Control preset...** to preview Modern and Classic
+bindings. Modern is the default for new pilots. Existing pilots retain their
+bindings until you choose a preset and press OK. Custom means keeping your
+current layout. Both presets preserve joystick bindings, mouse sensitivity,
+mouse inversion, and the selected mouse-control mode.
+
+Modern uses W/S for forward/reverse, A/D for strafing, Space/Left Ctrl for
+vertical thrust, Shift for afterburner, and Q/E for roll. Left and right mouse
+fire primary weapons and missiles; F or middle mouse fires flares. Mouse wheel
+up cycles primary weapons and wheel down cycles missiles. Tab opens the
+automap and H toggles the headlight.
+
+If a new binding is already used, the editor names the conflicting action and
+offers Replace, Swap, or Cancel. Swap is available for a single conflict;
+Replace removes all conflicting assignments. **Restore Settings** restores all
+bindings as they were when you entered the controls menu. Leave the menu to
+save your bindings with the pilot.
+
+### Gameplay mouse settings
+
+Open **Joy/Mouse > Adjust Settings** to select Flight Sim or Mouselook,
+adjust mouse X/Y sensitivity up to 16×, and toggle **Invert mouse Y**.
+Inversion is enabled for new/default controls. Existing pilots keep their
+saved settings. Mouselook uses the full sensitivity value; Flight Sim still
+obeys the ship's turning-rate limit. These settings do not affect menu cursor
+speed. **Ctrl+G** releases or recaptures the mouse.
+
 ## Troubleshooting
 
 ```
 Descent 3 Message(Error: Couldn't find the string table.)
 ```
 
-This error means that game data could not be found. Make sure you copied all
-game files to the `D3-open-source` folder, and that you're running the game
-from this same folder.
+Check that `game-assets.cfg` points to a complete, accessible original game
+installation, including `d3.hog` and `missions/`. Rerun with `-assetdir` to
+replace the saved location, or delete only `game-assets.cfg` to repeat setup.
+Also ensure the generated `d3-linux.hog`, `d3-win.hog`, or `d3-osx.hog` is
+installed beside the engine. Copying assets is optional; do not delete your
+pilot or save files to repair an asset location.
+
+For diagnostics, run `make run ARGS="-logfile -loglevel DEBUG"` and inspect
+`Descent3.log` in the installation directory. When launching the executable
+directly, this log is relative to the directory you launched it from.
 
 ## Base directories
 
-A base directory is a directory that Descent 3 expects game files to be in. When you run Descent 3, it will try to access many different files. Most of those files need to be stored in a base directory. There are two different types of files that are stored in base directories:
+The engine keeps writable preferences separate from commercial data. Pilots
+(`.plt`), savegames, and `game-assets.cfg` live in the SDL user preferences
+directory. On Linux this normally means
+`~/.local/share/Outrage Entertainment/Descent 3/`; setting `XDG_DATA_HOME`
+changes its parent directory. The installation directory is not the default
+save directory.
 
-- Read-write files are files that can change while you play Descent 3. Examples: `<you name>.plt` and files in the `savegame/` directory.
-- Read-only files are files that do not change while you play Descent 3. Examples: `d3.hog` and files in the `movies/` directory.
+The selected original installation is a read-only asset source. Other base
+directories provide packaged engine data or optional overrides. Base-directory
+lookup searches later-added directories first, in this order:
 
-Descent 3 has two types of base directories:
+1. The executable directory, when distinct from the platform data directory.
+2. The platform data directory. For the default portable build this resolves
+   from the current working directory; a non-portable build uses its configured
+   data directory.
+3. The optional legacy `GAME_base_directory` setting.
+4. `-additionaldir` directories, last argument first.
+5. Optional compiled-in `DEFAULT_ADDITIONAL_DIRS`, last entry first.
+6. The original game directory saved by asset setup.
+7. The writable user preferences directory.
 
-- The writable base directory can contain both read-write files and read-only files. There is only one writeable base directory. By default, the writable base directory gets set to the current working directory.
-- The read-only base directories can only contain read-only files. There can be any number of read-only base directories. By default, Descent 3 uses zero read-only base directories.
+Only existing directories are added. HOG archives and extension-specific
+searches also participate in file loading. Keep generated engine HOG files
+beside the executable and use `-assetdir` for the original commercial data.
+See [build options](BUILD.md#build-options) for packager-controlled directories;
+the Linux wrapper clears compiled-in asset paths.
 
-You can set the writable base directory and the list of read-only base directories using the `-setdir`, `-useexedir` and `-additionaldir` command-line options (see [the next section](#command-line-options)). Descent 3 also has a list of default read-only base directories. Normally, the list of default read-only base directories is empty, but you can change it by using the `DEFAULT_ADDITIONAL_DIRS` CMake option when compiling Descent 3 (see [BUILD.md’s Build Options section](./BUILD.md#build-options)).
+For an additional read-only data directory, use:
 
-When Descent 3 tries to find a read-only file, then it will look through the list of base directories in this order:
-
-- the last read-only base directory that was specified on the command-line,
-- the second-to-last read-only base directory that was specified on the command-line,
-- the third-to-last read-only base directory that was specified on the command-line,
-- …
-- the first read-only base directory that was specified on the command-line,
-- all of the items on the `DEFAULT_ADDITIONAL_DIRS` list in reverse order, and, finally,
-- the writable base directory.
-
-Files that are in base directories that are higher on that list will override files that are in base directories that are lower on that list. For example, lets say that the `DEFAULT_ADDITIONAL_DIRS` list is empty and that you run Descent 3 like this:
-
+```sh
+make run ARGS='-additionaldir "/path/to/extra-data"'
 ```
-Descent3 -setdir /home/user/my-writable-base-directory -additionaldir /home/user/my-read-only-base-directory
-```
 
-Let’s also say that both `my-writable-base-directory` and `my-read-only-base-directory` contain a file named `d3.hog`. In this example, Descent 3 will load `/home/user/my-read-only-base-directory/d3.hog` because read-only directories have a higher precedence than the writable base directory. Descent 3 will ignore `/home/user/my-writable-base-directory/d3.hog`.
+This supplements the configured installation; it does not set the writable
+directory or replace first-run asset configuration. The legacy `-setdir` and
+`-useexedir` arguments are not implemented by the current startup path.
 
 ## Command-Line Options
 
@@ -147,11 +245,13 @@ The following command-line options are available in Descent 3. You can set comma
 
     **Type:** integer
 
-    **Default:** 480 unless you select a different value in the options menu
+    **Default:** Desktop height of the selected display at startup
 
     **Platform:** all
 
-    **Description:** Sets the screen resolution to the specified height, if possible.
+    **Description:** Overrides gameplay height. Specify `-width` as well.
+    Without both dimensions, startup uses desktop resolution. Video Settings
+    can change the resolution during the current session.
 
 - `-himem`
 
@@ -197,7 +297,7 @@ The following command-line options are available in Descent 3. You can set comma
 
     **Type:** boolean
 
-    **Default:** Off
+    **Default:** On for new settings; otherwise the saved video setting
 
     **Platform:** all
 
@@ -207,11 +307,13 @@ The following command-line options are available in Descent 3. You can set comma
 
     **Type:** integer
 
-    **Default:** 640 unless you select a different value in the options menu
+    **Default:** Desktop width of the selected display at startup
 
     **Platform:** all
 
-    **Description:** Sets the screen resolution to the specified width, if possible.
+    **Description:** Overrides gameplay width. Specify `-height` as well.
+    Example: `make run ARGS="-width 1920 -height 1080"`. Without an explicit
+    pair, each launch starts at desktop resolution.
 
 - `-windowed` or `-w`
 
@@ -257,25 +359,9 @@ The following command-line options are available in Descent 3. You can set comma
 
     **Description:** Specifies the size of the deadzone for a joystick.
 
-- `-mlooksens <scale>`
-
-    **Type:** floating-point number
-
-    **Default:** 9.102
-
-    **Platform:** all
-
-    **Description:** Determines how much the player moves when the mouse is moved.
-
-- `-mousesens <scale>`
-
-    **Type:** floating-point number
-
-    **Default:** 1.0
-
-    **Platform:** all
-
-    **Description:** Adjusts the sensitivity of the mouse when not using mouselook mode.
+The legacy `-mlooksens` and `-mousesens` arguments are parsed, but their values
+are not used by the current SDL controller backend. Use **Joy/Mouse > Adjust
+Settings** to change gameplay sensitivity instead.
 
 - `-nomousegrab` or `-m`
 
@@ -455,11 +541,13 @@ The following command-line options are available in Descent 3. You can set comma
 
     **Type:** integer
 
-    **Default:** 20142
+    **Default:** No advertised-port override (0)
 
     **Platform:** all
 
-    **Description:** Specifies the port that PXO will tell clients to use when contacting a server. The default is 2092.
+    **Description:** Overrides the game port advertised to PXO clients.
+    Without an override, the connector uses its normal game-port behavior;
+    the engine's default game port is 2092.
 
 - `-useip <IP>`
 
@@ -493,6 +581,18 @@ The following command-line options are available in Descent 3. You can set comma
 
 ### Base Directory Options
 
+- `-assetdir <path>`
+
+    **Type:** path
+
+    **Default:** The location saved in `game-assets.cfg`; otherwise first-run setup
+
+    **Platform:** all
+
+    **Description:** Validates the original installation and saves its absolute
+    path for later launches. The directory must contain `d3.hog` and `missions/`.
+    Use this option for dedicated servers or when native dialogs are unavailable.
+
 - `-additionaldir <path>`
 
     **Type:** path
@@ -501,27 +601,9 @@ The following command-line options are available in Descent 3. You can set comma
 
     **Platform:** all
 
-    **Description:** Adds a directory to the list of read-only base directories. This options can be used multiple times to add multiple directories to the list.
-
-- `-setdir <path>`
-
-    **Type:** path
-
-    **Default:** .
-
-    **Platform:** all
-
-    **Description:** Sets the writable base directory.
-
-- `-useexedir`
-
-    **Type:** boolean
-
-    **Default:** Off
-
-    **Platform:** all
-
-    **Description:** Tells Descent 3 to use the directory in which the executable is located as the writable base directory.
+    **Description:** Adds a read-only base directory. Repeat the option for
+    multiple directories; later arguments have priority within this group.
+    See [Base directories](#base-directories) for the full search order.
 
 ### Other Options
 
@@ -543,7 +625,10 @@ The following command-line options are available in Descent 3. You can set comma
 
     **Platform:** all
 
-    **Description:** Generates a logfile `d3.log` if using the Debug build. All `mprintf` statements output to the logfile.
+    **Description:** Enables `Descent3.log` in the launch working directory
+    for both Debug and Release. With `make run`, that is `~/Apps/Descent3`.
+    Use `-loglevel DEBUG` to include debug messages. An existing log is replaced
+    when file logging starts.
 
 - `-loglevel <LEVEL>`
 

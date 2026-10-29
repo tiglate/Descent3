@@ -940,6 +940,7 @@
 #include "soundload.h"
 #include "ship.h"
 #include "controls.h"
+#include "game_asset_setup.h"
 #include "Mission.h"
 #include "findintersection.h"
 #include "appdatabase.h"
@@ -1428,6 +1429,18 @@ void InitIOSystems(bool editor) {
   }
   LOG_INFO << "Setting writable preference path " << pref_path;
   cf_AddBaseDirectory(pref_path);
+
+  // Resolve commercial data with an asset-independent native dialog before
+  // loading string tables, fonts, or the engine's own UI.
+  std::filesystem::path game_assets_path;
+  try {
+    game_assets_path = SetupGameAssets(pref_path, Dedicated_server || editor);
+  } catch (const std::exception &error) {
+    Error("%s", error.what());
+  }
+  if (game_assets_path.empty())
+    std::exit(EXIT_SUCCESS); // The user cancelled first-run setup.
+  cf_AddBaseDirectory(game_assets_path);
 
   // Set the default base directories
   cf_AddDefaultBaseDirectories();

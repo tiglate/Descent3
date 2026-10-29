@@ -345,6 +345,8 @@ void opengl_SetDefaults() {
   dglActiveTexture(GL_TEXTURE0_ARB + 0);
 }
 
+#include "ddio.h"
+
 extern renderer_preferred_state Render_preferred_state;
 
 int opengl_Setup(oeApplication *app, const int *width, const int *height) {
@@ -417,13 +419,8 @@ int opengl_Setup(oeApplication *app, const int *width, const int *height) {
     int display_arg = FindArg("-display");
     int display_count = 0;
 
-    // High-DPI support
-    {
-      float scale = SDL_GetDisplayContentScale(Display_id);
-      LOG_WARNING.printf("Using content scale %f", scale);
-      winw = std::floor(static_cast<float>(winw) * scale);
-      winh = std::floor(static_cast<float>(winh) * scale);
-    }
+    // Video modes already specify the requested resolution. Multiplying by
+    // desktop content scaling would enlarge a native-resolution window again.
 
     SDL_PropertiesID props = SDL_CreateProperties();
     SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, "Descent 3");
@@ -439,7 +436,8 @@ int opengl_Setup(oeApplication *app, const int *width, const int *height) {
       return 0;
     }
 
-    bool grabMouse = FindArgChar("-nomousegrab", 'm') == 0;
+    // Retain the user's Ctrl+G capture choice when recreating the window.
+    bool grabMouse = ddio_MouseGetGrab();
     SDL_SetWindowRelativeMouseMode(GSDLWindow, grabMouse);
 
     rend_SetFullScreen(Game_fullscreen);

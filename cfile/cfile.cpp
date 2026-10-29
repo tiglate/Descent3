@@ -84,7 +84,8 @@ const char *eof_error = "Unexpected end of file";
  */
 void cf_AddDefaultBaseDirectories() {
   for (const auto &base_directory : D3::Default_read_only_base_directories) {
-    cf_AddBaseDirectory(base_directory);
+    if (!base_directory.empty())
+      cf_AddBaseDirectory(base_directory);
   }
 }
 

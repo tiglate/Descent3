@@ -174,7 +174,9 @@
 #include "renderer.h"
 #include "Macros.h"
 
-constexpr float kDefaultMouseScale = 20;
+// SDL reports ordinary mouse-motion units.  Keep UI coordinates in screen
+// pixels: the old factor of 20 divided all menu cursor movement by twenty.
+constexpr int kDefaultMouseScale = 1;
 
 #define UI_MOUSE_HOTX 2
 #define UI_MOUSE_HOTY 2
