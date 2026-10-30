@@ -102,14 +102,14 @@ public:
   virtual ~UIItem() = default;
 
   //	if returns false, then it didn't draw.
-  virtual bool draw(int x, int y, tUIDrawClass draw_class = uiDrawNormal) { return false; };
-  virtual bool draw(int x, int y, int w, int h) { return false; };
+  virtual bool draw(int /*x*/, int /*y*/, tUIDrawClass /*draw_class*/ = uiDrawNormal) { return false; };
+  virtual bool draw(int /*x*/, int /*y*/, int /*w*/, int /*h*/) { return false; };
   virtual int width() { return 0; };
   virtual int height() { return 0; };
   virtual tUIResClass class_type() { return uiItem; };
-  virtual void set_alpha(uint8_t alpha){};
+  virtual void set_alpha(uint8_t /*alpha*/){};
   virtual uint8_t get_alpha() const { return 0; };
-  virtual void set_color(ddgr_color col){};
+  virtual void set_color(ddgr_color /*col*/){};
   virtual ddgr_color get_color() const { return GR_BLACK; };
   virtual UIItem *CopyUIItem() { return NULL; };
 };
@@ -146,7 +146,7 @@ public:
 
   //	if returns false, then it didn't draw.
   virtual bool draw(int x, int y, tUIDrawClass draw_class = uiDrawNormal);
-  virtual bool draw(int x, int y, int w, int h) { return draw(x, y); };
+  virtual bool draw(int x, int y, int /*w*/, int /*h*/) { return draw(x, y); };
   virtual int width();
   virtual int height();
   virtual tUIResClass class_type() const { return uiTextItem; };
@@ -238,7 +238,7 @@ public:
 
   //	if returns false, then it didn't draw.
   virtual bool draw(int x, int y, tUIDrawClass draw_class = uiDrawNormal);
-  virtual bool draw(int x, int y, int w, int h) { return draw(x, y); };
+  virtual bool draw(int x, int y, int /*w*/, int /*h*/) { return draw(x, y); };
   virtual int width();
   virtual int height();
   virtual tUIResClass class_type() const { return uiBitmapItem; };
@@ -302,7 +302,7 @@ public:
   };
 
   //	if returns false, then it didn't draw.
-  virtual bool draw(int x, int y, tUIDrawClass draw_class = uiDrawNormal) { return false; };
+  virtual bool draw(int /*x*/, int /*y*/, tUIDrawClass /*draw_class*/ = uiDrawNormal) { return false; };
   virtual bool draw(int x, int y, int w, int h);
 };
 

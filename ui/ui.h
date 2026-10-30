@@ -432,13 +432,13 @@ protected:
 
   //	called by Process.
 protected:
-  virtual void OnKeyDown(int key){};               // override: behavior when key is pressed.
-  virtual void OnKeyUp(int key){};                 // override: behavior when key is released.
-  virtual void OnMouseBtnDown(int btn){};          // override: behavior when mouse button is pressed.
-  virtual void OnMouseBtnUp(int btn){};            // override: behavior when mouse button is released.
+  virtual void OnKeyDown(int /*key*/){};               // override: behavior when key is pressed.
+  virtual void OnKeyUp(int /*key*/){};                 // override: behavior when key is released.
+  virtual void OnMouseBtnDown(int /*btn*/){};          // override: behavior when mouse button is pressed.
+  virtual void OnMouseBtnUp(int /*btn*/){};            // override: behavior when mouse button is released.
   virtual void OnDestroy(){};                      // override: behavior when gadget is destroyed.
   virtual void OnUserProcess(){};                  // override: behavior when gadget is processed
-  virtual void OnNotifySelect(UIGadget *sender){}; // override: send gadget select message to another gadget.
+  virtual void OnNotifySelect(UIGadget */*sender*/){}; // override: send gadget select message to another gadget.
 
   //	typically this function is called by a child class when we want
   //	to tell the caller that this gadget was selected for something.
@@ -498,7 +498,7 @@ class UIHotspot final : public UIGadget {
 
 protected:
   virtual void OnKeyDown(int key);      // override: behavior when key is pressed.
-  virtual void OnKeyUp(int key){};      // override: behavior when key is released.
+  virtual void OnKeyUp(int /*key*/){};      // override: behavior when key is released.
   virtual void OnMouseBtnDown(int btn); // override: behavior when mouse button is pressed.
   virtual void OnMouseBtnUp(int btn);   // override: behavior when mouse button is released.
   virtual void OnFormat();              // override: called when resized or before drawing.

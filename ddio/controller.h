@@ -202,7 +202,7 @@ static inline uint16_t makeshort(uint8_t h, uint8_t l) { return static_cast<uint
 
 class gameController {
 public:
-  gameController(int num_funcs, ct_function *funcs){};
+  gameController(int /*num_funcs*/, ct_function */*funcs*/){};
   virtual ~gameController() = default;
 
   //	these functions suspend or resume any controller reading.  this is really only useful for
@@ -254,12 +254,12 @@ public:
 
   //	toggles use of deadzone for controllers. ctl can be 0 to ???
   // dead zone is from 0.0 to 0.5
-  virtual void set_controller_deadzone(int ctl, float deadzone){};
-  virtual float get_controller_deadzone(int ctl) { return 0; };
+  virtual void set_controller_deadzone(int /*ctl*/, float /*deadzone*/){};
+  virtual float get_controller_deadzone(int /*ctl*/) { return 0; };
 
   // toggles use of axis on controllers. ctl can be 0 to ???
   //	axis is a CT_?_AXIS value
-  void toggle_controller_axis(int ctl, int axis, bool toggle){};
+  void toggle_controller_axis(int /*ctl*/, int /*axis*/, bool /*toggle*/){};
 };
 
 gameController *CreateController(int num_funcs, ct_function *funcs);

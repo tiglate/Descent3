@@ -568,7 +568,7 @@ public:
   virtual bool SoundPropertySupport() const { return false; };
 
   // sound obstruction from 0 to 1.0 (1.0  = fully obstructed)
-  virtual void SetSoundProperties(int sound_uid, float obstruction){};
+  virtual void SetSoundProperties(int /*sound_uid*/, float /*obstruction*/){};
 };
 
 //	TAKEN FROM SNDLIB SOUNDLOAD.CPP TO SEPARATE CODE REQUIRED BY THE LOWLEVEL SYSTEM AND THE
