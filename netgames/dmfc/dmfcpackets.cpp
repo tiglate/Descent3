@@ -587,7 +587,8 @@ void DMFCBase::ReceiveControlMessage(uint8_t *data) {
   uint8_t src = MultiGetByte(data, &count);
   uint8_t dst = MultiGetByte(data, &count);
 
-  if ((GetLocalRole() == LR_SERVER) && (dst != SP_SERVER || dst != GetPlayerNum())) {
+  // dst is the target player number (a byte, so the negative SP_* sentinels cannot appear in it)
+  if ((GetLocalRole() == LR_SERVER) && dst != GetPlayerNum()) {
     // forward this packet to the correct player
     uint8_t fdata[MAX_GAME_DATA_SIZE];
     count = 0;

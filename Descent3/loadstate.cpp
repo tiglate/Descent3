@@ -279,11 +279,13 @@ int LoadGameState(const std::filesystem::path &pathname) {
   // read in header and do version check.
   cf_ReadBytes((uint8_t *)desc, sizeof(desc), fp);
   version = (uint16_t)cf_ReadShort(fp);
-  if (version < GAMESAVE_OLDVER) { // currently never true: GAMESAVE_OLDVER is 0
+#if GAMESAVE_OLDVER > 0 // the check is compiled out while every version is accepted
+  if (version < GAMESAVE_OLDVER) {
     Int3();
     retval = LGS_OUTDATEDVER;
     goto loadsg_error;
   }
+#endif
 
   retval = LGSSnapshot(fp); // read and clear snapshot.
   if (retval > 0) {
