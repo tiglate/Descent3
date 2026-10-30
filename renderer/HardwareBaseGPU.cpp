@@ -53,7 +53,7 @@ uint8_t Renderer_initted = 0;
 
 // Generic GPU data
 rendering_state gpu_state;
-renderer_preferred_state gpu_preferred_state = {0, 1, 1.5};
+renderer_preferred_state gpu_preferred_state = {0, 1, 1.5f, 0, 0, 0, 0};
 
 int gpu_last_frame_polys_drawn = 0;
 int gpu_last_frame_verts_processed = 0;

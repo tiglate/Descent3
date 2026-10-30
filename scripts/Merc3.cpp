@@ -2038,7 +2038,7 @@ bool qBeamHittingPlayer2(int beam1_handle, int beam2_handle, float radius) {
 struct t_exit_room_node {
   int16_t room_number;
   const char *commands;
-  char cmdstr[16];
+  char cmdstr[16] = {};
 };
 
 #define N_END_ROOMS 19

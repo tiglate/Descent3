@@ -29,7 +29,7 @@
 #include "sounds.h"
 #include "psrand.h"
 
-weather Weather = {0};
+weather Weather = {};
 
 int ThunderA_sound_handle = -1;
 int ThunderB_sound_handle = -1;

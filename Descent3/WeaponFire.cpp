@@ -2617,7 +2617,7 @@ void DrawWeaponObject(object *obj) {
                              bm_handle);
     } else {
 
-      polymodel_effect pe = {0};
+      polymodel_effect pe = {};
       int use_effect = 0;
 
       if (obj->type == OBJ_WEAPON && !Detail_settings.Weapon_coronas_enabled) {

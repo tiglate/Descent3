@@ -1494,7 +1494,7 @@ void RenderObject_DrawPolymodel(object *obj, float *normalized_times) {
   int model_num;
   int use_effect = 0;
   vector obj_pos = obj->pos;
-  polymodel_effect pe = {0};
+  polymodel_effect pe = {};
 
   // Do cloak effect on player
   if (UseHardware) {

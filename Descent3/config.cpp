@@ -541,26 +541,66 @@ tGameToggles Game_toggles = { // toggles specified in general settings.
 #define MINIMUM_RENDER_DIST 80
 #define MAXIMUM_RENDER_DIST 200
 
-static const tDetailSettings DetailPresetLow = {
-    DL_LOW_TERRAIN_DISTANCE,  DL_LOW_PIXEL_ERROR,       DL_LOW_SPECULAR_LIGHT, DL_LOW_DYNAMIC_LIGHTING,
-    DL_LOW_FAST_HEADLIGHT,    DL_LOW_MIRRORED_SURFACES, DL_LOW_FOG_ENABLED,    DL_LOW_CORONAS_ENABLES,
-    DL_LOW_PROCEDURALS,       DL_LOW_POWERUP_HALOS,     DL_LOW_SCORCH_MARKS,   DL_LOW_WEAPON_CORONAS,
-    DL_LOW_SPEC_MAPPING_TYPE, DL_LOW_OBJECT_COMPLEXITY};
-static const tDetailSettings DetailPresetMed = {
-    DL_MED_TERRAIN_DISTANCE,  DL_MED_PIXEL_ERROR,       DL_MED_SPECULAR_LIGHT, DL_MED_DYNAMIC_LIGHTING,
-    DL_MED_FAST_HEADLIGHT,    DL_MED_MIRRORED_SURFACES, DL_MED_FOG_ENABLED,    DL_MED_CORONAS_ENABLES,
-    DL_MED_PROCEDURALS,       DL_MED_POWERUP_HALOS,     DL_MED_SCORCH_MARKS,   DL_MED_WEAPON_CORONAS,
-    DL_MED_SPEC_MAPPING_TYPE, DL_MED_OBJECT_COMPLEXITY};
-static const tDetailSettings DetailPresetHigh = {
-    DL_HIGH_TERRAIN_DISTANCE,  DL_HIGH_PIXEL_ERROR,       DL_HIGH_SPECULAR_LIGHT, DL_HIGH_DYNAMIC_LIGHTING,
-    DL_HIGH_FAST_HEADLIGHT,    DL_HIGH_MIRRORED_SURFACES, DL_HIGH_FOG_ENABLED,    DL_HIGH_CORONAS_ENABLES,
-    DL_HIGH_PROCEDURALS,       DL_HIGH_POWERUP_HALOS,     DL_HIGH_SCORCH_MARKS,   DL_HIGH_WEAPON_CORONAS,
-    DL_HIGH_SPEC_MAPPING_TYPE, DL_HIGH_OBJECT_COMPLEXITY};
-static const tDetailSettings DetailPresetVHi = {
-    DL_VHI_TERRAIN_DISTANCE,  DL_VHI_PIXEL_ERROR,       DL_VHI_SPECULAR_LIGHT, DL_VHI_DYNAMIC_LIGHTING,
-    DL_VHI_FAST_HEADLIGHT,    DL_VHI_MIRRORED_SURFACES, DL_VHI_FOG_ENABLED,    DL_VHI_CORONAS_ENABLES,
-    DL_VHI_PROCEDURALS,       DL_VHI_POWERUP_HALOS,     DL_VHI_SCORCH_MARKS,   DL_VHI_WEAPON_CORONAS,
-    DL_VHI_SPEC_MAPPING_TYPE, DL_VHI_OBJECT_COMPLEXITY};
+static const tDetailSettings DetailPresetLow = {DL_LOW_TERRAIN_DISTANCE,
+                                                DL_LOW_PIXEL_ERROR,
+                                                DL_LOW_SPECULAR_LIGHT,
+                                                DL_LOW_DYNAMIC_LIGHTING,
+                                                DL_LOW_FAST_HEADLIGHT,
+                                                DL_LOW_MIRRORED_SURFACES,
+                                                DL_LOW_FOG_ENABLED,
+                                                DL_LOW_CORONAS_ENABLES,
+                                                DL_LOW_PROCEDURALS,
+                                                DL_LOW_POWERUP_HALOS,
+                                                DL_LOW_SCORCH_MARKS,
+                                                DL_LOW_WEAPON_CORONAS,
+                                                true,
+                                                DL_LOW_SPEC_MAPPING_TYPE,
+                                                DL_LOW_OBJECT_COMPLEXITY};
+static const tDetailSettings DetailPresetMed = {DL_MED_TERRAIN_DISTANCE,
+                                                DL_MED_PIXEL_ERROR,
+                                                DL_MED_SPECULAR_LIGHT,
+                                                DL_MED_DYNAMIC_LIGHTING,
+                                                DL_MED_FAST_HEADLIGHT,
+                                                DL_MED_MIRRORED_SURFACES,
+                                                DL_MED_FOG_ENABLED,
+                                                DL_MED_CORONAS_ENABLES,
+                                                DL_MED_PROCEDURALS,
+                                                DL_MED_POWERUP_HALOS,
+                                                DL_MED_SCORCH_MARKS,
+                                                DL_MED_WEAPON_CORONAS,
+                                                true,
+                                                DL_MED_SPEC_MAPPING_TYPE,
+                                                DL_MED_OBJECT_COMPLEXITY};
+static const tDetailSettings DetailPresetHigh = {DL_HIGH_TERRAIN_DISTANCE,
+                                                 DL_HIGH_PIXEL_ERROR,
+                                                 DL_HIGH_SPECULAR_LIGHT,
+                                                 DL_HIGH_DYNAMIC_LIGHTING,
+                                                 DL_HIGH_FAST_HEADLIGHT,
+                                                 DL_HIGH_MIRRORED_SURFACES,
+                                                 DL_HIGH_FOG_ENABLED,
+                                                 DL_HIGH_CORONAS_ENABLES,
+                                                 DL_HIGH_PROCEDURALS,
+                                                 DL_HIGH_POWERUP_HALOS,
+                                                 DL_HIGH_SCORCH_MARKS,
+                                                 DL_HIGH_WEAPON_CORONAS,
+                                                 true,
+                                                 DL_HIGH_SPEC_MAPPING_TYPE,
+                                                 DL_HIGH_OBJECT_COMPLEXITY};
+static const tDetailSettings DetailPresetVHi = {DL_VHI_TERRAIN_DISTANCE,
+                                                DL_VHI_PIXEL_ERROR,
+                                                DL_VHI_SPECULAR_LIGHT,
+                                                DL_VHI_DYNAMIC_LIGHTING,
+                                                DL_VHI_FAST_HEADLIGHT,
+                                                DL_VHI_MIRRORED_SURFACES,
+                                                DL_VHI_FOG_ENABLED,
+                                                DL_VHI_CORONAS_ENABLES,
+                                                DL_VHI_PROCEDURALS,
+                                                DL_VHI_POWERUP_HALOS,
+                                                DL_VHI_SCORCH_MARKS,
+                                                DL_VHI_WEAPON_CORONAS,
+                                                true,
+                                                DL_VHI_SPEC_MAPPING_TYPE,
+                                                DL_VHI_OBJECT_COMPLEXITY};
 
 void ConfigSetDetailLevel(int level) {
   switch (level) {

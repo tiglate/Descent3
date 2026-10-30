@@ -66,7 +66,8 @@ InternalAudioDecoder::InternalAudioDecoder(ReadDataFunction readerFunction, void
 bool InternalAudioDecoder::Initialize() {
 
   // set the read function, the others are optional
-  acm_io_callbacks io = {AcmReadFunc};
+  acm_io_callbacks io = {};
+  io.read_func = AcmReadFunc;
 
   // force_channels 0 means libacm will use number of chans from ACM file header
   const int force_channels = 0;

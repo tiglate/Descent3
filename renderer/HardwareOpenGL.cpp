@@ -1597,9 +1597,9 @@ void rend_DrawLine(int x1, int y1, int x2, int y2) {
   rend_SetTextureType(TT_FLAT);
 
   color_array color{
-      GR_COLOR_RED(gpu_state.cur_color) / 255.0f,
-      GR_COLOR_GREEN(gpu_state.cur_color) / 255.0f,
+      GR_COLOR_RED(gpu_state.cur_color) / 255.0f, GR_COLOR_GREEN(gpu_state.cur_color) / 255.0f,
       GR_COLOR_BLUE(gpu_state.cur_color) / 255.0f,
+      0.0f, // alpha is ignored with AT_ALWAYS
   };
   std::array<PosColorUV2Vertex, 2> vertices{
       PosColorUV2Vertex{

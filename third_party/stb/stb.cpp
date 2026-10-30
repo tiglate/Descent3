@@ -17,4 +17,8 @@
  */
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
+// The vendored header partially initializes its structs; leave it unmodified.
+#if defined(__GNUC__) // also accepted by clang
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#endif
 #include "stb_image_write.h"
