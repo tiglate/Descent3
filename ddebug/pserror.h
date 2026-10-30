@@ -229,8 +229,8 @@ static inline void SetDebugBreakHandlers(void (*stop)(), void (*resume)()) {
   } while (0)
 
 #else
-#define DEBUG_BREAK()
-#define ASSERT(x)
-#define Int3()
+#define DEBUG_BREAK() ((void)0)
+#define ASSERT(x) ((void)0)
+#define Int3() ((void)0)
 #endif
 #endif

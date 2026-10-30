@@ -51,7 +51,7 @@ extern PollUI_fp DLLPollUI;
 #ifndef RELEASE
 #define DLLmprintf(...) DLLDebug_ConsolePrintf(__VA_ARGS__)
 #else
-#define DLLmprintf(...)
+#define DLLmprintf(...) ((void)0)
 #endif
 
 typedef void (*Debug_ConsolePrintf_fp)(int n, const char *format, ...);

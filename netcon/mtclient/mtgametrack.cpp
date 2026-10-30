@@ -145,7 +145,7 @@ extern nw_SendWithID_fp DLLnw_SendWithID;
 #if (defined(LOGGER) && (!defined(RELEASE)))
 #define DLLmprintf(...) DLLDebug_ConsolePrintf(__VA_ARGS__)
 #else
-#define DLLmprintf(...)
+#define DLLmprintf(...) ((void)0)
 #endif
 
 typedef void (*Debug_ConsolePrintf_fp)(int n, const char *format, ...);

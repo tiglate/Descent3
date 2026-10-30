@@ -337,20 +337,20 @@
 #ifdef DEBUG_BREAK
 #undef DEBUG_BREAK
 #endif
-#define DEBUG_BREAK()
+#define DEBUG_BREAK() ((void)0)
 
-#define DLLASSERT(x)
-#define DLLmprintf(...)
+#define DLLASSERT(x) ((void)0)
+#define DLLmprintf(...) ((void)0)
 
 #ifdef Int3
 #undef Int3
 #endif
-#define Int3()
+#define Int3() ((void)0)
 
 #ifdef ASSERT
 #undef ASSERT
 #endif
-#define ASSERT(x)
+#define ASSERT(x) ((void)0)
 
 #endif // #ifndef RELEASE
 

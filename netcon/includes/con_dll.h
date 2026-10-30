@@ -760,7 +760,7 @@ struct vmt_descent3_struct {
 #ifndef RELEASE
 #define DLLmprintf(...) DLLDebug_ConsolePrintf(__VA_ARGS__)
 #else
-#define DLLmprintf(...)
+#define DLLmprintf(...) ((void)0)
 #endif
 
 uint32_t MTClientVer = 100;

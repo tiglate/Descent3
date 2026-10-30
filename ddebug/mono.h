@@ -77,6 +77,6 @@
 // Prints a formatted string on window n at row, col.
 #else // ifdef _DEBUG
 // DAJ defined in target headers
-#define mprintf(...)
+#define mprintf(...) ((void)0)
 #endif // ifdef _DEBUG
 #endif
