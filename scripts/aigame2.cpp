@@ -360,8 +360,6 @@ int STDCALL SaveRestoreState(void *file_ptr, uint8_t saving_state) { return 0; }
 static int CreateAndAttach(int me, const char *child_name, uint8_t child_type, char parent_ap, char child_ap,
                            bool f_aligned = true, bool f_set_parent = false);
 static void FlushGoal(int me_handle, int goal_priority);
-static void SafeGoalClearAll(int obj_handle);
-static void AI_SafeSetType(int obj_handle, int ai_type);
 static int TurnOnSpew(int objref, int gunpoint, int effect_type, float mass, float drag, int gravity_type, uint8_t isreal,
                       float lifetime, float interval, float longevity, float size, float speed, uint8_t random);
 
@@ -412,120 +410,6 @@ void FlushGoal(int me_handle, int goal_priority) {
 
 #define DALLAS_LOW_PRIORITY_GOAL_SLOT 0
 #define DALLAS_HIGH_PRIORITY_GOAL_SLOT 3
-
-// Wipes out all goals except slots 0 and 3 (used by Dallas)
-void SafeGoalClearAll(int obj_handle) {
-  int i;
-
-  for (i = 0; i < MAX_GOALS; i++) {
-    if (i != DALLAS_LOW_PRIORITY_GOAL_SLOT && i != DALLAS_HIGH_PRIORITY_GOAL_SLOT) {
-      AI_ClearGoal(obj_handle, i);
-    }
-  }
-}
-
-// Works like AI_SetType(), but won't clear out Dallas' goal slots 0 or 3
-void AI_SafeSetType(int obj_handle, int ai_type) {
-  float aware = AWARE_BARELY;
-  float time = 25.0f;
-
-  SafeGoalClearAll(obj_handle);
-
-  switch (ai_type) {
-  case AIT_STALKER: {
-    vector goal_pos;
-    int goal_room;
-
-    Obj_Value(obj_handle, VF_GET, OBJV_V_POS, &goal_pos);
-    Obj_Value(obj_handle, VF_GET, OBJV_I_ROOMNUM, &goal_room);
-
-    AI_AddGoal(obj_handle, AIG_WANDER_AROUND, 1, 1.0f, -1, GF_NONFLUSHABLE | GF_KEEP_AT_COMPLETION, &goal_pos,
-               goal_room);
-  } break;
-
-  case AIT_EVADER2: {
-    vector goal_pos;
-    int goal_room;
-    float size, circle_distance;
-
-    Obj_Value(obj_handle, VF_GET, OBJV_V_POS, &goal_pos);
-    Obj_Value(obj_handle, VF_GET, OBJV_I_ROOMNUM, &goal_room);
-    Obj_Value(obj_handle, VF_GET, OBJV_F_SIZE, &size);
-    AI_Value(obj_handle, VF_GET, AIV_F_CIRCLE_DIST, &circle_distance);
-
-    AI_AddGoal(obj_handle, AIG_GUARD_AREA, 1, 1.0f, -1, GF_NONFLUSHABLE, &goal_pos, goal_room);
-    AI_SetGoalCircleDist(obj_handle, 1, size * 2.0f);
-    AI_GoalAddEnabler(obj_handle, 1, AIE_GT_AWARENESS, 1.0, 0.0, &aware);
-    AI_GoalAddEnabler(obj_handle, 1, AIE_LTE_LAST_SEE_TARGET_INTERVAL, 1.0, 0.0, &time);
-
-    int gi = AI_AddGoal(obj_handle, AIG_GET_AROUND_OBJ, ACTIVATION_BLEND_LEVEL, 3.0f, -1,
-                        GF_NONFLUSHABLE | GF_OBJ_IS_TARGET, OBJECT_HANDLE_NONE);
-    AI_GoalAddEnabler(obj_handle, gi, AIE_NEAR, 1.0, 0.0, &circle_distance);
-    AI_SetGoalCircleDist(obj_handle, gi, circle_distance);
-  } break;
-
-  case AIT_EVADER1: {
-    float circle_distance;
-    AI_Value(obj_handle, VF_GET, AIV_F_CIRCLE_DIST, &circle_distance);
-
-    AI_AddGoal(obj_handle, AIG_MOVE_RELATIVE_OBJ, 1, 1.0f, -1, GF_OBJ_IS_TARGET | GF_SPEED_ATTACK | GF_NONFLUSHABLE,
-               OBJECT_HANDLE_NONE);
-    AI_GoalAddEnabler(obj_handle, 1, AIE_GT_AWARENESS, 1.0, 0.0, &aware);
-    AI_GoalAddEnabler(obj_handle, 1, AIE_LTE_LAST_SEE_TARGET_INTERVAL, 1.0, 0.0, &time);
-
-    if (circle_distance > 0.0f) {
-      int gi = AI_AddGoal(obj_handle, AIG_GET_AROUND_OBJ, ACTIVATION_BLEND_LEVEL, 3.0f, -1,
-                          GF_NONFLUSHABLE | GF_OBJ_IS_TARGET, OBJECT_HANDLE_NONE);
-
-      float temp = circle_distance * 0.55f;
-      AI_GoalAddEnabler(obj_handle, gi, AIE_NEAR, 1.0, 0.0, &temp);
-      AI_SetGoalCircleDist(obj_handle, gi, circle_distance * 0.55f);
-    }
-  } break;
-
-  case AIT_MELEE1: {
-    int flags = AISR_MELEE;
-    int m_goal;
-
-    AI_AddGoal(obj_handle, AIG_MOVE_RELATIVE_OBJ, 1, 1.0f, -1,
-               GF_NONFLUSHABLE | GF_OBJ_IS_TARGET | GF_KEEP_AT_COMPLETION, OBJECT_HANDLE_NONE);
-    AI_GoalAddEnabler(obj_handle, 1, AIE_GT_AWARENESS, 1.0, 0.0, &aware);
-    AI_GoalAddEnabler(obj_handle, 1, AIE_LTE_LAST_SEE_TARGET_INTERVAL, 1.0, 0.0, &time);
-
-    AI_AddGoal(obj_handle, AIG_GET_TO_OBJ, 2, 1.0f, -1,
-               GF_SPEED_ATTACK | GF_NONFLUSHABLE | GF_OBJ_IS_TARGET | GF_USE_BLINE_IF_SEES_GOAL | GF_KEEP_AT_COMPLETION,
-               OBJECT_HANDLE_NONE);
-    AI_GoalAddEnabler(obj_handle, 2, AIE_AI_STATUS_FLAG, 1.0, 0.0, &flags);
-    AI_SetGoalCircleDist(obj_handle, 2, -100.0f);
-    AI_GoalAddEnabler(obj_handle, 2, AIE_GT_AWARENESS, 1.0, 0.0, &aware);
-    AI_GoalAddEnabler(obj_handle, 2, AIE_LTE_LAST_SEE_TARGET_INTERVAL, 1.0, 0.0, &time);
-
-    m_goal = AI_AddGoal(obj_handle, AIG_MELEE_TARGET, ACTIVATION_BLEND_LEVEL, 1.0f, -1,
-                        GF_NONFLUSHABLE | GF_OBJ_IS_TARGET | GF_KEEP_AT_COMPLETION, OBJECT_HANDLE_NONE);
-    AI_GoalAddEnabler(obj_handle, m_goal, AIE_GT_AWARENESS, 1.0, 0.0, &aware);
-    AI_GoalAddEnabler(obj_handle, m_goal, AIE_LTE_LAST_SEE_TARGET_INTERVAL, 1.0, 0.0, &time);
-  } break;
-
-  case AIT_BIRD_FLOCK1: {
-  } break;
-
-  case AIT_HERD1: {
-  } break;
-
-  case AIT_STATIONARY_TURRET:
-    break;
-
-  case AIT_AIS:
-    break;
-
-  case AIT_FLYLANDER:
-    break;
-
-  default: {
-    mprintf(0, "Invalid AI type passed into AI_SafeSetType()\n");
-  }
-  }
-}
 
 int TurnOnSpew(int objref, int gunpoint, int effect_type, float mass, float drag, int gravity_type, uint8_t isreal,
                float lifetime, float interval, float longevity, float size, float speed, uint8_t random) {
@@ -700,8 +584,8 @@ void aiBlackStormTrooper::OnInit(int me_handle) {
   }
 
   // determine reachable snipe points for each snipe point!
-  for (i = 0; i < memory->snipe_points; i++) {
-    for (j = 0, n_pts = 0; j < memory->snipe_points; j++) {
+  for (i = 0; i < N_SNIPE_POINTS && i < memory->snipe_points; i++) {
+    for (j = 0, n_pts = 0; j < N_SNIPE_POINTS && j < memory->snipe_points; j++) {
       if (i != j) {
         if (AI_IsObjReachable(memory->snipe_point_handles[i], memory->snipe_point_handles[j])) {
           memory->access_array[i][n_pts++] = (int8_t)j;
@@ -731,7 +615,6 @@ void aiBlackStormTrooper::find_targets(int me_handle, bool new_snipe_point) {
   int room;   // room of trooper
 
   int nearby_objs[32];                     // objhandles for nearby players (or robots)
-  int player_objs[8];                      // nearby players.
   int nobjs, np;                           // number of objects and players
   int closest_player = OBJECT_HANDLE_NONE; //	handle of closest player
   float closest_player_dist = 10000.0f;    // distance of closest player from trooper.
@@ -761,7 +644,7 @@ void aiBlackStormTrooper::find_targets(int me_handle, bool new_snipe_point) {
       for (j = 0; j < N_SNIPE_POINTS; j++) {
         if (nearby_objs[i] == memory->snipe_target_handles[j]) {
           float dist;
-          player_objs[np++] = nearby_objs[i];
+          np++;
           dist = AI_GetDistToObj(me_handle, nearby_objs[i]);
           if (memory->target_handle == nearby_objs[i]) {
             current_player_dist = dist;
@@ -1332,7 +1215,6 @@ void aiCreeper::set_state(int me_handle, int state) {
   float circle_dist;
   char cenable;
 
-retry_set_state:
   switch (state) {
   case STATE_IDLE:
     // stay at one position until ready.  note that if attacked , it will flee in this state.

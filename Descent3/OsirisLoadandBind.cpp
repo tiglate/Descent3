@@ -544,8 +544,6 @@ extern void Cinematic_StartCannedScript(tCannedCinematicInfo *info);
 //	Osiris_DumpLoadedObjects
 //
 //	Debug.  Dumps all loaded objects to given file
-static void Osiris_DumpLoadedObjects(char *file);
-static void Osiris_ForceUnloadModules(void);
 
 uint32_t Osiris_game_checksum;
 
@@ -724,47 +722,6 @@ void Osiris_FreeModule(int id) {
       OSIRIS_loaded_modules[id].module_name = NULL;
     }
   }
-}
-
-void Osiris_ForceUnloadModules(void) {
-  for (int j = 0; j < MAX_LOADED_MODULES; j++) {
-    if (OSIRIS_loaded_modules[j].flags & OSIMF_INUSE) {
-      Osiris_FreeModule(j);
-    }
-  }
-}
-
-//	Osiris_DumpLoadedObjects
-//
-//	Debug.  Dumps all loaded objects to given file
-void Osiris_DumpLoadedObjects(char *file) {
-#ifndef OSIRISDEBUG
-  return;
-#else
-  CFILE *f = cfopen(file, "wt");
-  if (!f) {
-    Int3();
-    return;
-  }
-
-  char buffy[1024];
-
-  for (int j = 0; j < MAX_LOADED_MODULES; j++) {
-    if (OSIRIS_loaded_modules[j].flags & OSIMF_INUSE && OSIRIS_loaded_modules[j].RefRoot != NULL) {
-      // uh oh! scripts were not completely decremented
-      tRefObj *node = OSIRIS_loaded_modules[j].RefRoot;
-      while (node) {
-        snprintf(buffy, sizeof(buffy), "Module: \"%s\" Objnum: %d Type: %d%s Id:%d\n",
-                 OSIRIS_loaded_modules[j].module_name, node->objnum, node->type, (node->dummy) ? "(Dummy)" : "",
-                 node->id);
-        cf_WriteString(f, buffy);
-        node = node->next;
-      }
-    }
-  }
-
-  cfclose(f);
-#endif
 }
 
 //	Osiris_FindLoadedModule

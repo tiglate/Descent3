@@ -1331,6 +1331,8 @@ void RenderObject(object *obj) {
         alpha_step = 1.0f / (num_iterations + 1);
         total_time = times[MAX_POSITION_HISTORY] - times[0];
         ASSERT(total_time > 0);
+        if (total_time <= 0)
+          num_iterations = 0;
 
         float curr_alpha = 1.0f - alpha_step;
         float curr_t = t_interval;
@@ -2314,7 +2316,6 @@ void DrawPlayerSightVector(object *obj) {
   // Cast a ray to see where it ends up
   fvi_query fq;
   fvi_info hit_data;
-  int fate;
   vector end_pos = obj->pos + (obj->orient.fvec * 500);
 
   fq.p0 = &obj->pos;
@@ -2324,7 +2325,7 @@ void DrawPlayerSightVector(object *obj) {
   fq.thisobjnum = -1;
   fq.ignore_obj_list = NULL;
   fq.flags = FQ_CHECK_OBJS | FQ_IGNORE_POWERUPS | FQ_IGNORE_WEAPONS;
-  fate = fvi_FindIntersection(&fq, &hit_data);
+  fvi_FindIntersection(&fq, &hit_data);
   rend_SetAlphaType(AT_VERTEX);
   rend_SetTextureType(TT_FLAT);
   rend_SetLighting(LS_GOURAUD);

@@ -333,7 +333,7 @@ void RenderSmallWindow(int left, int top, int right, int bot, object *viewer, ve
   }
 
   // Draw window outline
-  if (outline_color != -1) {
+  if (outline_color != static_cast<ddgr_color>(-1)) {
     rend_SetFlatColor(outline_color);
     rend_DrawLine(0, 0, width - 1, 0);
     rend_DrawLine(width - 1, 0, width - 1, height - 1);

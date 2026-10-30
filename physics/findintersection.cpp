@@ -956,7 +956,6 @@ int Fvi_num_recorded_faces = 0;
 
 static int do_fvi_terrain();
 static int fvi_room(int room_index, int from_portal, int room_obj = -1);
-static void do_fvi_rooms(int initial_room_index);
 /// Find the point on the specified plane where the line intersects.
 /// - returns: true if point found, false if line parallel to plane.
 /// - parameter new_pnt: is the found point on the plane.
@@ -3325,9 +3324,9 @@ void check_hit_obj(int objnum) {
   vector hit_point;
   float cur_dist;
   const object *obj = &Objects[objnum];
-  int collision_type;
   int m_obj_index = fvi_query_ptr->thisobjnum;
-  object *m_obj = &Objects[m_obj_index];
+  object *m_obj = m_obj_index >= 0 ? &Objects[m_obj_index] : nullptr;
+  int collision_type = m_obj ? CollisionResult[m_obj->type][obj->type] : RESULT_NOTHING;
 
   if (!(fvi_query_ptr->flags & FQ_CHECK_OBJS) && (obj->type != OBJ_ROOM))
     return;
@@ -3339,7 +3338,7 @@ void check_hit_obj(int objnum) {
 
   if (!(obj->flags & OF_DEAD)) {
     if (m_obj_index != objnum) {
-      if (!((m_obj_index > -1) && ((collision_type = CollisionResult[m_obj->type][obj->type]) == RESULT_NOTHING) &&
+      if (!((m_obj_index > -1) && (collision_type == RESULT_NOTHING) &&
             (CollisionResult[obj->type][m_obj->type] == RESULT_NOTHING))) {
         // Account for ray casting
         if (m_obj_index <= -1 && (CollisionRayResult[obj->type] == RESULT_NOTHING))
@@ -4500,10 +4499,6 @@ int fvi_room(int room_index, int from_portal, int room_obj) {
   }
 
   if (fvi_query_ptr->flags & FQ_IGNORE_WALLS) {
-    vector face_normal;
-    vector *vertex_ptr_list[MAX_VERTS_PER_FACE];
-    int16_t count;
-    bool f_backface;
     int face_info;
     int j; //, k;
 
@@ -4522,13 +4517,6 @@ int fvi_room(int room_index, int from_portal, int room_obj) {
 
       if (portal_num >= 0 && portal_num == from_portal)
         continue;
-
-      f_backface = false;
-
-      for (count = 0; count < cur_room->faces[i].num_verts; count++)
-        vertex_ptr_list[count] = &cur_room->verts[cur_room->faces[i].face_verts[count]];
-
-      face_normal = cur_room->faces[i].normal;
 
       // Add the portal if we are within a AABB of it.
       if ((face_info & FPF_PORTAL)) {

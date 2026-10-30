@@ -182,7 +182,6 @@ int TCCargoCreateLine(int id, int y, const char *title, int type) {
     int prim_start = PRIMARY_INDEX;
     int prim_end = (PRIMARY_INDEX < SECONDARY_INDEX) ? SECONDARY_INDEX : MAX_STATIC_WEAPONS;
     int weap_index;
-    weapon *weap;
 
     ASSERT(prim_start >= 0);
     ASSERT(prim_end <= MAX_STATIC_WEAPONS);
@@ -190,7 +189,6 @@ int TCCargoCreateLine(int id, int y, const char *title, int type) {
 
     for (weap_index = prim_start; weap_index < prim_end; weap_index++) {
       if (TCCPlayerHasWeapon(weap_index)) {
-        weap = &Weapons[weap_index];
         grtext_Printf(TITLE_X, y, Static_weapon_names[weap_index]);
         y += small_height;
       }
@@ -203,7 +201,6 @@ int TCCargoCreateLine(int id, int y, const char *title, int type) {
     int sec_start = SECONDARY_INDEX;
     int sec_end = (SECONDARY_INDEX < PRIMARY_INDEX) ? PRIMARY_INDEX : MAX_STATIC_WEAPONS;
     int weap_index;
-    weapon *weap;
 
     ASSERT(sec_start >= 0);
     ASSERT(sec_end <= MAX_STATIC_WEAPONS);
@@ -211,7 +208,6 @@ int TCCargoCreateLine(int id, int y, const char *title, int type) {
 
     for (weap_index = sec_start; weap_index < sec_end; weap_index++) {
       if (TCCPlayerHasWeapon(weap_index)) {
-        weap = &Weapons[weap_index];
         grtext_Printf(TITLE_X, y, Static_weapon_names[weap_index]);
         y += small_height;
       }
@@ -250,7 +246,7 @@ void TCCargoRenderCallback(void) {
   grtext_SetAlpha(255);
   grtext_SetColor(GR_WHITE);
 
-  for (int i = 0; i < NUM_LINES; i++) {
+  for (size_t i = 0; i < NUM_LINES; i++) {
     id = StatusLines[i].id;
 
     y = TCCargoCreateLine(id, y, StatusLines[i].name, StatusLines[i].type);

@@ -1212,7 +1212,7 @@ void PilotSelect() {
 // Brings up the Create A New Pilot Dialog
 bool PilotCreate(pilot *Pilot, bool forceselection) {
   bool done = false;
-  bool ret;
+  bool ret = false;
   bool to_ret = false;
   char pname[PILOT_STRING_SIZE];
 
@@ -2268,7 +2268,7 @@ bool PltSelectShip(pilot *Pilot) {
   int old_bmhandle;
   int old_flags;
   bool exit_menu = false;
-  bool ret;
+  bool ret = false;
 
   //	pre-initialize all variables
 

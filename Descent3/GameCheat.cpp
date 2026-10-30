@@ -355,8 +355,8 @@ void DemoCheats(int key) {
   cryptstring = jcrypt(&CheatBuffer[7]);
   oldcryptstring = oldjcrypt(&OldCheatBuffer[7]);
 
-  for (i = 0; i < N_LAMER_CHEATS; i++) {
-    if (!(strcmp(oldcryptstring, LamerCheats[i]))) {
+  for (size_t cheat_index = 0; cheat_index < N_LAMER_CHEATS; cheat_index++) {
+    if (!(strcmp(oldcryptstring, LamerCheats[cheat_index]))) {
       if (snd_cheat != -1)
         Sound_system.Play2dSound(snd_cheat);
 
@@ -523,7 +523,7 @@ void DemoCheats(int key) {
 
     int i;
     for (i = 0; i < MAX_PLAYER_WEAPONS; i++) {
-      if (HAS_FLAG(i)) {
+      if (Players[Player_num].weapon_flags & HAS_FLAG(i)) {
         Players[Player_num].weapon_ammo[i] = Ships[Players[Player_num].ship_index].max_ammo[i];
       }
     }

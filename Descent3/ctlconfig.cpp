@@ -413,7 +413,6 @@ t_cfg_element Cfg_joy_elements[] = {{-1, CtlText_WeaponGroup, CCITEM_WPN_X2, CCI
 static void ctl_cfg_set_and_verify_changes(int16_t fnid, ct_type elem_type, uint8_t controller, uint8_t elem, int8_t slot);
 static void ctl_cfg_element_options_dialog(int16_t fnid);
 // used for adjusting settings.
-static int weapon_select_dialog(int wpn, bool is_secondary);
 #define UID_KEYCFG_ID 0x1000
 #define UID_JOYCFG_ID 0x1100
 #define UID_PRIMARY_WPN 0x1200
@@ -590,7 +589,7 @@ void key_cfg_screen::setup(newuiLargeMenu *menu) {
 }
 void key_cfg_screen::finish() {}
 void key_cfg_screen::process(int res) {
-  int i;
+  size_t i;
   for (i = 0; i < N_KEY_CFG_FN; i++) {
     if (m_elem[i].GetID() != -1 && m_elem[i].GetID() == res) {
       // we chose a slot to configure.
@@ -619,7 +618,8 @@ void key_cfg_screen::process(int res) {
 }
 void key_cfg_screen::realize() {
   // create controls
-  int i, x = 0, y = 0;
+  size_t i;
+  int x = 0, y = 0;
   t_cfg_element *cfg_elem = &Cfg_key_elements[0];
   m_reset_btn.Create(m_menu, UID_RESETDEFAULTS, "Control preset...", KEYCFG_EXTRAS_X + m_sheet->X(),
                      KEYCFG_EXTRAS_Y + m_sheet->Y(), NEWUI_BTNF_LONG);
@@ -644,7 +644,7 @@ void key_cfg_screen::realize() {
 }
 void key_cfg_screen::unrealize() {
   // create controls
-  int i;
+  size_t i;
   t_cfg_element *cfg_elem = &Cfg_key_elements[0];
   m_help2_txt.Destroy();
   m_help1_txt.Destroy();
@@ -680,7 +680,7 @@ void joy_cfg_screen::setup(newuiLargeMenu *menu) {
 }
 void joy_cfg_screen::finish() {}
 void joy_cfg_screen::process(int res) {
-  int i;
+  size_t i;
 
   for (i = 0; i < N_JOY_CFG_FN; i++) {
     if (m_elem[i].GetID() != -1 && m_elem[i].GetID() == res) {
@@ -715,7 +715,8 @@ void joy_cfg_screen::process(int res) {
 }
 
 void joy_cfg_screen::realize() {
-  int i, x = 0, y = 0;
+  size_t i;
+  int x = 0, y = 0;
   t_cfg_element *cfg_elem = &Cfg_joy_elements[0];
   m_reset_btn.Create(m_menu, UID_RESETDEFAULTS, TXT_RESETTODEFAULT, KEYCFG_EXTRAS_X + m_sheet->X(),
                      KEYCFG_EXTRAS_Y + m_sheet->Y(), NEWUI_BTNF_LONG);
@@ -741,7 +742,7 @@ void joy_cfg_screen::realize() {
 }
 void joy_cfg_screen::unrealize() {
   // create controls
-  int i;
+  size_t i;
 
   m_controller_settings.Destroy();
   t_cfg_element *cfg_elem = &Cfg_joy_elements[0];
@@ -1142,56 +1143,6 @@ void ctl_cfg_element_options_dialog(int16_t fnid) {
   wnd.Close();
   wnd.Destroy();
 }
-// used in weapon selection: returns new slot.
-int weapon_select_dialog(int wpn, bool is_secondary) {
-  newuiTiledWindow wnd;
-  newuiListBox *lbox;
-  newuiSheet *sheet;
-  int res, i;
-  uint16_t retval;
-  wpn &= (~WPNSEL_SKIP);
-  wnd.Create(NULL, 0, 0, 320, 288);
-  sheet = wnd.GetSheet();
-  sheet->NewGroup(NULL, 116, 210, NEWUI_ALIGN_HORIZ);
-  sheet->AddButton(TXT_OK, UID_OK);
-  sheet->AddButton(TXT_CANCEL, UID_CANCEL);
-  sheet->NewGroup(NULL, 0, 0);
-  sheet->AddText(TXT_WPNCFGHELP3);
-  sheet->AddText(TXT(Static_weapon_names_msg[wpn]));
-  sheet->NewGroup(NULL, 0, 40);
-  lbox = sheet->AddListBox(192, 160, UID_WPNLIST, UILB_NOSORT);
-  // add primaries or secondaries.
-  for (i = 0; i < 10; i++) {
-    int wpnidx;
-    char str[64];
-    wpnidx = is_secondary ? GetAutoSelectSecondaryWpnIdx(i) : GetAutoSelectPrimaryWpnIdx(i);
-    if (wpnidx != WPNSEL_INVALID) {
-      if (wpnidx & WPNSEL_SKIP) {
-        wpnidx &= (~WPNSEL_SKIP);
-        snprintf(str, sizeof(str), TXT_WPNSELBTN, TXT(Static_weapon_names_msg[wpnidx]));
-      } else {
-        snprintf(str, sizeof(str), "%s", TXT(Static_weapon_names_msg[wpnidx]));
-      }
-      lbox->AddItem(str);
-    } else {
-      lbox->AddItem("ERR-WPN");
-    }
-  }
-  wnd.Open();
-  res = wnd.DoUI();
-  wnd.Close();
-  switch (res) {
-  case UID_WPNLIST:
-  case UID_OK:
-    retval = lbox->GetCurrentIndex();
-    break;
-  default:
-    retval = -1;
-  }
-  wnd.Destroy();
-
-  return retval;
-}
 void joystick_calibration() {
 }
 void joystick_settings_dialog() {
@@ -1562,17 +1513,17 @@ void CtlConfig(int mode) {
   Skip_render_game_frame = false;
 }
 int CtlFindBinding(int controlid, bool keyboard) {
-  int i = 0;
+  size_t i = 0;
 
   if (keyboard) {
     for (i = 0; i < N_KEY_CFG_FN; i++) {
       if (Cfg_key_elements[i].fn_id == controlid)
-        return i;
+        return static_cast<int>(i);
     }
   } else {
     for (i = 0; i < N_JOY_CFG_FN; i++) {
       if (Cfg_joy_elements[i].fn_id == controlid)
-        return i;
+        return static_cast<int>(i);
     }
   }
   return -1;

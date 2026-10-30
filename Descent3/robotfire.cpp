@@ -69,7 +69,7 @@ void WBSetupFireAnim(object *obj, otype_wb_info *static_wb, int wb_index) {
 
   p_dwb->wb_anim_mask = p_dwb->cur_firing_mask;
 
-  if (static_wb->anim_start_frame != static_wb->anim_end_frame) {
+  if (static_wb->anim_start_frame[p_dwb->cur_firing_mask] != static_wb->anim_end_frame[p_dwb->cur_firing_mask]) {
     p_dwb->flags |= DWBF_ANIMATING;
     p_dwb->wb_anim_frame = static_wb->anim_start_frame[p_dwb->cur_firing_mask];
   }
@@ -291,7 +291,7 @@ void WBFireBattery(object *obj, otype_wb_info *static_wb, int poly_wb_index, int
 
   // RType Code...
   if (!((Game_mode & GM_MULTI) && (Netgame.local_role == LR_CLIENT))) {
-    if (obj->type == OBJ_PLAYER && obj->id >= 0) {
+    if (obj->type == OBJ_PLAYER) {
       object *bobj = ObjGet(Buddy_handle[obj->id]);
       if (bobj && bobj->type == OBJ_ROBOT && (bobj->ai_info->flags & AIF_GB_MIMIC_PLAYER_FIRING_HACK)) {
         if (dynamic_wb_index != OMEGA_INDEX && dynamic_wb_index != NAPALM_INDEX && dynamic_wb_index < 10) {

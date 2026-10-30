@@ -1770,7 +1770,6 @@ void SuperThief::SetMode(int me, char mode) {
 
 void SuperThief::SpewEverything(int me) {
   int i;
-  int powerup_handle;
   int room;
   vector pos;
 
@@ -1794,7 +1793,7 @@ void SuperThief::SpewEverything(int me) {
 
       Player_Value(memory->stolen_weapons[i].owner, VF_GET, PLYSV_US_WEAPON_POWERUP_ID, &id,
                    memory->stolen_weapons[i].index);
-      powerup_handle = Obj_Create(OBJ_POWERUP, id, room, &pos, NULL, OBJECT_HANDLE_NONE, &dir);
+      Obj_Create(OBJ_POWERUP, id, room, &pos, NULL, OBJECT_HANDLE_NONE, &dir);
     }
 
     memory->stolen_weapons[i].amount = 0;
@@ -1810,10 +1809,8 @@ bool SuperThief::DoNotify(int me, tOSIRISEVTAINOTIFY *notify) {
     Obj_Value(target_handle, VF_GET, OBJV_I_TYPE, &target_type);
 
     if (target_type == OBJ_PLAYER) {
-      bool f_success;
-
       memory->time_till_fire_secondary = 1.0f + (float)rand() / (float)RAND_MAX;
-      f_success = DoSteal(me, target_handle);
+      DoSteal(me, target_handle);
     }
   }
 
@@ -1906,7 +1903,7 @@ bool SuperThief::DoSteal(int me, int it) {
               max = (14 - SuperThiefableItems[i].index) / 2.5f + 1;
             }
 
-            int new_amount = (rand() / (float)(RAND_MAX + 1)) * max + 1;
+            int new_amount = (rand() / (static_cast<double>(RAND_MAX) + 1.0)) * max + 1;
 
             if (new_amount < amount)
               amount = new_amount;
@@ -3247,7 +3244,7 @@ bool Humonculous::SetMode(int me, uint16_t mode) {
 
     flags = FQ_CHECK_OBJS | FQ_IGNORE_POWERUPS | FQ_IGNORE_WEAPONS | FQ_IGNORE_MOVING_OBJECTS |
             FQ_IGNORE_NON_LIGHTMAP_OBJECTS;
-    int fate = FVI_RayCast(me, &start_pos, &end_pos, start_room, 0.0f, flags, &ray);
+    FVI_RayCast(me, &start_pos, &end_pos, start_room, 0.0f, flags, &ray);
 
     start_pos = end_pos = ray.hit_point;
     start_room = ray.hit_room;
@@ -3256,7 +3253,7 @@ bool Humonculous::SetMode(int me, uint16_t mode) {
 
     flags = FQ_CHECK_OBJS | FQ_IGNORE_POWERUPS | FQ_IGNORE_WEAPONS | FQ_IGNORE_MOVING_OBJECTS |
             FQ_IGNORE_NON_LIGHTMAP_OBJECTS;
-    fate = FVI_RayCast(me, &start_pos, &end_pos, start_room, 0.0f, flags, &ray);
+    FVI_RayCast(me, &start_pos, &end_pos, start_room, 0.0f, flags, &ray);
 
     if (vm_Dot3Product(ray.hit_wallnorm, orient.rvec) > -0.95) {
       memory->mode = HM_WALL_HIT;
@@ -4406,9 +4403,6 @@ int16_t CBall::CallEvent(int event, tOSIRISEventInfo *data) {
 //---------------
 
 void SixGun::DoInit(int me) {
-  msafe_struct m;
-  m.objhandle = me;
-
   tOSIRISMEMCHUNK ch;
   ch.id = 4;
   ch.size = sizeof(sixgun_data);
@@ -4470,9 +4464,6 @@ int16_t SixGun::CallEvent(int event, tOSIRISEventInfo *data) {
 //---------------
 
 void ExplodeTimeOut::DoInit(int me) {
-  msafe_struct m;
-  m.objhandle = me;
-
   tOSIRISMEMCHUNK ch;
   ch.id = 4;
   ch.size = sizeof(explodetimeout_data);
@@ -4631,6 +4622,7 @@ bool GuideBot::SetMode(int me, char mode) {
     break;
   case GBM_ENTER_SHIP: {
     DoMessage(TXT_GB_ENTERINGSHIP, true);
+    [[fallthrough]];
   }
   case GBM_RESPAWN_ENTER_SHIP: {
     int i;
@@ -6288,7 +6280,7 @@ bool Thief::DoSteal(int me, int it, int attempt_num, bool f_last_success) {
               max = (14 - ThiefableItems[i].index) / 2.5f + 1;
             }
 
-            int new_amount = (rand() / (float)(RAND_MAX + 1)) * max + 1;
+            int new_amount = (rand() / (static_cast<double>(RAND_MAX) + 1.0)) * max + 1;
 
             if (new_amount < amount)
               amount = new_amount;
@@ -6755,7 +6747,6 @@ void Thief::DoFrame(int me) {
 
 void Thief::SpewEverything(int me) {
   int i;
-  int powerup_handle;
   int room;
   vector pos;
 
@@ -6779,7 +6770,7 @@ void Thief::SpewEverything(int me) {
 
       Player_Value(memory->stolen_weapons[i].owner, VF_GET, PLYSV_US_WEAPON_POWERUP_ID, &id,
                    memory->stolen_weapons[i].index);
-      powerup_handle = Obj_Create(OBJ_POWERUP, id, room, &pos, NULL, OBJECT_HANDLE_NONE, &dir);
+      Obj_Create(OBJ_POWERUP, id, room, &pos, NULL, OBJECT_HANDLE_NONE, &dir);
     }
 
     memory->stolen_weapons[i].amount = 0;
@@ -6845,7 +6836,7 @@ void Thief::SpewEverything(int me) {
       vm_VectorNormalize(&dir);
       dir *= speed;
 
-      powerup_handle = Obj_Create(OBJ_POWERUP, id, room, &pos, NULL, OBJECT_HANDLE_NONE, &dir);
+      Obj_Create(OBJ_POWERUP, id, room, &pos, NULL, OBJECT_HANDLE_NONE, &dir);
     }
   }
   memory->num_stolen_inv = 0;
@@ -6913,7 +6904,6 @@ void Sickle::SetMode(int me, char mode) {
   case SICKLE_LAND_ON_CEILING: {
     ray_info ray;
     int flags;
-    int fate;
 
     int start_room;
     vector start_pos;
@@ -6932,12 +6922,12 @@ void Sickle::SetMode(int me, char mode) {
     end_pos.y() = end_pos.y() + 400.0;
     flags = FQ_CHECK_OBJS | FQ_IGNORE_POWERUPS | FQ_IGNORE_WEAPONS | FQ_IGNORE_MOVING_OBJECTS |
             FQ_IGNORE_NON_LIGHTMAP_OBJECTS;
-    fate = FVI_RayCast(me, &start_pos, &end_pos, start_room, 0.0f, flags, &ray);
+    FVI_RayCast(me, &start_pos, &end_pos, start_room, 0.0f, flags, &ray);
 
     memory->ceiling_pos = ray.hit_point;
     memory->ceiling_pos.y() -= 3.2f;
 
-    fate = FVI_RayCast(me, &start_pos, &memory->ceiling_pos, start_room, 0.0f, flags, &ray);
+    FVI_RayCast(me, &start_pos, &memory->ceiling_pos, start_room, 0.0f, flags, &ray);
     ceiling_room = ray.hit_room;
 
     AI_AddGoal(me, AIG_GET_TO_POS, 2, 1.0f, -1, /*GF_NONFLUSHABLE | GF_KEEP_AT_COMPLETION |*/ GF_ORIENT_SCRIPTED,
@@ -7004,8 +6994,6 @@ void Sickle::SetMode(int me, char mode) {
 
 void Sickle::DoInit(int me) {
   int flags;
-  msafe_struct m;
-  m.objhandle = me;
 
   tOSIRISMEMCHUNK ch;
   ch.id = 4;
@@ -7144,9 +7132,6 @@ int16_t Sickle::CallEvent(int event, tOSIRISEventInfo *data) {
 //---------------
 
 void FireAtDist::DoInit(int me) {
-  msafe_struct m;
-  m.objhandle = me;
-
   tOSIRISMEMCHUNK ch;
   ch.id = 4;
   ch.size = sizeof(fireatdist_data);
@@ -7234,9 +7219,6 @@ int16_t FireAtDist::CallEvent(int event, tOSIRISEventInfo *data) {
 //---------------
 
 void HatePTMC::DoInit(int me) {
-  msafe_struct m;
-  m.objhandle = me;
-
   tOSIRISMEMCHUNK ch;
   ch.id = 4;
   ch.size = sizeof(hateptmc_data);
@@ -7480,7 +7462,6 @@ bool OldScratch::DoSteal(int me, int it) {
   int max_tries = numSuperThiefableItems;
   ;
   int i;
-  int count_max;
   bool *attempted_steals;
 
   attempted_steals = (bool *)malloc(numSuperThiefableItems * sizeof(bool));
@@ -7508,8 +7489,6 @@ bool OldScratch::DoSteal(int me, int it) {
     attempted_steals[i] = true;
 
     {
-      count_max = MAX_STOLEN_WEAPONS;
-
       // mprintf(0,"THIEF: Checking %s\n",TXT(SuperThiefableItems[i].name_idx));
 
       bool can_take = false;
@@ -7542,7 +7521,7 @@ bool OldScratch::DoSteal(int me, int it) {
               max = (14 - SuperThiefableItems[i].index) / 2.5f + 1;
             }
 
-            int new_amount = (rand() / (float)(RAND_MAX + 1)) * max + 1;
+            int new_amount = (rand() / (static_cast<double>(RAND_MAX) + 1.0)) * max + 1;
 
             if (new_amount < amount)
               amount = new_amount;
@@ -7563,7 +7542,6 @@ bool OldScratch::DoSteal(int me, int it) {
         continue;
 
       {
-        int powerup_handle;
         int room;
         vector pos;
         int j;
@@ -7584,7 +7562,7 @@ bool OldScratch::DoSteal(int me, int it) {
           dir *= speed;
 
           Player_Value(it, VF_GET, PLYSV_US_WEAPON_POWERUP_ID, &id, SuperThiefableItems[i].index);
-          powerup_handle = Obj_Create(OBJ_POWERUP, id, room, &pos, NULL, it, &dir);
+          Obj_Create(OBJ_POWERUP, id, room, &pos, NULL, it, &dir);
         }
       }
 
@@ -7704,8 +7682,7 @@ bool OldScratch::DoNotify(int me, tOSIRISEVTAINOTIFY *notify) {
       return true;
 
     if (target_type == OBJ_PLAYER && (target_flags & OF_DESTROYABLE)) {
-      bool f_success;
-      f_success = DoSteal(me, target_handle);
+      DoSteal(me, target_handle);
     }
   }
 
@@ -9512,7 +9489,7 @@ bool Skiff::SendCommand(int me, int it, char command, void *ptr) {
   tOSIRISEventInfo ei;
 
   ei.me_handle = it;
-  ei.extra_info = (void *)&command;
+  ei.extra_info = &com;
   ei.evt_ai_notify.notify_type = AIN_USER_DEFINED;
   ei.evt_ai_notify.it_handle = me;
 
@@ -10155,8 +10132,7 @@ void Sniper::SetMode(int me, char mode) {
 
     AI_Value(me, VF_SET, AIV_F_MAX_SPEED, &memory->base_speed);
     AI_Value(me, VF_SET, AIV_F_MAX_DELTA_SPEED, &memory->base_acc);
-    memory->time_till_next_mode = 5.0f * (float)rand() / (float)RAND_MAX;
-    +6.0f;
+    memory->time_till_next_mode = 5.0f * (float)rand() / (float)RAND_MAX + 6.0f;
   } break;
   }
 
@@ -10286,8 +10262,7 @@ void SniperNoRun::SetMode(int me, char mode) {
 
     AI_Value(me, VF_SET, AIV_F_MAX_SPEED, &memory->base_speed);
     AI_Value(me, VF_SET, AIV_F_MAX_DELTA_SPEED, &memory->base_acc);
-    memory->time_till_next_mode = 5.0f * (float)rand() / (float)RAND_MAX;
-    +4.0f;
+    memory->time_till_next_mode = 5.0f * (float)rand() / (float)RAND_MAX + 4.0f;
   } break;
   }
 
@@ -10411,8 +10386,7 @@ void EvaderModA::SetMode(int me, char mode) {
       }
     }
 
-    memory->time_till_next_mode = 4.0f * (float)rand() / (float)RAND_MAX;
-    +6.0f;
+    memory->time_till_next_mode = 4.0f * (float)rand() / (float)RAND_MAX + 6.0f;
   } break;
   }
 
@@ -10526,8 +10500,7 @@ void FlameRAS::SetMode(int me, char mode) {
       }
     }
 
-    memory->time_till_next_mode = 4.0f * (float)rand() / (float)RAND_MAX;
-    +6.0f;
+    memory->time_till_next_mode = 4.0f * (float)rand() / (float)RAND_MAX + 6.0f;
   } break;
   }
 
@@ -10754,7 +10727,6 @@ int16_t BettyBomb::CallEvent(int event, tOSIRISEventInfo *data) {
     int child_id = Obj_FindID("Betty");
 
     if (parent != OBJECT_HANDLE_NONE && child_id != -1) {
-      int child_handle;
       matrix orient;
       vector vel, pos, v;
       int room;
@@ -10794,19 +10766,19 @@ int16_t BettyBomb::CallEvent(int event, tOSIRISEventInfo *data) {
       }
 
       // First create middle Betty
-      child_handle = Obj_Create(OBJ_ROBOT, child_id, room, &pos, &orient, parent, &v);
+      Obj_Create(OBJ_ROBOT, child_id, room, &pos, &orient, parent, &v);
 
       // Now create left Betty
       v = -orient.fvec + (0.3f * orient.rvec) - orient.uvec;
       vm_VectorNormalize(&v);
       v *= 30.0f;
-      child_handle = Obj_Create(OBJ_ROBOT, child_id, room, &pos, &orient, parent, &v);
+      Obj_Create(OBJ_ROBOT, child_id, room, &pos, &orient, parent, &v);
 
       // Now create right Betty
       v = -orient.fvec - (0.3f * orient.rvec) - orient.uvec;
       vm_VectorNormalize(&v);
       v *= 30.0f;
-      child_handle = Obj_Create(OBJ_ROBOT, child_id, room, &pos, &orient, parent, &v);
+      Obj_Create(OBJ_ROBOT, child_id, room, &pos, &orient, parent, &v);
     }
 
     memory->explode = true;
@@ -10945,7 +10917,7 @@ void ChaffScript::DoInit(int handle) {
 
   int count, chaffcount;
   int chunk_id, room;
-  int parent, ch, type;
+  int parent, type;
 
   // Allocate the memory for the script
   tOSIRISMEMCHUNK mem;
@@ -10975,7 +10947,7 @@ void ChaffScript::DoInit(int handle) {
       v.y() += (rand() % 30) - 15;
       v.z() += (rand() % 30) - 15;
 
-      ch = Obj_Create(OBJ_ROBOT, chunk_id, room, &pos, &orient, parent, &v);
+      Obj_Create(OBJ_ROBOT, chunk_id, room, &pos, &orient, parent, &v);
     }
 
     type = GetObjectType(parent);

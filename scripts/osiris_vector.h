@@ -23,7 +23,9 @@
 #include "vecmat_external.h"
 
 // Disable the "possible loss of data" warning
+#ifdef _MSC_VER
 #pragma warning(disable : 4244)
+#endif
 
 // Used for debugging.  It is used in printf's so we do not have to write out the structure 3 times
 // to print all the coordinates.

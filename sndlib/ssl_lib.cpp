@@ -59,7 +59,8 @@ void llsSystem::CheckForErrors() {
 void llsSystem::ErrorText(const char *fmt, ...) {
   std::va_list arglist;
   char buf[128];
-  int len, slen;
+  int len;
+  size_t slen;
 
   slen = strlen(m_error_text);
 
@@ -74,7 +75,7 @@ void llsSystem::ErrorText(const char *fmt, ...) {
   if (len < 0)
     return;
 
-  if ((slen + strlen(buf) + 1) > sizeof(m_error_text)) {
+  if ((slen + strlen(buf) + 2) > sizeof(m_error_text)) {
     return;
   }
   strcat(m_error_text, buf);

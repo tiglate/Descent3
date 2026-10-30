@@ -1028,7 +1028,6 @@ void GetIJ(const vector *normal, int *ii, int *jj) {
 //					rp - pointer to the room that pnt is in
 //					fp - pointer to the face that pnt is on
 void FindPointUV(float *u, float *v, const vector *pnt, const room *rp, const face *fp) {
-  int roomnum = ROOMNUM(rp);
   int ii, jj;
   vector vec0, vec1;
   float *p1, *checkp, *v0, *v1;
@@ -1036,7 +1035,7 @@ void FindPointUV(float *u, float *v, const vector *pnt, const room *rp, const fa
   int t;
 
   // Make sure we have a valid room
-  ASSERT((roomnum >= 0) && (roomnum <= Highest_room_index));
+  ASSERT((ROOMNUM(rp) >= 0) && (ROOMNUM(rp) <= Highest_room_index));
 
   // Find what plane to project this wall onto to make it a 2d case
   GetIJ(&fp->normal, &ii, &jj);

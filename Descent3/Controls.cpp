@@ -640,7 +640,7 @@ void PollControls() {
 // Read the keyboard & other controllers.  Fills in the specified structure.
 void ReadPlayerControls(game_controls *controls) {
   if (!Control_system_init) {
-    memset(controls, 0, sizeof(game_controls));
+    *controls = game_controls{};
     return;
   }
   //@@	Control_frametime = Frametime;
@@ -648,7 +648,7 @@ void ReadPlayerControls(game_controls *controls) {
   // controller uses polled control frametime
 
   if (!Control_poll_flag) {
-    memset(controls, 0, sizeof(game_controls));
+    *controls = game_controls{};
     return;
   }
 

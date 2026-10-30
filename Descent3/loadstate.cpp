@@ -279,7 +279,7 @@ int LoadGameState(const std::filesystem::path &pathname) {
   // read in header and do version check.
   cf_ReadBytes((uint8_t *)desc, sizeof(desc), fp);
   version = (uint16_t)cf_ReadShort(fp);
-  if (version < GAMESAVE_OLDVER) {
+  if (version < GAMESAVE_OLDVER) { // currently never true: GAMESAVE_OLDVER is 0
     Int3();
     retval = LGS_OUTDATEDVER;
     goto loadsg_error;
@@ -812,7 +812,10 @@ int inreadobj = 0;
 void VerifySaveGame(CFILE *fp) {
   int testint;
   testint = cf_ReadInt(fp);
-  ASSERT(testint == 0xF00D4B0B);
+  ASSERT(static_cast<uint32_t>(testint) == 0xF00D4B0BU);
+  if (static_cast<uint32_t>(testint) != 0xF00D4B0BU) {
+    LOG_ERROR << "Invalid savegame verification marker.";
+  }
 }
 
 #define VERIFY_SAVEFILE
@@ -937,10 +940,6 @@ int LGSObjects(CFILE *fp, int version) {
   Osiris_EnableEvents(OEM_OBJECTS | OEM_TRIGGERS | OEM_LEVELS);
   for (i = 0; i <= highest_index; i++) {
     object *op;
-    weapon *wpn;
-    ship *shp;
-    object_info *obji;
-    door *door;
     int index, nattach, new_model, handle;
     uint8_t type, dummy_type;
     int16_t sindex, size;
@@ -951,6 +950,10 @@ int LGSObjects(CFILE *fp, int version) {
     gs_ReadInt(fp, sig);
 
     ASSERT(sig == 0xBADB0B);
+    if (sig != 0xBADB0B) {
+      retval = LGS_OUTDATEDVER;
+      goto lgsobjs_fail;
+    }
 
     gs_ReadByte(fp, type);
 
@@ -1067,18 +1070,14 @@ int LGSObjects(CFILE *fp, int version) {
     case OBJ_BUILDING:
     case OBJ_CLUTTER:
       op->id = gs_Xlates->obji_indices[op->id];
-      obji = &Object_info[op->id];
       break;
     case OBJ_DOOR:
       op->id = gs_Xlates->door_handles[op->id];
-      door = &Doors[op->id];
       break;
     case OBJ_WEAPON:
       op->id = gs_Xlates->wpn_handles[op->id];
-      wpn = &Weapons[op->id];
       break;
     case OBJ_PLAYER:
-      shp = &Ships[Players[op->id].ship_index];
       break;
     }
 
@@ -1244,16 +1243,16 @@ int LGSObjects(CFILE *fp, int version) {
         case OBJ_POWERUP:
         case OBJ_BUILDING:
         case OBJ_CLUTTER:
-          PageInPolymodel(new_model, type, &obji->size);
-          op->size = obji->size;
+          PageInPolymodel(new_model, type, &Object_info[op->id].size);
+          op->size = Object_info[op->id].size;
           break;
         case OBJ_WEAPON:
-          PageInPolymodel(new_model, OBJ_WEAPON, &wpn->size);
-          op->size = wpn->size;
+          PageInPolymodel(new_model, OBJ_WEAPON, &Weapons[op->id].size);
+          op->size = Weapons[op->id].size;
           break;
         case OBJ_PLAYER:
-          PageInPolymodel(new_model, OBJ_PLAYER, &shp->size);
-          op->size = shp->size;
+          PageInPolymodel(new_model, OBJ_PLAYER, &Ships[Players[op->id].ship_index].size);
+          op->size = Ships[Players[op->id].ship_index].size;
           break;
         case OBJ_ROOM:
           op->size = ComputeRoomBoundingSphere(&pos, &Rooms[op->id]);
@@ -1270,8 +1269,8 @@ int LGSObjects(CFILE *fp, int version) {
       if (new_model != op->rtype.pobj_info.dying_model_num) {
         switch (type) {
         case OBJ_PLAYER:
-          PageInPolymodel(new_model, OBJ_PLAYER, &shp->size);
-          op->size = shp->size;
+          PageInPolymodel(new_model, OBJ_PLAYER, &Ships[Players[op->id].ship_index].size);
+          op->size = Ships[Players[op->id].ship_index].size;
           break;
         }
       }

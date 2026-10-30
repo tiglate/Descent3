@@ -1117,19 +1117,13 @@ void mng_AssignShipToShipPage(int n, mngs_ship_page *shippage) {
 
   for (i = 0; i < MAX_PLAYER_WEAPONS; i++) {
     for (j = 0; j < MAX_WB_GUNPOINTS; j++) {
-      if (shippointer->static_wb[i].gp_weapon_index[j] >= 0)
-        strcpy(shippage->weapon_name[i][j], Weapons[shippointer->static_wb[i].gp_weapon_index[j]].name);
-      else
-        strcpy(shippage->weapon_name[i][j], "Laser");
+      strcpy(shippage->weapon_name[i][j], Weapons[shippointer->static_wb[i].gp_weapon_index[j]].name);
     }
   }
 
   for (i = 0; i < MAX_PLAYER_WEAPONS; i++) {
     for (j = 0; j < MAX_WB_FIRING_MASKS; j++) {
-      if (shippointer->static_wb[i].fm_fire_sound_index[j] >= 0)
-        strcpy(shippage->fire_sound_name[i][j], Sounds[shippointer->static_wb[i].fm_fire_sound_index[j]].name);
-      else
-        strcpy(shippage->fire_sound_name[i][j], "");
+      strcpy(shippage->fire_sound_name[i][j], Sounds[shippointer->static_wb[i].fm_fire_sound_index[j]].name);
     }
   }
 
@@ -1177,6 +1171,9 @@ void mng_LoadNetShipPage(CFILE *infile, bool overlay) {
     }
     int ret = mng_SetAndLoadShip(&shippage, infile);
     ASSERT(ret >= 0);
+    if (ret < 0) {
+      LOG_ERROR << "Failed to load ship page.";
+    }
   } else
     LOG_WARNING.printf("Could not load shippage named %s!", shippage.ship_struct.name);
 }

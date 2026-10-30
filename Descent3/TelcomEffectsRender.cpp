@@ -449,12 +449,11 @@ void RenderBmpBlur(tceffect *tce, float frametime, int xoff, int yoff, bool ok_t
     done = true;
 
   uint16_t *src, *dest;
-  int rowsize, w, h;
+  int w, h;
 
   if (!done) {
     src = bm_data(sbm_handle, 0);
     dest = bm_data(dbm_handle, 0);
-    rowsize = bm_w(sbm_handle, 0);
     w = bm_w(sbm_handle, 0);
     h = bm_h(sbm_handle, 0);
     int current_stage;
@@ -517,8 +516,6 @@ void RenderBmpScanline(tceffect *tce, float frametime, int xoff, int yoff, bool 
   }
 
   bool changed = true;
-  bool done;
-  int x, y;
   int sbm_handle = tce->bmpinfo.bm_handle;
   int dbm_handle = tce->bmpinfo.temp_bmhandle;
   uint16_t *src, *dest;
@@ -528,23 +525,20 @@ void RenderBmpScanline(tceffect *tce, float frametime, int xoff, int yoff, bool 
     goto done_scanline;
   bm_ClearBitmap(dbm_handle);
 
-  x = 0;
-  y = 0;
-  done = false;
-
   k = tce->age / tce->speed;
 
   if (k > 1.2)
     goto done_scanline;
   if (k > 1.0) {
     k = 1.0;
-    done = 1;
   }
   if (tce->flags == TC_BMPF_OUT) {
     k = 1.0 - k;
   }
   src = bm_data(sbm_handle, 0);
   dest = bm_data(dbm_handle, 0);
+  if (!src || !dest)
+    goto done_scanline;
   rowsize = bm_w(sbm_handle, 0);
   w = bm_w(sbm_handle, 0);
   h = bm_h(sbm_handle, 0);
@@ -556,8 +550,7 @@ void RenderBmpScanline(tceffect *tce, float frametime, int xoff, int yoff, bool 
     if (span_width > w)
       span_width = w;
     for (xx = 0; xx < span_width; xx++)
-      if (dest && src)
-        *dest++ = *src++;
+      *dest++ = *src++;
 
     dest += (rowsize - xx);
     src += (w - span_width);
@@ -647,6 +640,9 @@ void RenderBmpInvert(tceffect *tce, float frametime, int xoff, int yoff, bool ok
   case 128:
     shift = 7;
     break;
+  default:
+    LOG_WARNING.printf("Unsupported bitmap chunk dimension %d", dim);
+    return;
   }
   uint16_t *src_data = bm_data(srcbmph, 0);
   uint16_t *sdata;

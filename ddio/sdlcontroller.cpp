@@ -526,6 +526,7 @@ bool sdlgameController::get_packet(int id, ct_packet *packet, ct_format alt_form
 
     case ctMouseAxis:
       packet->flags |= CTPK_MOUSE;
+      [[fallthrough]];
     case ctAxis:
       val = get_axis_value(controller, value, alt_format, (m_ElementList[id].flags[i] & CTFNF_INVERT) ? true : false);
       if (m_ElementList[id].flags[i] & CTFNF_INVERT) {
@@ -539,6 +540,7 @@ bool sdlgameController::get_packet(int id, ct_packet *packet, ct_format alt_form
 
     case ctMouseButton:
       packet->flags |= CTPK_MOUSE;
+      [[fallthrough]];
     case ctButton:
       val = get_button_value(controller, alt_format, value);
       break;
@@ -954,14 +956,10 @@ int8_t sdlgameController::get_pov_controller(uint8_t pov) {
 }
 
 int8_t sdlgameController::get_button_controller(uint8_t btn) {
-  unsigned mask;
-
   //	buttons range from 1-CT_MAX_BUTTONS
   ASSERT(btn <= CT_MAX_BUTTONS);
   if (btn == NULL_BINDING)
     return NULL_LNXCONTROLLER;
-
-  mask = 1 << (btn - 1);
 
   //	start from controller 2 because 0, and 1 are reserved for keyboard and mouse
   for (int i = 2; i < m_NumControls; i++)

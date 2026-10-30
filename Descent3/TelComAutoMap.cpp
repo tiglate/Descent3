@@ -614,7 +614,6 @@ void TCAMReadControls() {
 void TCAMRenderTerrain() {
   int nt;
   int render_width, render_height;
-  float w2, h2;
 
   int save_check = Terrain_occlusion_checksum;
   int save_pix = Detail_settings.Pixel_error;
@@ -624,10 +623,7 @@ void TCAMRenderTerrain() {
   Detail_settings.Terrain_render_distance = 300 * TERRAIN_SIZE;
   Terrain_occlusion_checksum = -1;
 
-  // Get the size of the current render window
   rend_GetProjectionParameters(&render_width, &render_height);
-  w2 = ((float)render_width - 1) / 2.0;
-  h2 = ((float)render_height - 1) / 2.0;
 
   // Set up vars for (psuedo-)clipping window
   Check_terrain_portal = 0;

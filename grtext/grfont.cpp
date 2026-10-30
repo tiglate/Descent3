@@ -161,7 +161,7 @@ static inline int READ_FONT_INT(FONTFILE ffile);
 static inline int16_t READ_FONT_SHORT(FONTFILE ffile);
 static inline uint8_t READ_FONT_BYTE(FONTFILE ffile);
 static inline int READ_FONT_DATA(FONTFILE ffile, void *buf, int size, int nelem);
-static inline FONTFILE OPEN_FONT(char *filename);
+static inline FONTFILE OPEN_FONT(const char *filename);
 static inline void CLOSE_FONT(FONTFILE ffile);
 
 inline int READ_FONT_INT(FONTFILE ffile) { return cf_ReadInt(ffile); }
@@ -189,7 +189,7 @@ inline FONTFILE OPEN_FONT(const char *filename) {
     return nullptr;
 
   file_id = READ_FONT_INT(fp);
-  if (file_id != 0xfeedbaba)
+  if (static_cast<uint32_t>(file_id) != 0xfeedbabaU)
     return (FONTFILE)(-1);
 
   return fp;
@@ -203,7 +203,7 @@ static inline int WRITE_FONT_INT(FONTFILE2 ffile, int i);
 static inline int WRITE_FONT_SHORT(FONTFILE2 ffile, int16_t s);
 static inline int WRITE_FONT_BYTE(FONTFILE2 ffile, uint8_t c);
 static inline int WRITE_FONT_DATA(FONTFILE2 ffile, void *buf, int size, int nelem);
-static inline FONTFILE2 OPEN_FONT2(char *filename);
+static inline FONTFILE2 OPEN_FONT2(const char *filename);
 static inline void CLOSE_FONT2(FONTFILE2 ffile);
 
 inline int WRITE_FONT_INT(FONTFILE2 ffile, int i) { return fwrite(&i, sizeof(i), 1, (FILE *)ffile); }

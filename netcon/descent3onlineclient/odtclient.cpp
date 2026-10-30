@@ -202,7 +202,7 @@ void UpdateGamelist(void *lb) {
   }
 
   for (j = 0; j < MAX_GAMELIST_ITEMS; j++) {
-    if (Gamelist[j].used && (Gamelist[j].handle != -1)) {
+    if (Gamelist[j].used && (Gamelist[j].handle != UINT32_MAX)) {
       int gameid = GetGameByHandle(Gamelist[j].handle);
 
       if (gameid != -1) {
@@ -709,7 +709,7 @@ int MainMultiplayerMenu() {
             while (DLLgrtext_GetTextLineWidth(fmtchan) < LIST_ROW1) {
               endpos = strlen(fmtchan);
               fmtchan[endpos] = chan_name[charpos];
-              fmtchan[endpos + 1] = NULL;
+              fmtchan[endpos + 1] = '\0';
               charpos++;
             }
             strcat(fmtchan, "\t\0");
@@ -717,7 +717,7 @@ int MainMultiplayerMenu() {
             while (DLLgrtext_GetTextLineWidth(fmtchan) < LIST_ROW2) {
               endpos = strlen(fmtchan);
               fmtchan[endpos] = count_list[charpos];
-              fmtchan[endpos + 1] = NULL;
+              fmtchan[endpos + 1] = '\0';
               charpos++;
             }
             strcat(fmtchan, "\t\0");
@@ -1081,11 +1081,7 @@ int SearchMasterTrackerGameMenu() {
 
   UIObject *set_dft_hs;
 
-  void *net_game_txt_items[MAX_NET_GAMES];
-  int a;
   bool hardexit = false;
-  for (a = 0; a < MAX_NET_GAMES; a++)
-    net_game_txt_items[a] = nullptr;
   uint8_t oldalpha = *DLLNewUIWindow_alpha;
 
   DLLSetScreenMode(SM_MENU);
@@ -1198,7 +1194,7 @@ int SearchMasterTrackerGameMenu() {
     int activeDirectIp = 0;
     int j;
     for (j = 0; j < MAX_GAMELIST_ITEMS; j++) {
-      if (Gamelist[j].used && (Gamelist[j].handle != -1)) {
+      if (Gamelist[j].used && (Gamelist[j].handle != UINT32_MAX)) {
         int gameid = GetGameByHandle(Gamelist[j].handle);
         if (gameid != -1) {
           activeDirectIp++;
@@ -1533,7 +1529,7 @@ const char *SendWhisper(const char *name) {
   const char *p;
   char message[MAX_CHAT_SEND_LEN];
   char pilot_name[MAX_CHAT_SEND_LEN];
-  static char fmt_msg[MAX_CHAT_SEND_LEN * 2];
+  static char fmt_msg[MAX_CHAT_SEND_LEN * 2 + 6];
   auto title_text = DLLCreateNewUITextItem(TXT_ODT_PRIVATEMESSAGE, UICOL_WINDOW_TITLE);
 
   auto cancel_on_text = DLLCreateNewUITextItem(TXT_ODT_CANCEL, UICOL_HOTSPOT_HI);
@@ -1612,7 +1608,7 @@ const char *SendWhisper(const char *name) {
 int JoinPrivateLobby() {
   int exit_menu = 0;
   int ret = 0;
-  char message[MAX_CHAT_SEND_LEN];
+  char message[MAX_CHAT_SEND_LEN + 1];
   char priv_channel[MAX_CHAT_SEND_LEN];
 
   auto title_text = DLLCreateNewUITextItem(TXT_ODT_JOINPRIV, UICOL_WINDOW_TITLE);
@@ -1701,7 +1697,7 @@ int FindPilot() {
   const char *p;
   char message[MAX_CHAT_SEND_LEN];
   char pilot_name[MAX_CHAT_SEND_LEN];
-  static char fmt_msg[MAX_CHAT_SEND_LEN * 2];
+  static char fmt_msg[MAX_CHAT_SEND_LEN * 2 + 6];
   auto title_text = DLLCreateNewUITextItem(TXT_ODT_FINDPILOT, UICOL_WINDOW_TITLE);
 
   auto cancel_on_text = DLLCreateNewUITextItem(TXT_ODT_CANCEL, UICOL_HOTSPOT_HI);

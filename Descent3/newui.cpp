@@ -580,7 +580,6 @@ void DoWaitPopup(bool enable, const char *message) {
   static newuiTiledWindow *msgbox = NULL;
   static UIText text;
   static bool opened = false;
-  newuiSheet *sheet;
 
   if (opened == enable) {
     Int3();
@@ -595,7 +594,6 @@ void DoWaitPopup(bool enable, const char *message) {
 
       msgbox->Create(NULL, 0, 0, FDWM_WIDTH, FDWM_HEIGHT);
 
-      sheet = msgbox->GetSheet();
       if (message) {
         char msg[512];
         int w, h;
@@ -1178,7 +1176,6 @@ void NewUIButton::OnDraw() {
 // override: called when resized or before drawing.
 void NewUIButton::OnFormat() {
   int bk_width;
-  int bk_height;
 
   // check fit flag than resize according to bitmap aligned coords, then call UIGadget's one that does
   //	centering!
@@ -1187,7 +1184,6 @@ void NewUIButton::OnFormat() {
   }
 
   bk_width = (m_W - m_BtnUpL.width() - m_BtnUpR.width()) / m_BtnUpC.width();
-  bk_height = 1;
 
   if (bk_width < 0)
     bk_width = 0;

@@ -1553,10 +1553,7 @@ void DMFCBase::SetPlayerInfo(int pnum) {
 
   m_iPlayerDisplayed = pnum;
 
-  int x, y;
   char buffer[100];
-  y = 0;
-  x = 15;
   int index = 0;
   bool display_addr = false;
 

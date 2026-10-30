@@ -1561,7 +1561,7 @@ void ConvertObject(int *type, int *id) {
 // reads an object
 // returns 1 if read ok
 int ReadObject(CFILE *ifile, object *objp, int handle, int fileversion) {
-  int type, id, old_id, i;
+  int type, id, i;
   int roomnum;
   float door_shields;
   char tempname[OBJ_NAME_LEN + 1] = "";
@@ -1574,7 +1574,9 @@ int ReadObject(CFILE *ifile, object *objp, int handle, int fileversion) {
     id = (uint8_t)cf_ReadByte(ifile);
 
   // Translate id
-  old_id = id;
+#if defined(EDITOR) || defined(NEWEDITOR)
+  int old_id = id;
+#endif
   switch (type) {
   case OBJ_ROBOT:
   case OBJ_POWERUP:
@@ -2166,6 +2168,8 @@ int ReadPortal(CFILE *ifile, portal *pp, int version) {
 
     num_faces = cf_ReadShort(ifile);
     ASSERT(num_faces == 1);
+    if (num_faces != 1)
+      return 0;
   }
 
   pp->portal_face = cf_ReadShort(ifile);
@@ -2726,7 +2730,7 @@ void ReadNewLightmapChunk(CFILE *fp, int version) {
   ASSERT(nummaps < MAX_LIGHTMAP_INFOS);
 
   for (i = 0; i < nummaps; i++) {
-    int w, h, lmi;
+    int w, h, lmi = BAD_LMI_INDEX;
     uint8_t type;
     if (nummaps >= 50) {
       if ((i % (nummaps / 50)) == 0) {
@@ -2808,7 +2812,7 @@ void ReadLightmapChunk(CFILE *fp, int version) {
                         (filelen) ? (float)chunk_start + (chunk_size / nummaps) / (float)filelen : 0.0f,
                         CHUNK_LIGHTMAPS);
     }
-    int w, h, lmi;
+    int w, h, lmi = BAD_LMI_INDEX;
     uint8_t type;
 
     w = cf_ReadInt(fp);
@@ -2822,11 +2826,19 @@ void ReadLightmapChunk(CFILE *fp, int version) {
     }
 
     if (version <= 38) {
-      LightmapInfo[lmi].xspacing = (float)cf_ReadByte(fp);
-      LightmapInfo[lmi].yspacing = (float)cf_ReadByte(fp);
+      float x = cf_ReadByte(fp);
+      float y = cf_ReadByte(fp);
+      if (!Dedicated_server) {
+        LightmapInfo[lmi].xspacing = x;
+        LightmapInfo[lmi].yspacing = y;
+      }
     } else if (version < 66) {
-      LightmapInfo[lmi].xspacing = cf_ReadFloat(fp);
-      LightmapInfo[lmi].yspacing = cf_ReadFloat(fp);
+      float x = cf_ReadFloat(fp);
+      float y = cf_ReadFloat(fp);
+      if (!Dedicated_server) {
+        LightmapInfo[lmi].xspacing = x;
+        LightmapInfo[lmi].yspacing = y;
+      }
     } else {
       int x, y;
 
@@ -3115,13 +3127,16 @@ void ReadBOAChunk(CFILE *fp, int version) {
   }
 }
 
-void ReadRoomAABBChunk(CFILE *fp, int version) {
+bool ReadRoomAABBChunk(CFILE *fp, int version) {
   int save_highest_room_index;
   int i;
 
   save_highest_room_index = cf_ReadInt(fp);
   ASSERT(save_highest_room_index < MAX_ROOMS);           // Someone decreased the max amount of rooms
   ASSERT(save_highest_room_index == Highest_room_index); // Someone decreased the max amount of rooms
+  if (save_highest_room_index < -1 || save_highest_room_index >= MAX_ROOMS ||
+      save_highest_room_index != Highest_room_index)
+    return false;
 
   for (i = 0; i <= save_highest_room_index; i++) {
     BOA_AABB_ROOM_checksum[i] = cf_ReadInt(fp);
@@ -3137,6 +3152,10 @@ void ReadRoomAABBChunk(CFILE *fp, int version) {
 
       int n_faces = cf_ReadInt(fp);
       ASSERT(Rooms[i].num_faces == n_faces);
+      if (Rooms[i].num_faces != n_faces) {
+        LOG_WARNING.printf("Invalid face count in room %d AABB data", i);
+        return false;
+      }
 
       for (j = 0; j < Rooms[i].num_faces; j++) {
         Rooms[i].faces[j].min_xyz.x() = cf_ReadFloat(fp);
@@ -3189,6 +3208,7 @@ void ReadRoomAABBChunk(CFILE *fp, int version) {
       BOA_AABB_ROOM_checksum[i] = 0; // Not used
     }
   }
+  return true;
 }
 
 void ReadMatcenChunk(CFILE *fp, int version) {
@@ -3583,7 +3603,7 @@ static constexpr const char *New_door_names[] = {"MARK'S OLD DOOR",
 
 // Deals with some renamed doors.  Translates the old name to the new name, then looks up the id
 int SpecialFindDoorName(const char *name) {
-  int i, id;
+  int id;
 
   // Look up the old name, and return it if found
   id = FindDoorName(name);
@@ -3591,7 +3611,7 @@ int SpecialFindDoorName(const char *name) {
     return id;
 
   // Didn't find old name, so see if there's a new name, and look for that
-  for (i = 0; i < NUM_RENAMED_DOORS; i++) {
+  for (size_t i = 0; i < NUM_RENAMED_DOORS; i++) {
     if (stricmp(name, Old_door_names[i]) == 0)
       return FindDoorName(New_door_names[i]);
   }
@@ -3678,8 +3698,8 @@ int LoadLevel(char *filename, void (*cb_fn)(const char *, int, int)) {
 
   int version;
   bool f_read_AABB = false;
-  bool no_128s = true;
 #ifdef EDITOR
+  bool no_128s = true;
   Disable_editor_rendering = 1;
   Num_failed_xlate_items = 0;
 #endif
@@ -3816,7 +3836,7 @@ int LoadLevel(char *filename, void (*cb_fn)(const char *, int, int)) {
           RoomMemInit(0, 0, 0, 0); // 0 means we don't know how much memory we need
 
         n_degenerate_faces_removed = 0;
-        int roomnum;
+        int roomnum = -1;
         for (i = 0; i < num_rooms; i++) {
 
           if ((i % 10) == 0) {
@@ -3934,8 +3954,7 @@ int LoadLevel(char *filename, void (*cb_fn)(const char *, int, int)) {
       } else if (ISCHUNK(CHUNK_FFT_MOD)) {
         ReadFFTMChunk(ifile, version);
       } else if (ISCHUNK(CHUNK_ROOM_AABB)) {
-        ReadRoomAABBChunk(ifile, version);
-        f_read_AABB = true;
+        f_read_AABB = ReadRoomAABBChunk(ifile, version);
       } else if (ISCHUNK(CHUNK_MATCEN_DATA)) {
         ReadMatcenChunk(ifile, version);
       } else if (ISCHUNK(CHUNK_LEVEL_GOALS)) {
@@ -4159,8 +4178,10 @@ int LoadLevel(char *filename, void (*cb_fn)(const char *, int, int)) {
         GameLightmaps[LightmapInfo[index].lm_handle].used++;
         lightmap_spoken_for[LightmapInfo[index].lm_handle] = 1;
 
+#ifdef EDITOR
         if (LightmapInfo[index].width == 128 || LightmapInfo[index].height == 128)
           no_128s = false;
+#endif
       }
     }
 

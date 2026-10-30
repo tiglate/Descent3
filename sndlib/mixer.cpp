@@ -174,8 +174,9 @@ void software_mixer::StreamMixer(char *ptr, int len) {
           f_mono = false;
           break;
         default:
-          Int3();
-          break;
+          LOG_WARNING.printf("MIX: Unsupported streaming format %d", cur_buf->play_info->m_stream_format);
+          cur_buf->m_status = SSF_UNUSED;
+          goto error_bail;
         }
         loop_start = 0;
         loop_end = np_sample_length - 1;
@@ -357,6 +358,11 @@ void software_mixer::StreamMixer(char *ptr, int len) {
           for (i = 0; i < (num_write << 1); i += 2) {
             int sample;
             const int mod_pos = samples_played % 4;
+            if (mod_pos < 0) {
+              LOG_WARNING.printf("MIX: Invalid sample position %d", samples_played);
+              cur_buf->m_status = SSF_UNUSED;
+              goto error_bail;
+            }
 
             if (sample_16bit) {
               switch (mod_pos) {
@@ -620,6 +626,6 @@ inline void opti_16s_mix(int16_t *cur_sample_16bit, const int num_write, int &sa
     *mb = (int16_t)l_sample;
     mb++;
     *mb = (int16_t)r_sample;
-    *mb++;
+    mb++;
   }
 }

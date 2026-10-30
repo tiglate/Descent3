@@ -2037,8 +2037,7 @@ int MultiSendRobotFireWeapon(uint16_t objectnum, vector *pos, vector *dir, uint1
     return 0;
   }
 
-  object *obj = &Objects[objectnum];
-  ASSERT(obj->flags & OF_CLIENT_KNOWS);
+  ASSERT(Objects[objectnum].flags & OF_CLIENT_KNOWS);
 
   size = START_DATA(MP_ROBOT_FIRE, data, &count);
   MultiAddUshort(objectnum, data, &count);
@@ -3298,9 +3297,9 @@ bool MultiEnoughAmmoToFire(int slot, int wb_index) {
 void MultiSubtractAmmoToFire(int slot, int wb_index) {
   ship *ship = &Ships[Players[slot].ship_index];
   otype_wb_info *wb = &ship->static_wb[wb_index];
-  Players[slot].weapon_ammo[wb_index] -= wb->ammo_usage;
-  if (Players[slot].weapon_ammo[wb_index] < 0)
-    Players[slot].weapon_ammo[wb_index] = 0;
+  // weapon_ammo is unsigned, so clamp before storing to avoid wrap-around
+  int ammo = Players[slot].weapon_ammo[wb_index] - wb->ammo_usage;
+  Players[slot].weapon_ammo[wb_index] = (ammo < 0) ? 0 : ammo;
 }
 
 #define MPFF_QUADED 128
@@ -4571,7 +4570,7 @@ void MultiDoJoinObjects(uint8_t *data) {
       type = MultiGetByte(data, &count);
     }
 
-    uint32_t checksum;
+    uint32_t checksum = 0;
     matrix orient;
 
     vm_MakeIdentity(&orient);
@@ -5081,7 +5080,7 @@ void MultiDoExecuteDLL(uint8_t *data) {
     local_me_objnum = -1;
   else {
     local_me_objnum = Server_object_list[me_objnum];
-    if (local_me_objnum == 65535) {
+    if (local_me_objnum == -1) {
       LOG_FATAL << "Invalid object in DoExecuteDLL";
       Int3();
       return;
@@ -5092,7 +5091,7 @@ void MultiDoExecuteDLL(uint8_t *data) {
     local_it_objnum = -1;
   else {
     local_it_objnum = Server_object_list[it_objnum];
-    if (local_it_objnum == 65535) {
+    if (local_it_objnum == -1) {
       LOG_FATAL << "Invalid object in DoExecuteDLL!";
       Int3();
       return;
@@ -6938,9 +6937,7 @@ void MultiSendRobotFireSound(int16_t soundidx, uint16_t objnum) {
   int count = 0;
   uint8_t data[MAX_GAME_DATA_SIZE];
   MULTI_ASSERT_NOMESSAGE(Netgame.local_role == LR_SERVER);
-  object *obj = &Objects[objnum];
-
-  ASSERT(obj->flags & OF_CLIENT_KNOWS);
+  ASSERT(Objects[objnum].flags & OF_CLIENT_KNOWS);
 
   size = START_DATA(MP_ROBOT_FIRE_SOUND, data, &count);
   MultiAddUshort(objnum, data, &count);
@@ -7022,7 +7019,7 @@ int MultiStuffTurretUpdate(uint16_t objnum, uint8_t *data) {
 
   object *obj = &Objects[objnum];
   polyobj_info *p_info = &obj->rtype.pobj_info;
-  if ((objnum >= 0) && (obj->type != OBJ_NONE) && (obj->type != OBJ_WEAPON) && (obj->flags & OF_POLYGON_OBJECT) &&
+  if ((obj->type != OBJ_NONE) && (obj->type != OBJ_WEAPON) && (obj->flags & OF_POLYGON_OBJECT) &&
       (p_info->multi_turret_info.num_turrets)) {
     int i;
     ASSERT(Objects[objnum].flags & OF_CLIENT_KNOWS);
@@ -7047,10 +7044,9 @@ int MultiStuffTurretUpdate(uint16_t objnum, uint8_t *data) {
 
 void MultiDoTurretUpdate(uint8_t *data) {
 
-  multi_turret multi_turret_info;
+  multi_turret multi_turret_info{};
   int objnum;
   uint16_t num_turrets;
-  float turr_time;
   int count = 0;
   MULTI_ASSERT_NOMESSAGE(Netgame.local_role != LR_SERVER);
 
@@ -7064,13 +7060,14 @@ void MultiDoTurretUpdate(uint8_t *data) {
     return;
   }
 
-  turr_time = MultiGetFloat(data, &count);
+  multi_turret_info.time = MultiGetFloat(data, &count);
   num_turrets = MultiGetUshort(data, &count);
   multi_turret_info.keyframes = (float *)&turret_holder;
-  multi_turret_info.num_turrets = num_turrets;
+  multi_turret_info.num_turrets = std::min<int>(num_turrets, UINT8_MAX);
   for (int i = 0; i < num_turrets; i++) {
-    if (MAX_COOP_TURRETS > i)
-      multi_turret_info.keyframes[i] = MultiGetFloat(data, &count);
+    float keyframe = MultiGetFloat(data, &count);
+    if (i < multi_turret_info.num_turrets)
+      multi_turret_info.keyframes[i] = keyframe;
   }
 
   if (Objects[objnum].type != 255) {
@@ -7694,6 +7691,11 @@ void MultiDoFileData(uint8_t *data) {
   playernum = MultiGetUshort(data, &count);
   // file_who = MultiGetUshort (data,&count);
   data_len = MultiGetUshort(data, &count);
+  LOG_DEBUG.printf("File transfer chunk from player %u: position %u, size %u", playernum, curr_len, data_len);
+  if (playernum >= MAX_PLAYERS || data_len > DATA_CHUNK_SIZE || data_len > total_len) {
+    LOG_WARNING << "Invalid file transfer chunk.";
+    return;
+  }
   if ((NetPlayers[playernum].file_xfer_flags == NETFILE_RECEIVING) ||
       (NetPlayers[playernum].file_xfer_flags == NETFILE_ASKING)) {
 
@@ -8335,7 +8337,7 @@ void MultiDoAiWeaponFlags(uint8_t *data) {
   int16_t obj_num = Server_object_list[MultiGetUshort(data, &count)];
   flags = MultiGetInt(data, &count);
   wb_index = MultiGetByte(data, &count);
-  if (obj_num == 65535) {
+  if (obj_num == -1) {
     LOG_FATAL.printf("Client/Server object lists don't match! (Server num %d)", obj_num);
     Int3();
     return;
@@ -9846,6 +9848,7 @@ void MultiProcessData(uint8_t *data, int len, int slot, network_address *from_ad
   case MP_REJECTED_CHECKSUM:
     ACCEPT_CONDITION(-1, -1);
     MultiDoServerRejectedChecksum(data);
+    break;
   default:
     LOG_FATAL.printf("Invalid packet type %d!", type);
     Int3(); // Invalid packet type!!!!
@@ -9888,7 +9891,7 @@ void MultiProcessBigData(uint8_t *buf, int len, network_address *from_addr) {
     sub_len = INTEL_SHORT((*(int16_t *)(buf + bytes_processed + 1)));
 
     if (sub_len < 3 || type == 0 || (len - bytes_processed) < 2) {
-      LOG_FATAL << "Got a corrupted packet!";
+      LOG_FATAL.printf("Got a corrupted packet after type %d with length %d", last_type, last_len);
       Int3();
       return; // just throw the rest out
     }

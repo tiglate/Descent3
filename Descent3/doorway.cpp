@@ -252,7 +252,6 @@ void DoorwayPlaySound(object *objp) {
 void DoorwayActivate(int door_obj_handle) {
   object *objp;
   doorway *dp;
-  door *door;
 
   objp = ObjGet(door_obj_handle);
 
@@ -268,9 +267,6 @@ void DoorwayActivate(int door_obj_handle) {
   // If already blasted, bail
   if (dp->flags & DF_BLASTED)
     return;
-
-  // Get pointer to door
-  door = &Doors[dp->doornum];
 
   // If already open or opening or waiting, do nothing
   if ((dp->state == DOORWAY_OPENING) || (dp->state == DOORWAY_WAITING) || (dp->state == DOORWAY_OPENING_AUTO))
@@ -298,7 +294,6 @@ void DoorwayActivate(int door_obj_handle) {
 void DoorwaySetPosition(int door_obj_handle, float pos) {
   object *objp;
   doorway *dp;
-  door *door;
 
   objp = ObjGet(door_obj_handle);
 
@@ -311,9 +306,6 @@ void DoorwaySetPosition(int door_obj_handle, float pos) {
   dp = GetDoorwayFromObject(door_obj_handle);
   if (!dp)
     return;
-
-  // Get pointer to door
-  door = &Doors[dp->doornum];
 
   // Set new dest position
   dp->dest_pos = pos;
@@ -401,12 +393,9 @@ void DoorwayDeactivateAll() {
 
 // Sets the corresponding door objects animation frame
 void DoorwayUpdateAnimation(room *rp) {
-  doorway *dway;
   poly_model *pm;
   int doornum;
   float norm;
-
-  dway = rp->doorway_data;
 
   object *objp = GetDoorObject(rp);
   if (!objp)

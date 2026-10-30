@@ -789,7 +789,6 @@ bool TelComShow(bool ingame, bool ShipSelect) {
   Skip_render_game_frame = true;
   Telcom_called_from_game = ingame;
 
-  bool result = false;
   int old_sm;
 
   Telcom_exit_to_mainmenu = false;
@@ -855,8 +854,6 @@ bool TelComShow(bool ingame, bool ShipSelect) {
 
   // do some final deactivation
   TelComDeactivate();
-
-  result = true;
 
 telcom_bad_error:
 
@@ -1863,7 +1860,7 @@ void TelcomCreateScreenOverlays(void) {
   TelcomCreateScanLine();
   TelcomLoadMouseCursor();
   TelcomCreateCorners();
-  //	TelcomCreateStaticOverlays();
+  TelcomCreateStaticOverlays();
   TelcomInitPowerEffect();
 }
 
@@ -1873,7 +1870,7 @@ void TelcomDestroyScreenOverlays(void) {
   TelcomDestroyScanLine();
   TelcomFreeMouseCursor();
   TelcomFreeCorners();
-  //	TelcomFreeStaticOverlays();
+  TelcomFreeStaticOverlays();
   TelcomFreePowerEffect();
 }
 
@@ -2125,7 +2122,7 @@ void TelcomCreateStaticOverlays(void) {
   int saturation = 10;
   int result;
   float amount;
-  uint16_t *data[8];
+  uint16_t *data[STATIC_BMPS];
 
   amount = ((float)saturation) * 0.4f;
 
@@ -2135,14 +2132,20 @@ void TelcomCreateStaticOverlays(void) {
   for (i = 0; i < 4; i++) {
     // last 4 bitmaps
     StaticBmps[i + 8] = bm_AllocBitmap(64, 64, 0);
-    data[i + 4] = bm_data(StaticBmps[i + 8], 0);
+    if (StaticBmps[i + 8] <= BAD_BITMAP_HANDLE)
+      return;
+    data[i + 8] = bm_data(StaticBmps[i + 8], 0);
 
     // middle 4 bitmaps
     StaticBmps[i + 4] = bm_AllocBitmap(64, 64, 0);
-    data[i] = bm_data(StaticBmps[i + 4], 0);
+    if (StaticBmps[i + 4] <= BAD_BITMAP_HANDLE)
+      return;
+    data[i + 4] = bm_data(StaticBmps[i + 4], 0);
 
     // first 4 bitmaps
     StaticBmps[i] = bm_AllocBitmap(128, 128, 0);
+    if (StaticBmps[i] <= BAD_BITMAP_HANDLE)
+      return;
     data[i] = bm_data(StaticBmps[i], 0);
   }
 
@@ -2155,6 +2158,19 @@ void TelcomCreateStaticOverlays(void) {
       result = (int)myrand(amount);
       if (!result) {
         if ((int)myrand(5) == 3)
+          data[i + 8][j] = def_color;
+        else {
+          uint8_t grey = (uint8_t)myrand(200) + 55;
+          data[i + 8][j] = OPAQUE_FLAG | GR_RGB16(grey, grey, grey);
+        }
+      } else
+        data[i + 8][j] = NEW_TRANSPARENT_COLOR;
+
+      // middle 4 bitmaps
+      ps_srand(t * 674338);
+      result = (int)myrand(amount);
+      if (!result) {
+        if ((int)myrand(5) == 3)
           data[i + 4][j] = def_color;
         else {
           uint8_t grey = (uint8_t)myrand(200) + 55;
@@ -2162,19 +2178,6 @@ void TelcomCreateStaticOverlays(void) {
         }
       } else
         data[i + 4][j] = NEW_TRANSPARENT_COLOR;
-
-      // middle 4 bitmaps
-      ps_srand(t * 674338);
-      result = (int)myrand(amount);
-      if (!result) {
-        if ((int)myrand(5) == 3)
-          data[i][j] = def_color;
-        else {
-          uint8_t grey = (uint8_t)myrand(200) + 55;
-          data[i][j] = OPAQUE_FLAG | GR_RGB16(grey, grey, grey);
-        }
-      } else
-        data[i][j] = NEW_TRANSPARENT_COLOR;
     }
   }
 
@@ -2236,6 +2239,10 @@ void TelcomDisplayStatic(float alpha) {
   rend_SetFiltering(0);
 
   int dy = ((int)myrand(32)) - 16;
+
+  for (int i = 0; i < STATIC_BMPS; i++)
+    if (StaticBmps[i] <= BAD_BITMAP_HANDLE)
+      return;
 
   int h = bm_h(StaticBmps[type], 0);
   int w = bm_w(StaticBmps[type], 0);
@@ -2499,7 +2506,6 @@ bool TelComPopEvent(tTCEvent *evt) {
  */
 void TelComSetFocusOnEffect(int efxnum) {
   int screen;
-  int effect_with_focus;
 
   if (TCEffects[efxnum].type == EFX_NONE)
     return;
@@ -2514,11 +2520,9 @@ void TelComSetFocusOnEffect(int efxnum) {
 
   // find the effect on the screen with focus
   int i = Screen_roots[screen];
-  effect_with_focus = -1;
 
   while (i != -1) {
     if (TCEffects[i].tab_stop && TCEffects[i].has_focus) {
-      effect_with_focus = i;
       break;
     }
 

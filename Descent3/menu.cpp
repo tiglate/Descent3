@@ -1242,7 +1242,7 @@ redo_newgame_menu:
   } else if (res == UID_OK || res == UID_MSNLB) {
     int index = msn_lb->GetCurrentIndex();
     std::filesystem::path nameptr;
-    if (index >= 0 && index < filelist.size()) {
+    if (index >= 0 && static_cast<size_t>(index) < filelist.size()) {
       nameptr = filelist[index];
     }
     if (nameptr.empty() || !LoadMission(PATH_TO_CSTR(nameptr))) {

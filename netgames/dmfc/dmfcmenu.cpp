@@ -474,6 +474,7 @@ void MenuItem::Execute(void) {
         }
       }
     }
+    [[fallthrough]];
   }
   case MIT_STATE: {
     // We need to go through the Submenus and check to see if the submenu has focus
@@ -708,6 +709,8 @@ void MenuItem::Draw(int x, int y, int height, int bmp, float *not_used) {
         color = GR_RGB(0, 180, 0);
       }
     } break;
+    default:
+      continue;
     }
 
     bool draw_text = true;

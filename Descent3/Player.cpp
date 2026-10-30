@@ -1803,7 +1803,7 @@ void DoPlayerFrameForOne(int slot) {
     obj->mtype.phys_info = observed->mtype.phys_info;
   }
 
-  if (obj->type == OBJ_PLAYER || obj->type == OBJ_OBSERVER && obj->id == Player_num) {
+  if (obj->type == OBJ_PLAYER || (obj->type == OBJ_OBSERVER && obj->id == Player_num)) {
     // Do camera stuff if needed
     SetupPlayerCamera();
   }
@@ -2869,7 +2869,7 @@ static constexpr const char *powerup_multipacks[] =
 
 // Returns the index of the multipack version of the specified powerup, or -1 if none
 int FindMultipackPowerup(int single_index) {
-  for (int i = 0; i < N_POWERUP_MULTIPACKS; i++) {
+  for (size_t i = 0; i < N_POWERUP_MULTIPACKS; i++) {
     if (stricmp(Object_info[single_index].name, powerup_multipacks[i * 2]) == 0)
       return FindObjectIDName(powerup_multipacks[i * 2 + 1]);
   }
@@ -3923,8 +3923,7 @@ void ThiefStealItem(int player_object_handle, int item) {
   } break;
 
   case THIEFITEM_CLOAK: {
-    if ((pobj->effect_info) && (pobj->effect_info->type_flags & EF_FADING_OUT) ||
-        (pobj->effect_info->type_flags & EF_CLOAKED)) {
+    if (pobj->effect_info && (pobj->effect_info->type_flags & (EF_FADING_OUT | EF_CLOAKED))) {
       MakeObjectVisible(pobj);
     }
   } break;

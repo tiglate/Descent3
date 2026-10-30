@@ -125,16 +125,12 @@ static void ReceiveHyperGameState(uint8_t *data);
 static void SendHyperGameState(int playernum);
 // Displays HUD scores
 static void DisplayHUDScores(struct tHUDItem *hitem);
-// Displays the Stats screen
-static void DisplayScores(void);
 // Sorts based on score
 static void SortPlayerScores(int *sortedindex, int size);
 // Updates the effect on all the players
 static void UpdateEffect(void);
 // Displays the Welcome Screen
 static void DisplayWelcomeScreen(int pnum);
-// Handler for menu item for turning on/off blinking hud
-static void SwitchBlinkingHud(int i);
 // Generates a valid random room
 static int GetRandomValidRoom(void);
 // Moves the HyperOrb to the center of a random room
@@ -914,7 +910,7 @@ void SaveStatsToFile(char *filename) {
 // write out game stats
 #define BUFSIZE 150
   char buffer[BUFSIZE];
-  char tempbuffer[25];
+  char tempbuffer[26];
   int sortedslots[MAX_PLAYER_RECORDS];
   player_record *pr, *dpr;
   tPInfoStat stat;

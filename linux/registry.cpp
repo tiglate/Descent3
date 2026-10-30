@@ -79,11 +79,7 @@ char *SkipWhite(char *p) {
 // Parses a quoted string
 // Returns true if got string ok, else false
 char *ParseString(char *p, char *buf, int bufsize, char sdelim, char edelim) {
-  char *save_p;
-
   p = SkipWhite(p);
-
-  save_p = p;
 
   if (*p != sdelim) {
     return NULL;
@@ -113,9 +109,7 @@ char *ParseString(char *p, char *buf, int bufsize, char sdelim, char edelim) {
 
 // Parses a sequence of non-space characters
 char *ParseToken(char *p, char *buf, int bufsize) {
-  char *save_p;
   p = SkipWhite(p);
-  save_p = p;
 
   while (!isspace(*p) && (*p != ',') && *p && --bufsize)
     *buf++ = *p++;
@@ -244,15 +238,12 @@ bool CRegistry::Import() {
 
   bool oktocreate;
   // loop till we are done
-  while (!feof(file)) {
+  while (fgets(buffer, sizeof(buffer), file)) {
     oktocreate = true;
     char type = REGT_STRING;
 
     // read in the string
-    fgets(buffer, 500, file);
     ptr = buffer;
-    if (feof(file)) // we are at the end of the file so there isn't data to continue
-      oktocreate = false;
     // see what we read, a key or record, if the first character is a [ than a key " is record
     if (oktocreate) {
       if (buffer[0] == '[') {

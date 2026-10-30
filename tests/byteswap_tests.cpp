@@ -16,6 +16,8 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <cstring>
+
 #include <gtest/gtest.h>
 
 #include "byteswap.h"
@@ -27,18 +29,21 @@
 
 // Stupid function to trick the compiler into letting me byteswap a float
 inline float SWAPFLOAT(float x) {
-  int i = SWAPINT(*((int *)&(x)));
-  return *((float *)&(i));
+  int i;
+  memcpy(&i, &x, sizeof(i));
+  i = SWAPINT(i);
+  float f;
+  memcpy(&f, &i, sizeof(f));
+  return f;
 }
 
 // Taken from CFILE.cpp
 inline double SWAPDOUBLE(double x) {
-  double t;
-  int *sp = (int *)&x;
-  int *dp = (int *)&t;
+  int sp[2], dp[2];
+  memcpy(sp, &x, sizeof(sp));
   dp[0] = SWAPINT(sp[1]);
   dp[1] = SWAPINT(sp[0]);
-  x = t;
+  memcpy(&x, dp, sizeof(x));
 
   return x;
 }

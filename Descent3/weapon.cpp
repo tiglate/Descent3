@@ -833,8 +833,6 @@ bool IsWeaponSecondary(int index) {
 
 //	unconditionally adds a weapon and ammo to a player.
 int AddWeaponToPlayer(int slot, int weap_index, int ammo) {
-  bool select_new = false;
-
   LOGFILE((_logfp, "Adding weapon(%d,ammo=%d) to player.\n", weap_index, ammo));
 
   Players[slot].weapon_flags |= HAS_FLAG(weap_index);
@@ -854,14 +852,9 @@ int AddWeaponToPlayer(int slot, int weap_index, int ammo) {
 
   if (slot == Player_num) {
     if (weap_index < SECONDARY_INDEX)
-      select_new = AutoSelectWeapon(PW_PRIMARY, weap_index);
+      AutoSelectWeapon(PW_PRIMARY, weap_index);
     else
-      select_new = AutoSelectWeapon(PW_SECONDARY, weap_index);
-
-    // this should be done in multisafe code now.
-    // if (!select_new) {
-    //	AddHUDMessage ("%s!",TXT(Static_weapon_names_msg[weap_index]));
-    //}
+      AutoSelectWeapon(PW_SECONDARY, weap_index);
   }
 
   return 1;

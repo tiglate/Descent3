@@ -297,6 +297,8 @@ int STDCALL SaveRestoreState(void *file_ptr, uint8_t saving_state) {
   } else {
     version = File_ReadByte(file_ptr);
     size++;
+    if (version != VERSION)
+      return size;
 
     // restore rapid fire data
     for (i = 0; i < MAX_PLAYERS; i++) {

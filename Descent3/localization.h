@@ -78,6 +78,7 @@ class GrowString {
 public:
   GrowString();
   ~GrowString();
+  GrowString(const GrowString &) = default; // keep the implicit copy; declaring operator= deprecates it
   void Destroy(void);
   void operator+=(char *str);
   GrowString operator+(char *str);

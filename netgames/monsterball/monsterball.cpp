@@ -283,24 +283,18 @@ const char *GetStringFromTable(int d) {
 //////////////////////////////////
 // Prototypes
 static void DisplayHUDScores(struct tHUDItem *hitem);
-static void DisplayStats(void);
 static void GetGameStartPacket(uint8_t *data);
 static void SendGameStartPacket(int pnum);
 static bool GetMonsterballInfo(int id);
 static void SortTeams(void);
 static void DisplayWelcomeMessage(int player_num);
 static void OnTimerScore(void);
-static void OnTimer(void);
 static void OnTimerScoreKill(void);
-static void OnTimerKill(void);
-static void OnTimerRegen(void);
-static void OnTimerRegenKill(void);
 static void SaveStatsToFile(char *filename);
 static void SortPlayerSlots(int *sorted_list, int count);
 static void SendLastHitInfo(void);
 static void GetLastHitInfo(uint8_t *data);
 
-static void HandlePickupPowerball(object *owner);
 static void HandleLosePowerball(bool play_sound);
 static void HandleMonsterballCollideWithObject(object *ball, object *player, vector *point, vector *normal);
 static void HandleMonsterballCollideWithWeapon(object *ball, weapon_collide_info *winfo, vector *point, vector *normal);
@@ -775,31 +769,6 @@ void HandleLosePowerball(bool play_sound) {
   Monsterball_info.owner_handle = OBJECT_HANDLE_NONE;
 }
 
-void HandlePickupPowerball(object *owner) {
-  static int sound = -1;
-
-  if (sound == -1)
-    sound = DLLFindSoundName(IGNORE_TABLE(MONSTERBALL_SND_PICKUP));
-  if (sound != -1)
-    DLLPlay2dSound(sound, MAX_GAME_VOLUME / 2);
-
-  if (DMFCBase->GetLocalRole() == LR_SERVER) {
-    // if it was a player, attach the ball to the player
-    object *bobj;
-    if (!DLLObjGet(Monsterball_info.objhandle, &bobj)) {
-      FatalError("Monster Ball not found\n");
-    }
-
-    bool ret = DLLAttachObject(owner, 0, bobj, 0, true);
-    if (!ret) {
-      // blah!
-      mprintf(0, "COULDN'T ATTACH MONSTERBALL TO PLAYER!!!!!!\n");
-    }
-  }
-
-  Monsterball_info.owner_handle = owner->handle;
-}
-
 void OnClientCollide(object *me_obj, object *it_obj, vector *point, vector *normal) {
   // three things can happen in here
   // 1) The collision is between the ball (with no owner) and a player
@@ -830,7 +799,6 @@ void OnClientCollide(object *me_obj, object *it_obj, vector *point, vector *norm
       int p = 0;
       if (!ValidateOwner(&p, NULL) && p != it_obj->id) {
         ASSERT(it_obj->type == OBJ_PLAYER);
-        // HandlePickupPowerball(it_obj);
         HandleMonsterballCollideWithObject(me_obj, it_obj, point, normal);
       }
     }
@@ -1440,7 +1408,7 @@ void SaveStatsToFile(char *filename) {
 // write out game stats
 #define BUFSIZE 150
   char buffer[BUFSIZE];
-  char tempbuffer[25];
+  char tempbuffer[26];
   int sortedslots[MAX_PLAYER_RECORDS];
   player_record *pr, *dpr;
   tPInfoStat stat;
@@ -1578,7 +1546,8 @@ void SaveStatsToFile(char *filename) {
           dpr = DMFCBase->GetPlayerRecord(stat.slot);
 
           if (dpr) {
-            strncpy(tempbuffer, DMFCBase->GetTeamString(dpr->team), sizeof(tempbuffer));
+            snprintf(tempbuffer, sizeof(tempbuffer), "%.*s", static_cast<int>(sizeof(tempbuffer) - 1),
+                     DMFCBase->GetTeamString(dpr->team));
             memcpy(buffer, tempbuffer, strlen(tempbuffer));
 
             strcpy(tempbuffer, dpr->callsign);
@@ -1667,23 +1636,17 @@ void DisplayHUDScores(struct tHUDItem *hitem) {
     return;
 
   int height = DLLgrfont_GetHeight((DMFCBase->GetGameFontTranslateArray())[HUD_FONT_INDEX]) + 3;
-  int y, x, team, p;
+  int y, x, team;
 
   uint8_t alpha = DMFCBase->ConvertHUDAlpha((uint8_t)255);
 
-  if (!ValidateOwner(&p, NULL)) {
-    p = -1;
-  }
+  ValidateOwner(NULL, NULL);
 
   y = (DMFCBase->GetGameWindowH() / 2) - ((height * 2) / 2);
   x = 510;
 
   team = DMFCBase->GetMyTeam();
   DLLRenderHUDText(DMFCBase->GetTeamColor(team), 255, 0, x, 0, TXT_SAVESTATSTEAM, DMFCBase->GetTeamString(team));
-
-  int powerteam = -1;
-  if (p != -1)
-    powerteam = DMFCBase->GetPlayerTeam(p);
 
   int myteam = DMFCBase->GetMyTeam();
   int team_count;

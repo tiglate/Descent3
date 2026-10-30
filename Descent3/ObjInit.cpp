@@ -726,7 +726,7 @@ int ObjInitGeneric(object *objp, bool reinit) {
   object_info *obj_info;
   int ret = 1;
   float r_val = (float)ps_rand() / (float)D3_RAND_MAX;
-  if ((objp->id < 0) || (objp->id >= MAX_OBJECT_IDS)) {
+  if (objp->id >= MAX_OBJECT_IDS) {
     Int3();
     return 0;
   }
@@ -734,11 +734,13 @@ int ObjInitGeneric(object *objp, bool reinit) {
   // Deal with deleted type
   if (obj_info->type == OBJ_NONE) {
     int i;
-    for (i = 0, obj_info = Object_info; i < MAX_OBJECT_IDS; i++, obj_info) { // find other object of same type
+    for (i = 0, obj_info = Object_info; i < MAX_OBJECT_IDS; i++, obj_info++) { // find other object of same type
       if (Object_info[i].type == objp->type)
         break;
     }
     ASSERT(i < MAX_OBJECT_IDS); // There should (in real life) always be at least one of each type
+    if (i == MAX_OBJECT_IDS)
+      return 0;
 #ifdef EDITOR
     if (GetFunctionMode() == EDITOR_MODE)
       OutrageMessageBox("Object %d (\"%s\") had ID %d which no longer exists.  Changing to %d, \"%s\".", OBJNUM(objp),
@@ -967,7 +969,7 @@ int ObjInitWeapon(object *objp) {
   int ret = 1;
   ASSERT(objp->type == OBJ_WEAPON);
 
-  if (objp->id < 0 || objp->id >= MAX_WEAPONS)
+  if (objp->id >= MAX_WEAPONS)
     return 0;
 
   weap = &Weapons[objp->id];

@@ -232,12 +232,13 @@ uint16_t PPic_QueryPilot(char *pilot_name) {
       done = true;
       continue;
     }
+    if (name_size >= sizeof(name_buffer))
+      return count;
     cf_ReadBytes((uint8_t *)name_buffer, name_size, file);
     name_buffer[name_size] = '\0';
 
     // next read in pilot_id
-    uint16_t pilot_id;
-    pilot_id = (uint16_t)cf_ReadShort(file);
+    cf_ReadShort(file);
 
     // next read past the bitmap name
     uint8_t bmp_size;
@@ -433,7 +434,6 @@ int PPic_GetBitmapHandle(uint16_t pilot_id) {
     cfseek(PilotPic_database_index_handle, oldoffset, SEEK_SET);
     return -1;
   }
-
   // read in the pilot name
   // ----------------------
   uint8_t name_size;
@@ -443,12 +443,15 @@ int PPic_GetBitmapHandle(uint16_t pilot_id) {
     cfseek(PilotPic_database_index_handle, oldoffset, SEEK_SET);
     return -1;
   }
+  if (name_size >= sizeof(name_buffer)) {
+    cfseek(PilotPic_database_index_handle, oldoffset, SEEK_SET);
+    return -1;
+  }
   cf_ReadBytes((uint8_t *)name_buffer, name_size, PilotPic_database_index_handle);
   name_buffer[name_size] = '\0';
 
   // next read in pilot_id
-  uint16_t pid;
-  pid = (uint16_t)cf_ReadShort(PilotPic_database_index_handle);
+  cf_ReadShort(PilotPic_database_index_handle);
 
   // next read past the bitmap name
   uint8_t bmp_size;
@@ -663,12 +666,13 @@ int PPic_JumpToPilot(char *pilot_name) {
       done = true;
       continue;
     }
+    if (name_size >= sizeof(name_buffer))
+      return -1;
     cf_ReadBytes((uint8_t *)name_buffer, name_size, file);
     name_buffer[name_size] = '\0';
 
     // next read in pilot_id
-    uint16_t pilot_id;
-    pilot_id = (uint16_t)cf_ReadShort(file);
+    cf_ReadShort(file);
 
     // next read past the bitmap name
     uint8_t bmp_size;

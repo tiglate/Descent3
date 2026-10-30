@@ -1032,7 +1032,7 @@ void RenderTerrainRooms() {
   int room_count = 0;
   float zdist;
   int use_occlusion = 0;
-  int src_occlusion_index;
+  int src_occlusion_index = 0;
   int i;
   if (Terrain_from_mine)
     return;
@@ -1111,7 +1111,7 @@ void RenderAllTerrainObjects() {
   int obj_count = 0;
   float zdist;
   int use_occlusion = 0;
-  int src_occlusion_index;
+  int src_occlusion_index = 0;
   int i;
   if ((Terrain_checksum + 1) == Terrain_occlusion_checksum) {
     use_occlusion = 1;
@@ -2282,12 +2282,11 @@ int BuildEdgeLists(int *n, int tlist_index) {
   int edgecount = 0;
   int edge1, edge2;
   float delta, cury;
-  int max_edge_size = 1 << (MAX_TERRAIN_LOD - 1);
 
   t = Terrain_list[tlist_index].segment;
   lod = Terrain_list[tlist_index].lod;
   simplemul = 1 << ((MAX_TERRAIN_LOD - 1) - lod);
-  ASSERT(simplemul <= max_edge_size);
+  ASSERT(simplemul <= (1 << (MAX_TERRAIN_LOD - 1)));
   cx = t % TERRAIN_WIDTH;
   cz = t / TERRAIN_WIDTH;
   if (cx == TERRAIN_WIDTH - simplemul) {
@@ -2556,11 +2555,10 @@ void TerrainCellVisible(int index, int *upper_left, int *lower_right) {
 }
 
 void DisplayTerrainList(int cellcount, bool from_automap) {
-  int total = 0, on, t, i, lod, simplemul;
+  int total = 0, t, i, lod, simplemul;
   int bm_handle;
   bool draw_lightmap = false;
-  int savecell;
-  int obj_to_draw;
+  int savecell = cellcount;
   Terrain_objects_drawn = 0;
   rend_SetWrapType(WT_WRAP);
   if (!UseHardware)
@@ -2599,7 +2597,7 @@ void DisplayTerrainList(int cellcount, bool from_automap) {
     cx = t % TERRAIN_WIDTH;
     cz = t / TERRAIN_WIDTH;
 
-    if (cx < TERRAIN_WIDTH - simplemul && cz < TERRAIN_DEPTH - simplemul || lod != (MAX_TERRAIN_LOD - 1)) {
+    if ((cx < TERRAIN_WIDTH - simplemul && cz < TERRAIN_DEPTH - simplemul) || lod != (MAX_TERRAIN_LOD - 1)) {
       int ul, lr; // upper_left,lower_right
       if (Terrain_seg[t].flags & TF_INVISIBLE)
         if (!Show_invisible_terrain)
@@ -2615,19 +2613,19 @@ void DisplayTerrainList(int cellcount, bool from_automap) {
 
       if (UseHardware) {
         if (draw_lightmap)
-          on = DrawTerrainTrianglesHardware(seg_to_render, bm_handle, ul, lr);
+          DrawTerrainTrianglesHardware(seg_to_render, bm_handle, ul, lr);
         else
-          on = DrawTerrainTrianglesHardwareNoLight(seg_to_render, bm_handle, ul, lr);
+          DrawTerrainTrianglesHardwareNoLight(seg_to_render, bm_handle, ul, lr);
 
       } else
-        on = DrawTerrainTrianglesSoftware(seg_to_render, bm_handle, ul, lr);
+        DrawTerrainTrianglesSoftware(seg_to_render, bm_handle, ul, lr);
     }
 
   draw_objects:;
 // Now draw any objects in this segment
 #if (!defined(RELEASE) || defined(NEWEDITOR))
     if (!UseHardware) {
-      obj_to_draw = Terrain_seg_render_objs[t];
+      int obj_to_draw = Terrain_seg_render_objs[t];
 
       while (obj_to_draw != -1) {
 

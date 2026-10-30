@@ -41,19 +41,6 @@ DLLEXPORT int STDCALL SaveRestoreState(void *file_ptr, uint8_t saving_state);
 }
 #endif
 
-static int String_table_size = 0;
-static char **String_table = NULL;
-static const char *_Error_string = "!!ERROR MISSING STRING!!";
-static const char *_Empty_string = "";
-static const char *GetStringFromTable(int index) {
-  if ((index < 0) || (index >= String_table_size))
-    return _Error_string;
-  if (!String_table[index])
-    return _Empty_string;
-  return String_table[index];
-}
-#define TXT(x) GetStringFromTable(x)
-
 #define ID_FRAGCRATE 0
 #define ID_NAPALMBARREL 1
 #define ID_ALIENCUPLINK 2
@@ -139,8 +126,6 @@ public:
 //	Returns 1 if initialization went ok, 0 if there was an error and the DLL should not be loaded.
 char STDCALL InitializeDLL(tOSIRISModuleInit *func_list) {
   osicommon_Initialize((tOSIRISModuleInit *)func_list);
-  String_table_size = func_list->string_count;
-  String_table = func_list->string_table;
   if (func_list->game_checksum != CHECKSUM) {
     mprintf(0, "Game-Checksum FAIL!!! (%ul!=%ul)\n", func_list->game_checksum, CHECKSUM);
     mprintf(0, "RECOMPILE YOUR SCRIPTS!!!\n");
@@ -293,14 +278,13 @@ int16_t FragCrate::CallEvent(int event, tOSIRISEventInfo *data) {
   case EVT_DESTROY:
     vector pos;
     int weapon_id;
-    int handle;
     int room;
 
     Obj_Value(data->me_handle, VF_GET, OBJV_I_ROOMNUM, &room);
     Obj_Value(data->me_handle, VF_GET, OBJV_V_POS, &pos);
     weapon_id = Wpn_FindID("fragbarrel");
 
-    handle = Obj_Create(OBJ_WEAPON, weapon_id, room, &pos, NULL, data->me_handle);
+    Obj_Create(OBJ_WEAPON, weapon_id, room, &pos, NULL, data->me_handle);
 
     break;
   }

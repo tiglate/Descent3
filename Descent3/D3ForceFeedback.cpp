@@ -429,7 +429,7 @@ void ForceEffectsPlay(int id, float *scale, vector *direction) {
 }
 
 void DoForceForWeapon(object *me_obj, object *it_obj, vector *force_vec) {
-  if (it_obj->id < 0 || it_obj->id >= MAX_WEAPONS)
+  if (it_obj->id >= MAX_WEAPONS)
     return;
 
   weapon *weap = &Weapons[it_obj->id];

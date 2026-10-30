@@ -637,7 +637,6 @@ void hlsSystem::StopAllSounds() {
 
 void hlsSystem::BeginSoundFrame(bool f_in_game) {
   bool hwsound_support;   // if this is true, sound_render_system is being used
-  int16_t *sound_room_list; // these values are only meant for sound render system
   int i, n, counter = 0;
   pos_state listener_pos;
   const int num_samples_this_frame = (int)(Frametime * 22050);
@@ -648,7 +647,6 @@ void hlsSystem::BeginSoundFrame(bool f_in_game) {
   // non game sound frame, this, just updates currently playing sounds.
   // placed here to leave early and ensure any further processing involves game only.
   if (!f_in_game) {
-    sound_room_list = NULL;
     for (i = 0, counter = 0; i < MAX_SOUND_OBJECTS; i++) {
       if (m_sound_objects[i].m_obj_type_flags && m_sound_objects[i].m_sound_uid != -1) {
         counter++;
@@ -689,7 +687,8 @@ void hlsSystem::BeginSoundFrame(bool f_in_game) {
     }
   }
   // render all rooms within a certain range from player (traverse rooms through portals)
-  sound_room_list = hwsound_support ? sound_render_audible_rooms(&listener_pos) : NULL;
+  if (hwsound_support)
+    sound_render_audible_rooms(&listener_pos);
   //	SoundQ_process();
   // if sound object is outside listener's cone of audibility, emulate the sound.
   //	if sound is audible, then determine its playback properties.

@@ -93,9 +93,11 @@ void textaux_WordWrap(const char *src, char *dest, int width, int font) {
       case '\0':
         // we are done with everything
         done = true;
+        [[fallthrough]];
       case '\n':
         // we are done with this line
         curr_width = width + 1;
+        [[fallthrough]];
       case ' ':
         // update last_word
         last_word = &start_line[index];

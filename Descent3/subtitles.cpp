@@ -246,7 +246,6 @@ void SubtDrawSubtitles(int frame_num) {
   static int active_subtitles[MAX_ACTIVE_SUBTITLES];
   static int num_active_subtitles, next_subtitle, line_spacing;
   int t, y, fh;
-  int must_erase = 0;
 
   if (Movie_subtitle_init) {
     num_active_subtitles = 0;
@@ -263,7 +262,6 @@ void SubtDrawSubtitles(int frame_num) {
       for (t2 = t; t2 < num_active_subtitles - 1; t2++)
         active_subtitles[t2] = active_subtitles[t2 + 1];
       num_active_subtitles--;
-      must_erase = 1;
     } else
       t++;
   }

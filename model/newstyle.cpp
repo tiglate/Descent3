@@ -138,15 +138,6 @@ int ModelFaceSortFunc(const int16_t *a, const int16_t *b) {
 }
 
 #ifdef _DEBUG
-static void model_draw_outline(int nverts, g3Point **pointlist) {
-  int i;
-
-  for (i = 0; i < nverts - 1; i++)
-    g3_DrawLine(GR_RGB(255, 255, 255), pointlist[i], pointlist[i + 1]);
-
-  g3_DrawLine(GR_RGB(255, 255, 255), pointlist[i], pointlist[0]);
-}
-
 static void DrawSubmodelFaceOutline(int nv, g3Point **pointlist) {
   int i;
   g3Point tpnt[64];

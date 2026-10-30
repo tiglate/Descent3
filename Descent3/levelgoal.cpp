@@ -410,7 +410,7 @@ bool lgoal::GetStatus(int handle, char operation, int *value, bool f_save_load, 
   case LO_CLEAR_SPECIFIED:
     // multisafe will pass in 0xFFFFFFFF on a clear before actually setting flags,
     // so we need to ignore that case
-    if ((*value) != 0xFFFFFFFF && m_goal_completed) {
+    if (*value != -1 && m_goal_completed) {
       // check to see if we are marking this goal as "Not completed"
       if ((*value) & LGF_COMPLETED) {
         // unmark this m_goal_completed variable
@@ -443,77 +443,29 @@ bool lgoal::SetDesc(char *desc) {
   return true;
 }
 
-int lgoal::GetName(char *name, int buffer_size) {
-  if (!name)
+static int CopyGoalText(char *destination, int buffer_size, const char *source) {
+  if (!destination)
     return 0;
-
-  if (buffer_size <= 0)
-    return strlen(m_name);
-
-  if (m_name == NULL) {
-    name[0] = '\0';
-    return 0;
+  const size_t length = source ? strlen(source) : 0;
+  if (buffer_size > 0) {
+    const size_t capacity = static_cast<size_t>(buffer_size - 1);
+    const size_t copied = length < capacity ? length : capacity;
+    if (copied)
+      memcpy(destination, source, copied);
+    destination[copied] = '\0';
   }
-
-  strncpy(name, m_name, buffer_size);
-  name[buffer_size - 1] = '\0';
-
-  return strlen(m_name);
+  return static_cast<int>(length);
 }
+
+int lgoal::GetName(char *name, int buffer_size) { return CopyGoalText(name, buffer_size, m_name); }
 
 int lgoal::GetCompletionMessage(char *message, int buffer_size) {
-  if (!message)
-    return 0;
-
-  if (buffer_size <= 0)
-    return strlen(m_completion_message);
-
-  if (m_completion_message == NULL) {
-    message[0] = '\0';
-    return 0;
-  }
-
-  strncpy(message, m_completion_message, buffer_size);
-  message[buffer_size - 1] = '\0';
-
-  return strlen(m_completion_message);
+  return CopyGoalText(message, buffer_size, m_completion_message);
 }
 
-int lgoal::GetItemName(char *iname, int buffer_size) {
-  if (!iname)
-    return 0;
+int lgoal::GetItemName(char *iname, int buffer_size) { return CopyGoalText(iname, buffer_size, m_item_name); }
 
-  if (buffer_size <= 0)
-    return strlen(m_item_name);
-
-  if (m_item_name == NULL) {
-    iname[0] = '\0';
-    return 0;
-  }
-
-  strncpy(iname, m_item_name, buffer_size);
-  iname[buffer_size - 1] = '\0';
-
-  return strlen(m_item_name);
-}
-
-int lgoal::GetDesc(char *desc, int buffer_size) {
-  if (!desc)
-    return 0;
-
-  if (buffer_size <= 0)
-    return strlen(m_desc);
-
-  if (m_desc == NULL) {
-    desc[0] = '\0';
-    return 0;
-  }
-
-  strncpy(desc, m_desc, buffer_size);
-  desc[buffer_size - 1] = '\0';
-
-  return strlen(m_desc);
-}
+int lgoal::GetDesc(char *desc, int buffer_size) { return CopyGoalText(desc, buffer_size, m_desc); }
 
 int lgoal::GetNumItems() { return m_num_items; }
 
@@ -782,7 +734,8 @@ bool levelgoals::SaveLevelGoalInfo(CFILE *fptr) {
       int handle;
       bool f_done;
 
-      Level_goals.GoalItemInfo(i, j, LO_GET_SPECIFIED, &type, &handle, &f_done);
+      if (!Level_goals.GoalItemInfo(i, j, LO_GET_SPECIFIED, &type, &handle, &f_done))
+        return false;
       cf_WriteByte(fptr, type);
       cf_WriteInt(fptr, handle);
       cf_WriteByte(fptr, (char)f_done);
@@ -837,6 +790,8 @@ bool levelgoals::LoadLevelGoalInfo(CFILE *fptr) {
 
     int gi = AddGoal(false);
     ASSERT(gi == i);
+    if (gi != i)
+      return false;
 
     status = cf_ReadInt(fptr);
     m_goal[i].GetStatus(i, LO_SET_SPECIFIED, &status, true);
@@ -852,18 +807,24 @@ bool levelgoals::LoadLevelGoalInfo(CFILE *fptr) {
     Level_goals.GoalGoalList(i, LO_SET_SPECIFIED, &g_list);
 
     len = cf_ReadShort(fptr);
+    if (len < 0 || static_cast<size_t>(len) >= sizeof(name))
+      return false;
     if (len) {
       cf_ReadBytes((uint8_t *)name, len, fptr);
     }
     name[len] = '\0';
 
     len = cf_ReadShort(fptr);
+    if (len < 0 || static_cast<size_t>(len) >= sizeof(iname))
+      return false;
     if (len) {
       cf_ReadBytes((uint8_t *)iname, len, fptr);
     }
     iname[len] = '\0';
 
     len = cf_ReadShort(fptr);
+    if (len < 0 || static_cast<size_t>(len) >= sizeof(desc))
+      return false;
     if (len) {
       cf_ReadBytes((uint8_t *)desc, len, fptr);
     }
@@ -873,6 +834,8 @@ bool levelgoals::LoadLevelGoalInfo(CFILE *fptr) {
       message[0] = '\0';
     } else {
       len = cf_ReadShort(fptr);
+      if (len < 0 || static_cast<size_t>(len) >= sizeof(message))
+        return false;
       if (len) {
         cf_ReadBytes((uint8_t *)message, len, fptr);
       }
@@ -892,6 +855,8 @@ bool levelgoals::LoadLevelGoalInfo(CFILE *fptr) {
 
       int item_slot = GoalAddItem(i);
       ASSERT(item_slot == j);
+      if (item_slot != j)
+        return false;
 
       type = cf_ReadByte(fptr);
       handle = cf_ReadInt(fptr);
@@ -1072,7 +1037,8 @@ void levelgoals::DoFrame() {
         bool cdone;
         bool f_done = true;
 
-        m_goal[i].ItemInfo(0, LO_GET_SPECIFIED, &ctype, &chandle, &cdone);
+        if (!m_goal[i].ItemInfo(0, LO_GET_SPECIFIED, &ctype, &chandle, &cdone))
+          continue;
 
         if (ctype == LIT_TERRAIN_CELL) {
           if (Game_mode & GM_MULTI) {
@@ -1234,7 +1200,8 @@ void levelgoals::Inform(char type, int comp_type, int handle) {
       int chandle;
       bool cdone;
 
-      m_goal[i].ItemInfo(j, LO_GET_SPECIFIED, &ctype, &chandle, &cdone);
+      if (!m_goal[i].ItemInfo(j, LO_GET_SPECIFIED, &ctype, &chandle, &cdone))
+        continue;
 
       if (cdone || type != ctype || chandle != handle) {
         continue;

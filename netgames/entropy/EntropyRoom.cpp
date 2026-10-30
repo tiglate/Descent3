@@ -167,8 +167,7 @@ void DoServerConfigureDialog(void) {
     case UID_OK: // start game
       exit_menu = true;
       DLLEditGetText(virus_pk_edit, tempbuffer, 20);
-      int newpk = atoi(tempbuffer);
-      DLLmprintf(0, "New Virus/Kill = %d\n", newpk);
+      DLLmprintf(0, "New Virus/Kill = %d\n", atoi(tempbuffer));
       break;
     };
   }

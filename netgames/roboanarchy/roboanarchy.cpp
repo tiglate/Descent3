@@ -73,7 +73,6 @@ static uint8_t HUD_color_model = ACM_PLAYERCOLOR;
 static bool display_my_welcome = false;
 
 static void DisplayHUDScores(struct tHUDItem *hitem);
-static void DisplayScores(void);
 static void DisplayWelcomeMessage(int player_num);
 static void SaveStatsToFile(char *filename);
 static void SwitchHUDColor(int i);
@@ -552,7 +551,7 @@ void SaveStatsToFile(char *filename) {
 // write out game stats
 #define BUFSIZE 150
   char buffer[BUFSIZE];
-  char tempbuffer[25];
+  char tempbuffer[26];
   int sortedslots[MAX_PLAYER_RECORDS];
   player_record *pr, *dpr;
   tPInfoStat stat;
@@ -904,6 +903,7 @@ void DisplayHUDScores(struct tHUDItem *hitem) {
             color = (DMFCBase->GetPlayerColors())[pr->pnum];
             break;
           case ACM_NORMAL:
+          default:
             color = GR_RGB(40, 255, 40);
             break;
           };
@@ -946,6 +946,7 @@ void DisplayHUDScores(struct tHUDItem *hitem) {
               color = (DMFCBase->GetPlayerColors())[pr->pnum];
               break;
             case ACM_NORMAL:
+            default:
               color = GR_RGB(40, 255, 40);
               break;
             };

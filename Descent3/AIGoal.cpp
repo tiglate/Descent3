@@ -883,12 +883,12 @@ int GoalAllocSlot(object *obj, int level, float influence) {
   }
 
   if (level < NUM_ACTIVATION_LEVELS) {
-    cur_slot = level;
-
     if (level < 0) {
       LOG_DEBUG << "AI: Bashed an invalid activation level to zero";
       level = 0;
     }
+
+    cur_slot = level;
 
     if (ai_info->goals[cur_slot].used) {
       if (!(ai_info->goals[cur_slot].flags & GF_NONFLUSHABLE))

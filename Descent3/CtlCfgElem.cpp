@@ -915,6 +915,7 @@ int cfg_element_ui::DoUI() {
     if (key == KEY_ESC) {
       retval = UID_CANCEL;
       quit = true;
+      break;
     }
 
     // input must go here.
@@ -922,7 +923,7 @@ int cfg_element_ui::DoUI() {
     case ctKey: {
       // perform simple key processing.
       if (key > 0) {
-        if (Ctltext_KeyBindings[key & 0xff]) {
+        if (Ctltext_KeyBindings[key & 0xff][0]) {
           m_element = (key & 0xff);
           quit = true;
         } else {
@@ -1016,6 +1017,7 @@ int cfg_element_ui::DoUI() {
 
     if (GetUIFrameResult() == NEWUIRES_FORCEQUIT) {
       quit = true;
+      retval = UID_CANCEL;
     }
 
     m_alpha += adj;
@@ -1035,7 +1037,7 @@ int cfg_element_ui::DoUI() {
   ddio_MouseQueueFlush();
   ui_Flush();
 
-  return UID_OK;
+  return retval;
 }
 
 void cfg_element_ui::OnDraw() {

@@ -329,10 +329,9 @@ void Inventory::Reset(bool in_game, int reset_stage) {
   if (reset_stage < 0 || reset_stage > 2)
     reset_stage = 2;
 
-  inven_item *current = root, *next, *new_root;
+  inven_item *current = root, *next;
 
   int item_count = count;
-  new_root = NULL;
   object *obj;
 
   bool remove_nonspewers = false;

@@ -400,6 +400,7 @@ void DMFCBase::DoDMFCUITeamPlacement(bool clients_wait, bool called_by_level_sta
                            curr_y, icon_width, icon_height, 0);
       curr_y += icon_height + 3;
     }
+    [[fallthrough]];
   case 3:
     list_green = DLLListCreate(main_wnd, 1, 40, cury + 163, 128, 128, 0);
     team_text[GREEN_TEAM] = DLLEditCreate(main_wnd, -1, 40, cury + 131, 128, 32, 0);
@@ -635,6 +636,7 @@ void DMFCBase::DoDMFCUITeamPlacement(bool clients_wait, bool called_by_level_sta
             } else {
               // weird...they are out of sync?
               FatalError("Team Dialog Out Of Sync"); // remove later
+              continue;
             }
             RequestTeamChange(new_team, i, true); // spew his stuff also
           }

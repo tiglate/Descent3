@@ -533,6 +533,9 @@ void mng_LoadNetDoorPage(CFILE *infile, bool overlay) {
 
     int ret = mng_SetAndLoadDoor(&doorpage);
     ASSERT(ret >= 0);
+    if (ret < 0) {
+      LOG_ERROR << "Failed to load door page.";
+    }
   } else
     LOG_ERROR.printf("Could not load doorpage named %s!", doorpage.door_struct.name);
 }

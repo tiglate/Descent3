@@ -1250,11 +1250,7 @@ void do_physics_sim(object *obj) {
         float hit_speed, wall_part;
         float hit_dot = 1.0;
 
-        float luke_test;
-
-        if (obj->type == OBJ_PLAYER) {
-          luke_test = vm_GetMagnitude(&obj->mtype.phys_info.velocity);
-        }
+        float luke_test = vm_GetMagnitude(&obj->mtype.phys_info.velocity);
 
         // Find hit speed
         moved_v = obj->pos - start_pos; // chrishack -- We already computed this!!!!!!!
@@ -1449,11 +1445,7 @@ void do_physics_sim(object *obj) {
       vector moved_v;
       scalar wall_part;
 
-      scalar luke_test;
-
-      if (obj->type == OBJ_PLAYER) {
-        luke_test = vm_GetMagnitude(&obj->mtype.phys_info.velocity);
-      }
+      scalar luke_test = vm_GetMagnitude(&obj->mtype.phys_info.velocity);
 
       // Find hit speed
       moved_v = obj->pos - start_pos; // chrishack -- We already computed this!!!!!!!
@@ -2075,7 +2067,8 @@ void do_walking_sim(object *obj) {
             fq.p1 = &footstep;
             fq.rad = obj->size;
             fq.thisobjnum = objnum;
-            fq.ignore_obj_list = NULL;
+            ignore_obj_list[n_ignore_objs] = -1;
+            fq.ignore_obj_list = ignore_obj_list;
             fq.flags = FQ_CHECK_OBJS | FQ_IGNORE_WEAPONS | FQ_IGNORE_POWERUPS | FQ_IGNORE_TERRAIN;
 
             if (obj->mtype.phys_info.flags & PF_POINT_COLLIDE_WALLS) {
@@ -2351,7 +2344,7 @@ void do_walking_sim(object *obj) {
 
       obj->mtype.phys_info.thrust = old_force;
 
-      if ((obj->type == OBJ_ROBOT || obj->type == OBJ_PLAYER || OBJ_CLUTTER ||
+      if ((obj->type == OBJ_ROBOT || obj->type == OBJ_PLAYER || obj->type == OBJ_CLUTTER ||
            (obj->type == OBJ_BUILDING && obj->ai_info)) &&
           sim_time_remaining == old_sim_time_remaining && Objects[hit_info.hit_object[0]].movement_type == MT_NONE) {
         obj->mtype.phys_info.velocity += hit_info.hit_wallnorm[0];

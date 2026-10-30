@@ -3294,7 +3294,7 @@ void GetObjectPointInWorld(vector *dest, object *obj, int subnum, int vertnum) {
 bool ObjGetAnimUpdate(uint16_t objnum, custom_anim *multi_anim_info) {
   object *obj = &Objects[objnum];
 
-  if ((objnum >= 0) && (obj->type != OBJ_NONE) && (obj->type != OBJ_WEAPON) && (obj->flags & OF_POLYGON_OBJECT)) {
+  if ((obj->type != OBJ_NONE) && (obj->type != OBJ_WEAPON) && (obj->flags & OF_POLYGON_OBJECT)) {
     polyobj_info *pm = &obj->rtype.pobj_info;
 
     multi_anim_info->server_time = Gametime;
@@ -3324,9 +3324,8 @@ bool ObjGetAnimUpdate(uint16_t objnum, custom_anim *multi_anim_info) {
 }
 
 void SetObjectDeadFlag(object *obj, bool tell_clients_to_remove, bool play_sound_on_clients) {
-  int objnum = OBJNUM(obj);
-  ASSERT(objnum != -1);
-  ASSERT(objnum != 0);
+  ASSERT(OBJNUM(obj) != -1);
+  ASSERT(OBJNUM(obj) != 0);
   ASSERT(obj->type != OBJ_NONE);
   ASSERT(obj != Player_object);
 
@@ -3391,7 +3390,7 @@ void ObjSetAnimUpdate(uint16_t objnum, custom_anim *multi_anim_info) {
   object *obj = &Objects[objnum];
   polyobj_info *pm;
 
-  if ((objnum >= 0) && (obj->type != OBJ_NONE) && (obj->type != OBJ_WEAPON) && (obj->flags & OF_POLYGON_OBJECT)) {
+  if ((obj->type != OBJ_NONE) && (obj->type != OBJ_WEAPON) && (obj->flags & OF_POLYGON_OBJECT)) {
     pm = &obj->rtype.pobj_info;
     pm->multi_anim_info = *multi_anim_info;
 
@@ -3406,7 +3405,7 @@ void ObjGetTurretUpdate(uint16_t objnum, multi_turret *multi_turret_info) {
   poly_model *pm = &Poly_models[obj->rtype.pobj_info.model_num];
   polyobj_info *p_info = &obj->rtype.pobj_info;
 
-  if ((objnum >= 0) && (obj->type != OBJ_NONE) && (obj->type != OBJ_WEAPON) && (obj->flags & OF_POLYGON_OBJECT) &&
+  if ((obj->type != OBJ_NONE) && (obj->type != OBJ_WEAPON) && (obj->flags & OF_POLYGON_OBJECT) &&
       (p_info->multi_turret_info.num_turrets)) {
     int i;
     int j;
@@ -3427,13 +3426,13 @@ void ObjSetTurretUpdate(uint16_t objnum, multi_turret *multi_turret_info) {
   object *obj = &Objects[objnum];
   polyobj_info *p_info = &obj->rtype.pobj_info;
 
-  if ((objnum >= 0) && (obj->type != OBJ_NONE) && (obj->type != OBJ_WEAPON) && (obj->flags & OF_POLYGON_OBJECT) &&
+  if ((obj->type != OBJ_NONE) && (obj->type != OBJ_WEAPON) && (obj->flags & OF_POLYGON_OBJECT) &&
       (p_info->multi_turret_info.num_turrets)) {
     int i;
 
     p_info->multi_turret_info.time = multi_turret_info->time;
 
-    for (i = 0; i < p_info->multi_turret_info.num_turrets; i++) {
+    for (i = 0; i < p_info->multi_turret_info.num_turrets && i < multi_turret_info->num_turrets; i++) {
       p_info->multi_turret_info.keyframes[i] = multi_turret_info->keyframes[i];
     }
 

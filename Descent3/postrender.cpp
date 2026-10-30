@@ -97,16 +97,6 @@ static int Viewer_roomnum;
 // Resets out postrender list for a new frame
 void ResetPostrenderList() { Num_postrenders = 0; }
 
-// Compare function for room face sort
-static int Postrender_sort_func(const postrender_struct *a, const postrender_struct *b) {
-  if (a->z < b->z)
-    return -1;
-  else if (a->z > b->z)
-    return 1;
-  else
-    return 0;
-}
-
 #define STATE_PUSH(val)                                                                                                \
   {                                                                                                                    \
     state_stack[state_stack_counter] = val;                                                                            \

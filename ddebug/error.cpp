@@ -224,7 +224,7 @@ void error_Spew() {
 char Messagebox_title[80] = "Message";
 
 // Sets the title for future OutrageMessageBox() dialogs
-void SetMessageBoxTitle(const char *title) { strncpy(Messagebox_title, title, sizeof(Messagebox_title)); }
+void SetMessageBoxTitle(const char *title) { snprintf(Messagebox_title, sizeof(Messagebox_title), "%s", title); }
 
 #define BUF_LEN 1024
 

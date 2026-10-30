@@ -1735,7 +1735,6 @@ void AIMoveTowardsDir(object *obj, vector *dir, float scale) {
 bool AIMoveTowardsPosition(object *obj, /*velocity *new_vel,*/ vector *pos, float scale, bool stop_at_end_point,
                            vector *mdir, bool *f_moved) {
   vector dir;
-  scalar distance;
   ai_frame *ai_info = obj->ai_info;
   scalar acc_scale;
 
@@ -1789,7 +1788,7 @@ bool AIMoveTowardsPosition(object *obj, /*velocity *new_vel,*/ vector *pos, floa
     return false;
   } else {
     dir = *pos - obj->pos;
-    distance = vm_NormalizeVector(&dir);
+    vm_NormalizeVector(&dir);
   }
 
   *mdir = dir;
@@ -1849,11 +1848,10 @@ bool move_relative_object_vec(object *obj, vector *vec, object *target, float ci
 void move_away_from_position(object *obj, vector *pos /*, bool random_evade*/, float scale, vector *mdir,
                              bool *f_moved) {
   vector dir;
-  float distance;
 
   // Reverse of move towards
   dir = obj->pos - *pos;
-  distance = vm_NormalizeVector(&dir);
+  vm_NormalizeVector(&dir);
 
   //	AIMoveTowardsDir(obj, &dir, scale);
   *mdir = dir;
@@ -4607,7 +4605,7 @@ void ai_move(object *obj) {
   } else {
     // Determine movement stuff
     if (obj->movement_type == MT_PHYSICS || obj->movement_type == MT_WALKING) {
-      if (targetptr && IsTargetLocal(obj, targetptr) || (ai_info->awareness >= AWARE_BARELY) ||
+      if ((targetptr && IsTargetLocal(obj, targetptr)) || (ai_info->awareness >= AWARE_BARELY) ||
           (ai_info->flags & AIF_PERSISTANT)) {
         for (i = NUM_ACTIVATION_LEVELS; i < MAX_GOALS; i++) {
           if (ai_info->goals[i].used) {
@@ -4918,7 +4916,7 @@ void ai_move(object *obj) {
               default:
                 LOG_DEBUG << "Invalid vec in AIG_MOVE_RELATIVE_OBJ_VEC bashing to fvec";
                 cur_goal->subtype = GST_FVEC | (int)f_toward;
-                vec_id = GST_FVEC;
+                vec = &goal_obj->orient.fvec;
               }
 
               if (move_relative_object_vec(obj, vec, goal_obj, g_circle_dist, 1.0f, f_toward, &goal_mdir,
@@ -6024,8 +6022,6 @@ void AIDoMemFrame(object *obj) {
 void AIDoFrame(object *obj) {
 
   bool f_attach_done = false;
-  int multi_saved_weapon_flags;
-  char multi_saved_wb_firing;
 
   // AI objects don't use thrust (in general)
   obj->mtype.phys_info.flags &= ~PF_USES_THRUST;
@@ -6035,10 +6031,8 @@ void AIDoFrame(object *obj) {
   if (obj->type == OBJ_DUMMY)
     return;
 
-  if ((Game_mode & GM_MULTI) && (Netgame.local_role == LR_SERVER)) {
-    multi_saved_wb_firing = obj->ai_info->last_special_wb_firing;
-    multi_saved_weapon_flags = obj->weapon_fire_flags;
-  }
+  const int multi_saved_weapon_flags = obj->weapon_fire_flags;
+  const char multi_saved_wb_firing = obj->ai_info->last_special_wb_firing;
 
   ai_frame *ai_info = obj->ai_info;
   ASSERT((obj->control_type == CT_AI) || (obj->control_type == CT_DYING_AND_AI));

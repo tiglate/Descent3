@@ -676,6 +676,10 @@ static bool AIGenerateAltBNodePath(object *obj, vector *start_pos, int *start_ro
         bool f_ok = BNode_FindPath(cur_room, last_node, bnode, obj->size);
         ASSERT(f_ok);
         ASSERT(BNode_PathNumNodes);
+        if (!f_ok || !BNode_PathNumNodes) {
+          f_path_exists = false;
+          goto done;
+        }
 
         int i;
         for (i = 0; i < BNode_PathNumNodes; i++) {
@@ -723,6 +727,10 @@ static bool AIGenerateAltBNodePath(object *obj, vector *start_pos, int *start_ro
     bool f_ok = BNode_FindPath(*end_room, last_node, bnode, obj->size);
     ASSERT(f_ok);
     ASSERT(BNode_PathNumNodes);
+    if (!f_ok || !BNode_PathNumNodes) {
+      f_path_exists = false;
+      goto done;
+    }
     int i;
     for (i = 0; i < BNode_PathNumNodes; i++) {
       pos = &bnlist->nodes[BNode_Path[i]].pos;
@@ -841,6 +849,10 @@ static bool AIGenerateBNodePath(object *obj, vector *start_pos, int *start_room,
         bool f_ok = BNode_FindPath(cur_room, last_node, bnode, obj->size);
         ASSERT(f_ok);
         ASSERT(BNode_PathNumNodes);
+        if (!f_ok || !BNode_PathNumNodes) {
+          f_path_exists = false;
+          goto done;
+        }
 
         int i;
         for (i = 0; i < BNode_PathNumNodes; i++) {
@@ -889,6 +901,10 @@ static bool AIGenerateBNodePath(object *obj, vector *start_pos, int *start_room,
     bool f_ok = BNode_FindPath(*end_room, last_node, bnode, obj->size);
     ASSERT(f_ok);
     ASSERT(BNode_PathNumNodes);
+    if (!f_ok || !BNode_PathNumNodes) {
+      f_path_exists = false;
+      goto done;
+    }
     int i;
     for (i = 0; i < BNode_PathNumNodes; i++) {
       pos = &bnlist->nodes[BNode_Path[i]].pos;

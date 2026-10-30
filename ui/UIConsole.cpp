@@ -170,7 +170,7 @@ void UIConsoleGadget::puts(ddgr_color col, const char *str) {
 
 //	Inheritable operations
 void UIConsoleGadget::OnDraw() {
-  int x, y, cy, index;
+  int x, y, cy;
   char *linebuf;
 
   //	draw frame
@@ -186,7 +186,6 @@ void UIConsoleGadget::OnDraw() {
   x = m_OffX;
   y = m_OffY;
 
-  index = 0;
 
   for (cy = m_VisRowStart; cy < (m_VisRowStart + m_VisRows); cy++) {
     linebuf = m_ConsoleBuffer + (m_Rowsize * cy);

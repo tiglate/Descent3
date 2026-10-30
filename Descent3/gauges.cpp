@@ -256,20 +256,8 @@ static float *Render_normalized_times;
 static bool Render_gauge_moving; // gauge is moving, but temporarily off.
 static bool Render_gauge_reset;  //	set this if gauges will be moving, but are still active
 
-// TODO: MTS: function not found
-//	loads all shield bitmaps into memory
-static void FreeShieldFrames();
-
-// TODO: MTS: function not found
-//	loads all ship bitmaps into memory
-static void FreeShipFrames();
-
 //	projects monitor coordinates to screen coordinates
 static void RotateMonitorPosition(tGauge *gauge);
-
-// TODO: MTS: function not found
-// renders the current inventory item name at the x,y position
-static void InventoryRenderGauge(int x, int y);
 
 //	renders the primary monitor gauge
 static void RenderPrimaryMonitor(tGauge *gauge, bool modified);
@@ -299,10 +287,8 @@ static void DrawGaugeQuad(g3Point *pts, int bm, float u0, float v0, float u1, fl
 static void DrawGaugeQuad(g3Point *pts, int bm, uint8_t alpha = 255, bool saturate = false);
 
 //	renders a flat poly onto the screen with given color
-static void DrawGaugeQuadFlat(g3Point *pts, float r, float g, float b, uint8_t alpha);
 
 //	renders a flat poly onto the screen with 4 colors (for each vertex)
-static void DrawGaugeQuadFlat(g3Point *pts, float *r, float *g, float *b, uint8_t alpha);
 
 // correctly orders monitor vertices based off of UVs
 static int GetFirstVert(bsp_info *sm);
@@ -380,7 +366,6 @@ void CloseGauges() {
 void RenderGauges(vector *cockpit_pos, matrix *cockpit_mat, float *normalized_time, bool moving, bool reset) {
   tGauge *gauge;
   float font_aspect_x;
-  float font_aspect_y;
 
   Render_gauge_pos = cockpit_pos;
   Render_gauge_matrix = cockpit_mat;
@@ -392,7 +377,6 @@ void RenderGauges(vector *cockpit_pos, matrix *cockpit_mat, float *normalized_ti
   grtext_SetFont(HUD_FONT);
   //	for lores screens, we use different fonts, so DONT SCALE.
   font_aspect_x = (float)Game_window_w / Max_window_w;
-  font_aspect_y = (float)Game_window_h / Max_window_h;
 
   if (font_aspect_x <= 0.60) {
     grtext_SetFontScale(0.60f);
@@ -884,50 +868,6 @@ void DrawGaugeQuad(g3Point *pts, int bm, float u0, float v0, float u1, float v1,
     rend_SetAlphaType(AT_SATURATE_TEXTURE);
 
   g3_DrawPoly(4, pntlist, bm);
-}
-
-//	renders a flat poly onto the screen with given color
-void DrawGaugeQuadFlat(g3Point *pts, float r, float g, float b, uint8_t alpha) {
-  float ar[4] = {r, r, r, r}, ag[4] = {g, g, g, g}, ab[4] = {b, b, b, b};
-
-  DrawGaugeQuadFlat(pts, ar, ag, ab, alpha);
-}
-
-//	renders a flat poly onto the screen with 4 colors (for each vertex)
-void DrawGaugeQuadFlat(g3Point *pts, float *r, float *g, float *b, uint8_t alpha) {
-  g3Point *pntlist[4];
-  g3Point pnts[4];
-
-  for (int i = 0; i < 4; i++) {
-    pnts[i] = pts[i];
-    pnts[i].p3_flags = PF_RGBA | (pts[i].p3_flags & PF_ORIGPOINT);
-    pntlist[i] = &pnts[i];
-  }
-
-  pnts[0].p3_r = r[0];
-  pnts[0].p3_g = g[0];
-  pnts[0].p3_b = b[0];
-
-  pnts[1].p3_r = r[1];
-  pnts[1].p3_g = g[1];
-  pnts[1].p3_b = b[1];
-
-  pnts[2].p3_r = r[2];
-  pnts[2].p3_g = g[2];
-  pnts[2].p3_b = b[2];
-
-  pnts[3].p3_r = r[3];
-  pnts[3].p3_g = g[3];
-  pnts[3].p3_b = b[3];
-
-  rend_SetZBufferState(0);
-  rend_SetLighting(LS_GOURAUD);
-  rend_SetTextureType(TT_FLAT);
-  rend_SetColorModel(CM_RGB);
-  rend_SetAlphaType(AT_CONSTANT);
-  rend_SetAlphaValue(alpha);
-
-  g3_DrawPoly(4, pntlist, 0);
 }
 
 // Returns the vertex index that corresponds to the upper-left vertex

@@ -39,9 +39,9 @@
 struct tWaveFile {
   int sample_length;
   int np_sample_length;
-  int samples_per_second;
-  int16_t bits_per_sample;
-  int16_t number_channels;
+  int samples_per_second = 0;
+  int16_t bits_per_sample = 0;
+  int16_t number_channels = 0;
   uint8_t *sample_8bit;
   int16_t *sample_16bit;
 };
@@ -517,7 +517,8 @@ char taunt_LoadWaveFile(const char *filename, tWaveFile *wave) {
   uint32_t temp_long;
 
   // Flags for if we previously read data or a format
-  char f_data, f_fmt = 0;
+  bool f_data = false;
+  char f_fmt = 0;
 
   // Loop counter
   int count;
@@ -686,7 +687,6 @@ char taunt_LoadWaveFile(const char *filename, tWaveFile *wave) {
 
       // We did find a new format type
       f_fmt = 1;
-      f_data = 0;
       break;
 
     // Data Chunk
@@ -740,7 +740,7 @@ char taunt_LoadWaveFile(const char *filename, tWaveFile *wave) {
       }
 
       // We found data, clear format flag
-      f_data = 1;
+      f_data = true;
       f_fmt = 0; // Multiple waveforms, per file, are allowed
       break;
 
@@ -753,6 +753,12 @@ char taunt_LoadWaveFile(const char *filename, tWaveFile *wave) {
   // Close the file
   cfclose(cfptr);
   cfptr = NULL;
+
+  if (!f_data) {
+    error_code = 5;
+    LOG_WARNING.printf("TAUNT Wav Load: No audio data in %s", filename);
+    goto error_state;
+  }
 
   if (wave->sample_16bit == NULL) {
     ASSERT(wave->sample_8bit);

@@ -124,7 +124,7 @@ int MultiSaveSettings(const std::filesystem::path &filename) {
   for (i = 0; i < MAX_OBJECT_IDS; i++) {
     if (Object_info[i].type == OBJ_POWERUP) {
       if (!Object_info[i].multi_allowed) {
-        snprintf(szoutput, sizeof(szoutput), "OBJBAN\t%s", Object_info[i].name);
+        snprintf(szoutput, sizeof(szoutput), "OBJBAN\t%.*s", PAGENAME_LEN - 1, Object_info[i].name);
         cf_WriteString(cf, szoutput);
       }
     }
@@ -132,7 +132,7 @@ int MultiSaveSettings(const std::filesystem::path &filename) {
   for (i = 0; i < MAX_SHIPS; i++) {
     if (Ships[i].used) {
       if (!PlayerIsShipAllowed(0, i)) {
-        snprintf(szoutput, sizeof(szoutput), "SHIPBAN\t%s", Ships[i].name);
+        snprintf(szoutput, sizeof(szoutput), "SHIPBAN\t%.*s", PAGENAME_LEN - 1, Ships[i].name);
         cf_WriteString(cf, szoutput);
       }
     }
@@ -262,7 +262,7 @@ int MultiLoadSettings(const std::filesystem::path &filename) {
         Netgame.flags &= ~NF_ALLOW_MLOOK;
     } else if (stricmp(toklabel, "DIFFICULTY") == 0) {
       Netgame.difficulty = atoi(tokval);
-      if ((Netgame.difficulty > 4) || (Netgame.difficulty < 0))
+      if (Netgame.difficulty > 4)
         Netgame.difficulty = 0;
     } else {
       LOG_WARNING.printf("Unknown line in multiplayer config file %s\t%s", toklabel, tokval);

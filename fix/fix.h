@@ -99,7 +99,7 @@ scalar FixCos(angle a);
 // Conversion macros
 //??#define FloatToFix(num) Round((num) * FLOAT_SCALER)
 #define FloatToFix(num) ((fix)((num) * FLOAT_SCALER))
-#define IntToFix(num) ((num) << FIX_SHIFT)
+#define IntToFix(num) ((num) * (1 << FIX_SHIFT)) // multiply: left-shifting a negative value is undefined
 #define ShortToFix(num) (((int32_t)(num)) << FIX_SHIFT)
 #define FixToFloat(num) (((scalar)(num)) / FLOAT_SCALER)
 #define FixToInt(num) ((num) >> FIX_SHIFT)

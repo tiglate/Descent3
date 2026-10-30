@@ -344,7 +344,7 @@ void RemapStaticIDs() {
   bool f_weapons = false;
   bool f_ai = false;
 
-  for (int i = 0; i < NUM_STATIC_OBJECTS; i++) {
+  for (size_t i = 0; i < NUM_STATIC_OBJECTS; i++) {
 
     int cur_index = FindObjectIDName(IGNORE_TABLE(Static_object_names[i]));
 
@@ -354,7 +354,7 @@ void RemapStaticIDs() {
       continue;
     }
 
-    if (cur_index == i)
+    if (static_cast<size_t>(cur_index) == i)
       continue; // hurray, we're already matched up!
 
     // If our slot is already used, move the ID somewhere else

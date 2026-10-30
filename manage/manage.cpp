@@ -955,13 +955,13 @@ void mng_FreeTrackLock(int n) {
 }
 // Displays all the network locks of "name"
 void mng_DisplayLockList(char *name) {
+#ifndef RELEASE
   mngs_Pagelock list[100];
   char temp[200];
   int max = 100;
   int num, i;
   int length = 0;
   char str[5000];
-#ifndef RELEASE
   // Get the list
   if ((num = mng_GetListOfLocks(list, max, name)) < 0) {
     OutrageMessageBox(MBOX_OK, ErrorString);
@@ -1110,12 +1110,16 @@ int mng_RenamePage(char *oldname, char *newname, int pagetype) {
   // Make sure we own it
   l = mng_CheckIfPageOwned(&pl, TableUser);
   ASSERT(l == 1);
+  if (l != 1)
+    return 0;
   strcpy(pl.name, newname);
   strcpy(pl.holder, TableUser);
 
   // First, change the name of the network pagelock
   l = mng_ReplacePagelock(oname, &pl);
   ASSERT(l == 1);
+  if (l != 1)
+    return 0;
   switch (pagetype) {
   // Find the page type with this name and rename it
   case PAGETYPE_TEXTURE:
@@ -1125,6 +1129,8 @@ int mng_RenamePage(char *oldname, char *newname, int pagetype) {
 
     l = mng_ReplacePage(oname, GameTextures[i].name, i, PAGETYPE_TEXTURE, 0);
     ASSERT(l == 1);
+    if (l != 1)
+      return 0;
     if (mng_FindTrackLock(oname, PAGETYPE_TEXTURE) != -1)
       mng_ReplacePage(oname, GameTextures[i].name, i, PAGETYPE_TEXTURE, 1);
 
@@ -1137,6 +1143,8 @@ int mng_RenamePage(char *oldname, char *newname, int pagetype) {
     if (mng_FindTrackLock(oname, PAGETYPE_DOOR) != -1)
       mng_ReplacePage(oname, Doors[i].name, i, PAGETYPE_DOOR, 1);
     ASSERT(l == 1);
+    if (l != 1)
+      return 0;
     break;
   case PAGETYPE_GENERIC:
     i = FindObjectIDName(oname);
@@ -1149,6 +1157,8 @@ int mng_RenamePage(char *oldname, char *newname, int pagetype) {
       mng_ReplacePage(oname, Object_info[i].name, i, PAGETYPE_GENERIC, 1);
 
     ASSERT(l == 1);
+    if (l != 1)
+      return 0;
     break;
   case PAGETYPE_GAMEFILE:
     i = FindGamefileName(oname);
@@ -1159,6 +1169,8 @@ int mng_RenamePage(char *oldname, char *newname, int pagetype) {
     if (mng_FindTrackLock(oname, PAGETYPE_GAMEFILE) != -1)
       mng_ReplacePage(oname, Gamefiles[i].name, i, PAGETYPE_GAMEFILE, 1);
     ASSERT(l == 1);
+    if (l != 1)
+      return 0;
     break;
   case PAGETYPE_SOUND:
     i = FindSoundName(oname);
@@ -1168,6 +1180,8 @@ int mng_RenamePage(char *oldname, char *newname, int pagetype) {
     if (mng_FindTrackLock(oname, PAGETYPE_SOUND) != -1)
       mng_ReplacePage(oname, Sounds[i].name, i, PAGETYPE_SOUND, 1);
     ASSERT(l == 1);
+    if (l != 1)
+      return 0;
     break;
   case PAGETYPE_MEGACELL:
     i = FindMegacellName(oname);
@@ -1178,6 +1192,8 @@ int mng_RenamePage(char *oldname, char *newname, int pagetype) {
     if (mng_FindTrackLock(oname, PAGETYPE_MEGACELL) != -1)
       mng_ReplacePage(oname, Megacells[i].name, i, PAGETYPE_MEGACELL, 1);
     ASSERT(l == 1);
+    if (l != 1)
+      return 0;
     break;
   case PAGETYPE_SHIP:
     i = FindShipName(oname);
@@ -1189,6 +1205,8 @@ int mng_RenamePage(char *oldname, char *newname, int pagetype) {
       mng_ReplacePage(oname, Ships[i].name, i, PAGETYPE_SHIP, 1);
 
     ASSERT(l == 1);
+    if (l != 1)
+      return 0;
     break;
   case PAGETYPE_WEAPON:
     i = FindWeaponName(oname);
@@ -1199,6 +1217,8 @@ int mng_RenamePage(char *oldname, char *newname, int pagetype) {
     if (mng_FindTrackLock(oname, PAGETYPE_WEAPON) != -1)
       mng_ReplacePage(oname, Weapons[i].name, i, PAGETYPE_WEAPON, 1);
     ASSERT(l == 1);
+    if (l != 1)
+      return 0;
     break;
   default:
     Int3(); // Unknown type, get Jason
@@ -1219,7 +1239,6 @@ int mng_LoadNetPages(int show_progress) {
   int current_byte;
   float progress;
   int int_progress = 0;
-  int len;
 
   LOG_INFO << "Loading pages...";
   if (Dedicated_server)
@@ -1263,7 +1282,7 @@ int mng_LoadNetPages(int show_progress) {
     }
     pagetype = cf_ReadByte(infile);
     if (!Old_table_method)
-      len = cf_ReadInt(infile);
+      cf_ReadInt(infile);
     switch (pagetype) {
     case PAGETYPE_TEXTURE:
       mng_LoadNetTexturePage(infile);
@@ -1320,7 +1339,7 @@ int mng_LoadNetPages(int show_progress) {
 
   while (!cfeof(infile)) {
     pagetype = cf_ReadByte(infile);
-    len = cf_ReadInt(infile);
+    cf_ReadInt(infile);
     switch (pagetype) {
     case PAGETYPE_TEXTURE:
       mng_LoadNetTexturePage(infile, true);
@@ -1363,7 +1382,6 @@ int mng_LoadNetPages(int show_progress) {
 int mng_LoadLocalPages() {
   CFILE *infile;
   uint8_t pagetype;
-  int len;
 
   LOG_INFO << "Overlaying local pages...";
   infile = cfopen(LocalTableFilename, "rb");
@@ -1377,7 +1395,7 @@ int mng_LoadLocalPages() {
 
     pagetype = cf_ReadByte(infile);
     if (!Old_table_method)
-      len = cf_ReadInt(infile);
+      cf_ReadInt(infile);
     switch (pagetype) {
     case PAGETYPE_TEXTURE:
       mng_LoadLocalTexturePage(infile);
@@ -2893,7 +2911,6 @@ char *Addon_filename;
 void mng_LoadAddonPages() {
   CFILE *infile;
   uint8_t pagetype;
-  int len;
 
   // Set flag & Clear error count
   Loading_addon = true;
@@ -2921,7 +2938,7 @@ void mng_LoadAddonPages() {
     while (!cfeof(infile)) {
       // Read in a pagetype. If it is a page we recognize, load it.
       pagetype = cf_ReadByte(infile);
-      len = cf_ReadInt(infile);
+      cf_ReadInt(infile);
 
       switch (pagetype) {
       case PAGETYPE_TEXTURE:

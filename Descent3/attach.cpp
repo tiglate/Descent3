@@ -223,41 +223,6 @@ static bool AttachPointPos(object *obj, int8_t ap, bool f_compute_pos, vector *a
   return true;
 }
 
-static void ConvertAxisAmountMatrix(vector *n, float w, matrix *rotmat) {
-  float s;
-  float c;
-  float t;
-
-  //	float scale = *w/.0001f;
-  // float w_n = .0001f;
-  // vector s_result;
-
-  if (w == 0.0f) {
-    matrix temp = IDENTITY_MATRIX;
-
-    *rotmat = temp;
-    return;
-  }
-
-  s = sin(w);
-  c = cos(w);
-  t = 1.0f - c;
-
-  const scalar sx = s * n->x();
-  const scalar sy = s * n->y();
-  const scalar sz = s * n->z();
-  const scalar txy = t * n->x() * n->y();
-  const scalar txz = t * n->x() * n->z();
-  const scalar tyz = t * n->y() * n->z();
-  const scalar txx = t * n->x() * n->x();
-  const scalar tyy = t * n->y() * n->y();
-  const scalar tzz = t * n->z() * n->z();
-
-  rotmat->rvec = { txx + c, txy - sz, txz + sy };
-  rotmat->uvec = { txy + sz,  tyy + c, tyz - sx };
-  rotmat->fvec = { txz - sy, tyz + sx, tzz + c };
-}
-
 bool AttachDoPosOrientRad(object *parent, char p_ap, object *child, float rad_percent, vector *pos) {
   vector attach_pos;
   vector attach_fvec;

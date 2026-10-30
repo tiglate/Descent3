@@ -69,12 +69,6 @@ static int CreateAndAttach(int me, const char *child_name, uint8_t child_type, c
 
 static int FindClosestPlayer(int objhandle);
 
-// Returns true if object current has an active Dallas low priority goal
-static bool HasLowPriorityGoal(int obj_handle);
-
-// Returns true if object current has an active Dallas high priority goal
-static bool HasHighPriorityGoal(int obj_handle);
-
 // Wipes out all goals except slots 0 and 3 (used by Dallas)
 static void SafeGoalClearAll(int obj_handle);
 
@@ -118,22 +112,6 @@ static uint16_t lifter_amb_sound_id;
 
 #define DALLAS_LOW_PRIORITY_GOAL_SLOT 0
 #define DALLAS_HIGH_PRIORITY_GOAL_SLOT 3
-
-// Returns true if object current has an active Dallas low priority goal
-bool HasLowPriorityGoal(int obj_handle) {
-  bool used;
-  AI_GoalValue(obj_handle, DALLAS_LOW_PRIORITY_GOAL_SLOT, VF_GET, AIGV_B_USED, &used);
-
-  return used;
-}
-
-// Returns true if object current has an active Dallas high priority goal
-bool HasHighPriorityGoal(int obj_handle) {
-  bool used;
-  AI_GoalValue(obj_handle, DALLAS_HIGH_PRIORITY_GOAL_SLOT, VF_GET, AIGV_B_USED, &used);
-
-  return used;
-}
 
 // Returns True if given index implies that a goal is finished
 static inline bool IsGoalFinishedNotify(int index) {
@@ -328,7 +306,7 @@ int FindClosestPlayer(int objhandle) {
     MSafe_GetValue(MSAFE_OBJECT_PLAYER_HANDLE, &mstruct);
 
     // See if this player active
-    if (mstruct.objhandle == OBJECT_HANDLE_NONE)
+    if (mstruct.objhandle == static_cast<uint32_t>(OBJECT_HANDLE_NONE))
       continue;
 
     // Get the target position
@@ -2377,7 +2355,7 @@ bool AlienOrganism::IsOnFire(int me) { return (Obj_IsEffect(me, EF_NAPALMED)); }
 void AlienOrganism::ProjectBeam(int me, int pos_handle, vector *start_pos, int start_room, vector *beam_dir,
                                 matrix *orient, int beam_flag) {
   ray_info ray;
-  int flags, fate;
+  int flags;
   vector end_pos, landing_pos;
   int landing_room;
   float dist;
@@ -2387,7 +2365,7 @@ void AlienOrganism::ProjectBeam(int me, int pos_handle, vector *start_pos, int s
 
   flags = FQ_CHECK_OBJS | FQ_IGNORE_POWERUPS | FQ_IGNORE_WEAPONS | FQ_IGNORE_MOVING_OBJECTS |
           FQ_IGNORE_NON_LIGHTMAP_OBJECTS;
-  fate = FVI_RayCast(me, start_pos, &end_pos, start_room, 0.0f, flags, &ray);
+  FVI_RayCast(me, start_pos, &end_pos, start_room, 0.0f, flags, &ray);
 
   landing_pos = ray.hit_point;
   landing_room = ray.hit_room;
@@ -2598,7 +2576,6 @@ void AlienOrganism::SetMode(int me, char mode) {
     // mprintf(0,"Going home mode set.\n");
 
     ray_info ray;
-    int fate;
     vector end_pos, landing_pos;
     int landing_room;
 
@@ -2634,7 +2611,7 @@ void AlienOrganism::SetMode(int me, char mode) {
 
     flags = FQ_CHECK_OBJS | FQ_IGNORE_POWERUPS | FQ_IGNORE_WEAPONS | FQ_IGNORE_MOVING_OBJECTS |
             FQ_IGNORE_NON_LIGHTMAP_OBJECTS;
-    fate = FVI_RayCast(me, &memory->home_pos, &end_pos, memory->home_room, 0.0f, flags, &ray);
+    FVI_RayCast(me, &memory->home_pos, &end_pos, memory->home_room, 0.0f, flags, &ray);
 
     landing_pos = ray.hit_point;
     landing_room = ray.hit_room;
@@ -3073,9 +3050,6 @@ void AlienOrganism::DoTakeoff(int me, float takeoff_speed, float speed_variance)
 
 // Processes the AI Initialize event
 void AlienOrganism::DoInit(int me) {
-  msafe_struct m;
-  m.objhandle = me;
-
   // Setup memory data
   tOSIRISMEMCHUNK ch;
   ch.id = ALIEN_MEMORY_ID;
@@ -4404,17 +4378,7 @@ void HeavyTrooper::DoInit(int me) {
 
 // Processes the AI Frame Interval Event
 void HeavyTrooper::DoFrame(int me) {
-  float last_see_time, last_see_game_time;
-  float last_hear_time, last_hear_game_time;
   float curr_anim_frame;
-
-  // Get the last see and hear time
-  AI_Value(me, VF_GET, AIV_F_LAST_SEE_TARGET_TIME, &last_see_game_time);
-  AI_Value(me, VF_GET, AIV_F_LAST_HEAR_TARGET_TIME, &last_hear_game_time);
-
-  // Calculate the time since target was seen or heard
-  last_hear_time = Game_GetTime() - last_hear_game_time;
-  last_see_time = Game_GetTime() - last_see_game_time;
 
   // Get the current animation frame
   Obj_Value(me, VF_GET, OBJV_F_ANIM_FRAME, &curr_anim_frame);
@@ -4792,7 +4756,7 @@ bool Lifter::OkToPull(int me, bool initial_check /*=true*/) {
 void Lifter::PullTarget(int me) {
   // see if anything is in the way
   ray_info ray;
-  int flags, fate;
+  int flags;
   vector dir, start_pos, my_pos, end_pos, landing_pos;
   int start_room, landing_room;
   float target_size, dist;
@@ -4824,7 +4788,7 @@ void Lifter::PullTarget(int me) {
 
   // See where it is safe to move to
   flags = FQ_CHECK_OBJS | FQ_IGNORE_POWERUPS | FQ_IGNORE_WEAPONS;
-  fate = FVI_RayCast(target_handle, &start_pos, &end_pos, start_room, target_size, flags, &ray);
+  FVI_RayCast(target_handle, &start_pos, &end_pos, start_room, target_size, flags, &ray);
   landing_pos = ray.hit_point;
   landing_room = ray.hit_room;
 
@@ -5138,25 +5102,7 @@ bool Lifter::DoNotify(int me, tOSIRISEventInfo *data) {
 
 // Processes the AI Frame Interval Event
 void Lifter::DoFrame(int me) {
-  float last_see_time, last_see_game_time;
-  float last_hear_time, last_hear_game_time;
-  float last_perceive_time;
   float curr_anim_frame;
-
-  // Get the last see and hear time
-  AI_Value(me, VF_GET, AIV_F_LAST_SEE_TARGET_TIME, &last_see_game_time);
-  AI_Value(me, VF_GET, AIV_F_LAST_HEAR_TARGET_TIME, &last_hear_game_time);
-
-  // Calculate the time since target was seen or heard
-  last_hear_time = Game_GetTime() - last_hear_game_time;
-  last_see_time = Game_GetTime() - last_see_game_time;
-
-  // Perceive time is last time target was seen or heard (whichever is smalled)
-  if (last_hear_time <= last_see_time) {
-    last_perceive_time = last_hear_time;
-  } else {
-    last_perceive_time = last_see_time;
-  }
 
   // Get the current animation frame
   Obj_Value(me, VF_GET, OBJV_F_ANIM_FRAME, &curr_anim_frame);
@@ -5740,7 +5686,6 @@ void AlienBoss::SetMode(int me, char mode) {
     mprintf(0, "Going to Nest mode set.\n");
 
     ray_info ray;
-    int fate;
     vector end_pos, landing_pos;
     int landing_room;
 
@@ -5756,7 +5701,7 @@ void AlienBoss::SetMode(int me, char mode) {
 
     flags = FQ_CHECK_OBJS | FQ_IGNORE_POWERUPS | FQ_IGNORE_WEAPONS | FQ_IGNORE_MOVING_OBJECTS |
             FQ_IGNORE_NON_LIGHTMAP_OBJECTS;
-    fate = FVI_RayCast(me, &memory->home_pos, &end_pos, memory->home_room, 0.0f, flags, &ray);
+    FVI_RayCast(me, &memory->home_pos, &end_pos, memory->home_room, 0.0f, flags, &ray);
 
     landing_pos = ray.hit_point;
     landing_room = ray.hit_room;
@@ -6158,9 +6103,6 @@ void AlienBoss::DoTakeoff(int me, float takeoff_speed, float speed_variance) {
 
 // Processes the AI Initialize event
 void AlienBoss::DoInit(int me) {
-  msafe_struct m;
-  m.objhandle = me;
-
   // Setup memory data
   tOSIRISMEMCHUNK ch;
   ch.id = ALIEN_MEMORY_ID;

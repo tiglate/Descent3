@@ -1083,6 +1083,10 @@ void SetPolymodelProperties(bsp_info *subobj, char *props) {
     num_found = sscanf(data, " %f, %f, %f, %f", &r, &g, &b, &size);
 
     ASSERT(num_found == 4);
+    if (num_found != 4) {
+      LOG_WARNING.printf("Invalid glow property: %s", data);
+      return;
+    }
 
     subobj->flags |= SOF_GLOW;
 
@@ -1107,6 +1111,10 @@ void SetPolymodelProperties(bsp_info *subobj, char *props) {
     num_found = sscanf(data, " %f, %f, %f, %f", &r, &g, &b, &size);
 
     ASSERT(num_found == 4);
+    if (num_found != 4) {
+      LOG_WARNING.printf("Invalid thruster property: %s", data);
+      return;
+    }
 
     subobj->flags |= SOF_THRUSTER;
 
@@ -1130,6 +1138,10 @@ void SetPolymodelProperties(bsp_info *subobj, char *props) {
     num_found = sscanf(data, " %f, %f, %f", &fov_angle, &turret_spr, &reaction_time);
 
     ASSERT(num_found == 3);
+    if (num_found != 3) {
+      LOG_WARNING.printf("Invalid turret property: %s", data);
+      return;
+    }
 
     if (fov_angle < 0.0f || fov_angle > 360.0f) {
       // Bad data
@@ -1361,7 +1373,6 @@ int ReadNewModelFile(int polynum, CFILE *infile) {
       // Subobject header
       int n;
       char props[MAX_PROP_LEN];
-      float d;
 
       // mprintf(0,"Got chunk SOBJ, len=%d\n",len);
 
@@ -1376,7 +1387,7 @@ int ReadNewModelFile(int polynum, CFILE *infile) {
 
       ReadModelVector(&pm->submodel[n].norm, infile);
 
-      d = cf_ReadFloat(infile);
+      cf_ReadFloat(infile);
       ReadModelVector(&pm->submodel[n].pnt, infile);
       ReadModelVector(&pm->submodel[n].offset, infile);
 
@@ -1605,10 +1616,8 @@ int ReadNewModelFile(int polynum, CFILE *infile) {
 
         // Do lightmap res computation
         if (version_major >= 21) {
-          scalar xdiff, ydiff;
-
-          xdiff = cf_ReadFloat(infile);
-          ydiff = cf_ReadFloat(infile);
+          cf_ReadFloat(infile);
+          cf_ReadFloat(infile);
         }
       }
 
@@ -2190,6 +2199,10 @@ void PageInPolymodel(int polynum, int type, float *size_ptr) {
 
   cfclose(infile);
   ASSERT(ret > 0);
+  if (ret <= 0) {
+    LOG_WARNING.printf("Failed to read model %s", Poly_models[polynum].name);
+    return;
+  }
 
   // See if textures need to be remapped
   int remap = 0;

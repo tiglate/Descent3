@@ -416,6 +416,17 @@ static CFILE *NetDebugFile = NULL;
 // An array of callbacks
 static NetworkReceiveCallback Netcallbacks[16];
 
+// Adapters with the signature NetworkReceiveCallback expects; the handlers return nothing.
+static void *nw_HandleUnreliableDataCallback(uint8_t *data, int len, network_address *from_addr) {
+  nw_HandleUnreliableData(data, len, from_addr);
+  return nullptr;
+}
+
+static void *nw_WorkReliableCallback(uint8_t *data, int len, network_address *naddr) {
+  nw_WorkReliable(data, len, naddr);
+  return nullptr;
+}
+
 #define R_NET_SEQUENCE_NONE 0
 #define R_NET_SEQUENCE_CONNECTING 1
 #define R_NET_SEQUENCE_CONNECTED 2
@@ -782,7 +793,7 @@ tcp_done:
   }
 
   nw_psnet_buffer_init();
-  nw_RegisterCallback((NetworkReceiveCallback)nw_HandleUnreliableData, NWT_UNRELIABLE);
+  nw_RegisterCallback(nw_HandleUnreliableDataCallback, NWT_UNRELIABLE);
 }
 
 // Copies my address into the passed argument
@@ -1073,9 +1084,9 @@ int nw_SendReliable(uint32_t socketid, uint8_t *data, int length, bool urgent) {
   reliable_socket *rsocket;
   reliable_header send_header;
 
-  if (length == 0) {
-    LOG_ERROR << "Attempting to send 0 byte network packet in nw_SendReliable()";
-    Int3();
+  if (length <= 0 || static_cast<size_t>(length) > sizeof(reliable_net_sendbuffer)) {
+    LOG_ERROR.printf("Invalid reliable packet length %d", length);
+    return -1;
   }
   // mprintf(0,"Socket id passed to nw_NewSendReliable() -- %d\n",socketid);
 
@@ -1092,7 +1103,7 @@ int nw_SendReliable(uint32_t socketid, uint8_t *data, int length, bool urgent) {
 #endif
   }
 
-  ASSERT(length < sizeof(reliable_header));
+  ASSERT(static_cast<size_t>(length) < sizeof(reliable_header));
   // nw_WorkReliable();
   nw_DoReceiveCallbacks();
 
@@ -1115,7 +1126,7 @@ int nw_SendReliable(uint32_t socketid, uint8_t *data, int length, bool urgent) {
     int pnum = rsocket->waiting_packet_number;
     ASSERT(rsocket->sbuffers[pnum]);
     // See if there's room for this data
-    if (sizeof(reliable_net_sendbuffer) < (rsocket->send_len[pnum] + length)) {
+    if (rsocket->send_len[pnum] + length > static_cast<int>(sizeof(reliable_net_sendbuffer))) {
       // Send the previous packet, then use the normal code to generate a new packet
       LOG_DEBUG << "Pending reliable packet buffer full, sending packet now.";
       rsocket->waiting_packet_number = -1;
@@ -1204,12 +1215,11 @@ int nw_SendReliable(uint32_t socketid, uint8_t *data, int length, bool urgent) {
 
 // MTS: only used in this file
 int nw_InitReliableSocket() {
-  nw_RegisterCallback((NetworkReceiveCallback)nw_WorkReliable, NWT_RELIABLE);
+  nw_RegisterCallback(nw_WorkReliableCallback, NWT_RELIABLE);
   return 1;
 }
 // MTS: only used in this file
 void nw_SendReliableAck(SOCKADDR *raddr, uint32_t sig, network_protocol link_type, float time_sent) {
-  int ret;
   reliable_header ack_header;
   ack_header.type = RNT_ACK;
   // mprintf(0,"Sending ACK for sig %d.\n",sig);
@@ -1230,8 +1240,8 @@ void nw_SendReliableAck(SOCKADDR *raddr, uint32_t sig, network_protocol link_typ
     send_address.connection_type = NP_TCP;
   }
 
-  ret = nw_SendWithID(NWT_RELIABLE, (uint8_t *)&ack_header, RELIABLE_PACKET_HEADER_ONLY_SIZE + sizeof(uint32_t),
-                      &send_address);
+  nw_SendWithID(NWT_RELIABLE, (uint8_t *)&ack_header, RELIABLE_PACKET_HEADER_ONLY_SIZE + sizeof(uint32_t),
+                &send_address);
 }
 
 void nw_DoNetworkIdle(void) {
@@ -1248,7 +1258,9 @@ void nw_WorkReliable(uint8_t *data, int len, network_address *naddr) {
   int16_t max_len = NETBUFFERSIZE;
   static reliable_header rcv_buff;
   static SOCKADDR rcv_addr;
-  uint32_t rcvid; // The id of who we actually received a packet from, as opposed to socketid parm
+  if (len < 0 || static_cast<size_t>(len) < RELIABLE_PACKET_HEADER_ONLY_SIZE ||
+      static_cast<size_t>(len) > sizeof(rcv_buff))
+    return;
 
   if (NP_TCP == naddr->connection_type) {
     SOCKADDR_IN *inaddr = (SOCKADDR_IN *)&rcv_addr;
@@ -1264,7 +1276,7 @@ void nw_WorkReliable(uint8_t *data, int len, network_address *naddr) {
 
   reliable_socket *rsocket = NULL;
   // Check to see if we need to send a packet out.
-  if ((serverconn != -1) && (reliable_sockets[serverconn].status == RNF_LIMBO) &&
+  if ((serverconn != UINT32_MAX) && (reliable_sockets[serverconn].status == RNF_LIMBO) &&
       ((timer_GetTime() - last_sent_iamhere) > NETRETRYTIME)) {
     reliable_header conn_header;
     // Now send I_AM_HERE packet
@@ -1295,7 +1307,7 @@ void nw_WorkReliable(uint8_t *data, int len, network_address *naddr) {
   network_address d3_rcv_addr;
   memcpy(&d3_rcv_addr, naddr, sizeof(network_address));
   memcpy((uint8_t *)&rcv_buff, data, len);
-  SOCKADDR_IN *rcvaddr, *rsockaddr;
+  SOCKADDR_IN *rcvaddr;
 
   do {
 
@@ -1353,10 +1365,8 @@ void nw_WorkReliable(uint8_t *data, int len, network_address *naddr) {
       rcvaddr = (SOCKADDR_IN *)&rcv_addr;
       for (i = 1; i < MAXRELIABLESOCKETS; i++) {
 
-        rsockaddr = (SOCKADDR_IN *)&reliable_sockets[i].addr;
         if (memcmp(&d3_rcv_addr, &reliable_sockets[i].net_addr, sizeof(network_address)) == 0) {
           rsocket = &reliable_sockets[i];
-          rcvid = i;
           break;
         }
       }
@@ -1373,7 +1383,7 @@ void nw_WorkReliable(uint8_t *data, int len, network_address *naddr) {
         // Get out of limbo
         if (rsocket->status == RNF_LIMBO) {
           // this is our connection to the server
-          if ((serverconn != -1)) {
+          if ((serverconn != UINT32_MAX)) {
             if (rcv_buff.type == RNT_ACK) {
               int *acknum = (int *)&rcv_buff.data;
               *acknum = INTEL_INT(*acknum);
@@ -1390,7 +1400,7 @@ void nw_WorkReliable(uint8_t *data, int len, network_address *naddr) {
             continue;
           }
         }
-        if ((rcv_buff.type == RNT_DATA) && (serverconn != -1)) {
+        if ((rcv_buff.type == RNT_DATA) && (serverconn != UINT32_MAX)) {
           rsocket->status = RNF_CONNECTED;
         } else {
           // mprintf(0,"Packet from nonconnected socket -- seq: %d status: %d\n",rcv_buff.seq,rsocket->status);
@@ -1596,8 +1606,6 @@ void nw_ConnectToServer(SOCKET *socket, network_address *server_addr) {
   float first_sent_req = 0;
   static reliable_header conn_header;
   static reliable_header ack_header;
-  int bytesin;
-  struct timeval timeout;
   *socket = INVALID_SOCKET;
 
   if (Use_DirectPlay) {
@@ -1609,8 +1617,6 @@ void nw_ConnectToServer(SOCKET *socket, network_address *server_addr) {
   conn_header.seq = INTEL_SHORT((int16_t)CONNECTSEQ);
   conn_header.data_len = 0;
 
-  timeout.tv_sec = 0;
-  timeout.tv_usec = 0;
 
   if ((server_addr->connection_type == NP_TCP) && (!TCP_active)) {
     return;
@@ -1619,7 +1625,6 @@ void nw_ConnectToServer(SOCKET *socket, network_address *server_addr) {
   Net_connect_sequence = R_NET_SEQUENCE_CONNECTING;
 
   memset(&ack_header, 0, sizeof(reliable_header));
-  bytesin = 0;
 
   network_address d3_rcv_addr;
   memset(&d3_rcv_addr, 0, sizeof(network_address));
@@ -1691,8 +1696,8 @@ void nw_CloseSocket(SOCKET *sockp) {
   diss_conn_header.type = RNT_DISCONNECT;
   diss_conn_header.seq = INTEL_SHORT((int16_t)(CONNECTSEQ));
   diss_conn_header.data_len = 0;
-  if (*sockp == serverconn)
-    serverconn = -1;
+  if (static_cast<uint32_t>(*sockp) == serverconn)
+    serverconn = UINT32_MAX;
 
   network_address send_address;
   memset(&send_address, 0, sizeof(network_address));
@@ -1837,18 +1842,16 @@ void nw_psnet_buffer_init() {
 // buffer a packet (maintain order!)
 void nw_psnet_buffer_packet(uint8_t *data, int length, network_address *from) {
   int idx;
-  int found_buf = 0;
 
   // find the first empty packet
   for (idx = 0; idx < MAX_PACKET_BUFFERS; idx++) {
     if (Psnet_buffers[idx].sequence_number == -1) {
-      found_buf = 1;
       break;
     }
   }
 
   // if we didn't find the buffer, report an overrun
-  if (!found_buf) {
+  if (idx == MAX_PACKET_BUFFERS) {
     LOG_WARNING << "WARNING - Buffer overrun in psnet";
   } else {
     // copy in the data
@@ -1909,7 +1912,6 @@ int nw_psnet_buffer_get_next_by_packet_id(uint8_t *data, int *length, uint32_t p
 // get the index of the next packet in order!
 int nw_psnet_buffer_get_next(uint8_t *data, int *length, network_address *from) {
   int idx;
-  int found_buf = 0;
 
   // if there are no buffers, do nothing
   if ((Psnet_lowest_id == -1) || (Psnet_lowest_id > Psnet_highest_id)) {
@@ -1920,13 +1922,15 @@ int nw_psnet_buffer_get_next(uint8_t *data, int *length, network_address *from) 
   for (idx = 0; idx < MAX_PACKET_BUFFERS; idx++) {
     // if we found the buffer
     if (Psnet_buffers[idx].sequence_number == Psnet_lowest_id) {
-      found_buf = 1;
       break;
     }
   }
 
   // at this point, we should _always_ have found the buffer
-  ASSERT(found_buf);
+  if (idx == MAX_PACKET_BUFFERS) {
+    LOG_WARNING << "Expected network packet was not found in the buffer.";
+    return 0;
+  }
 
   // copy out the buffer data
   memcpy(data, Psnet_buffers[idx].data, Psnet_buffers[idx].len);
@@ -2294,7 +2298,7 @@ int nw_SendWithID(uint8_t id, uint8_t *data, int len, network_address *who_to) {
   SOCKET send_sock;
   SOCKADDR_IN sock_addr; // UDP/TCP socket structure
 
-  int ret, send_len;
+  int ret = SOCKET_ERROR, send_len;
   uint8_t iaddr[6], *send_data;
   int16_t port;
   fd_set wfds;
@@ -2422,7 +2426,8 @@ int nw_SendWithID(uint8_t id, uint8_t *data, int len, network_address *who_to) {
 
 int nw_DoReceiveCallbacks(void) {
   SOCKADDR_IN ip_addr; // UDP/TCP socket structure
-  socklen_t read_len, from_len;
+  int read_len;
+  socklen_t from_len;
   network_address from_addr;
 
   uint8_t packet_data[1500];
@@ -2500,7 +2505,7 @@ void nw_ReliableResend(void) {
   for (j = 0; j < MAXRELIABLESOCKETS; j++) {
     rsocket = &reliable_sockets[j];
 
-    if (serverconn == -1) {
+    if (serverconn == UINT32_MAX) {
       if (rsocket->status == RNF_LIMBO)
         if ((timer_GetTime() - rsocket->last_packet_received) > NETTIMEOUT) {
           LOG_WARNING.printf("Reliable (but in limbo) socket (%d) timed out in nw_WorkReliable().", j);
@@ -2602,7 +2607,7 @@ void nw_ReliableResend(void) {
           send_address.port = htons(inaddr->sin_port);
           send_address.connection_type = NP_TCP;
 
-          int len = RELIABLE_PACKET_HEADER_ONLY_SIZE + rsocket->send_len[i];
+          int len = RELIABLE_PACKET_HEADER_ONLY_SIZE;
           NetStatistics.tcp_total_packets_sent--;    // decrement because we are going to inc
                                                      // in nw_SendWithID
           NetStatistics.tcp_total_bytes_sent -= len; // see above

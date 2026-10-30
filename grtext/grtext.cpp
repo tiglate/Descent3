@@ -869,11 +869,9 @@ void grtext_DrawTextLineClip(int x, int y, char *str) {
   cur_x = x;
   for (i = 0; i < strsize; i++) {
     uint8_t ch, ch2;
-    int w;
     ch = (uint8_t)str[i];
     ch2 = (uint8_t)str[i + 1];
-
-    w = GRCHAR_WIDTH(Grtext_font, ch);
+    int w = GRCHAR_WIDTH(Grtext_font, ch);
 
     if (ch == GR_COLOR_CHAR) {
       ddgr_color col;
@@ -947,10 +945,8 @@ void grtext_DrawTextLine(int x, int y, char *str) {
   cur_x = x;
   for (i = 0; i < strsize; i++) {
     uint8_t ch, ch2;
-    int w;
     ch = (uint8_t)str[i];
     ch2 = (uint8_t)str[i + 1];
-    w = GRCHAR_WIDTH(Grtext_font, ch);
 
     if (ch == GR_COLOR_CHAR) {
       ddgr_color col;

@@ -318,9 +318,7 @@ void PageInVClip(int vcnum) {
   LOG_DEBUG.printf("Paging in vclip %s!", vc->name);
 
   uint8_t start_val = cf_ReadByte(infile);
-  int version = 0;
   if (start_val != 127) {
-    version = 0;
     vc->num_frames = start_val;
     cf_ReadFloat(infile);
     vc->frame_time = cf_ReadFloat(infile);
@@ -328,7 +326,7 @@ void PageInVClip(int vcnum) {
     cf_ReadFloat(infile);
     vc->frame_time = DEFAULT_FRAMETIME;
   } else {
-    version = cf_ReadByte(infile);
+    cf_ReadByte(infile);
     vc->num_frames = cf_ReadByte(infile);
     vc->frame_time = cf_ReadFloat(infile);
     vc->frame_time = DEFAULT_FRAMETIME;
@@ -423,9 +421,10 @@ int AllocLoadVClip(const char *filename, int texture_size, int mipped, int pagea
   ChangeVClipName(filename, name);
 
   // Check to see if this vclip already exists in memory
-  if ((i = FindVClipName(IGNORE_TABLE(name))) != -1) {
-    GameVClips[i].used++;
-    return i;
+  int existing = FindVClipName(IGNORE_TABLE(name));
+  if (existing != -1) {
+    GameVClips[existing].used++;
+    return existing;
   }
 
   // mprintf(0,"Loading OAF vclip %s\n",name);
@@ -467,9 +466,10 @@ int AllocLoadIFLVClip(const char *filename, int texture_size, int mipped, int fo
   ChangeVClipName(filename, name);
 
   // Check to see if this vclip already exists in memory
-  if ((i = FindVClipName(IGNORE_TABLE(name))) != -1) {
-    GameVClips[i].used++;
-    return i;
+  int existing = FindVClipName(IGNORE_TABLE(name));
+  if (existing != -1) {
+    GameVClips[existing].used++;
+    return existing;
   }
 
   infile = (CFILE *)cfopen(filename, "rt");
@@ -521,6 +521,10 @@ int AllocLoadIFLVClip(const char *filename, int texture_size, int mipped, int fo
         // Set play time
         float play_time = atof(&curline[i]);
         ASSERT(play_time >= 0);
+        if (play_time < 0) {
+          cfclose(infile);
+          return -1;
+        }
       }
     } else {
       int lastslash = -1;
@@ -614,9 +618,7 @@ void ChangeVClipName(const char *src, char *dest) {
   ddio_SplitPath(src, path, filename, ext);
 
   // Make sure we don't go over our name length limit
-  strncpy(dest, filename, limit);
-
-  strcat(dest, ".oaf");
+  snprintf(dest, PAGENAME_LEN, "%.*s.oaf", limit, filename);
 }
 // Searches thru all vclips for a specific name, returns -1 if not found
 // or index of vclip with name

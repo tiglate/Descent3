@@ -97,7 +97,6 @@ static bool display_my_welcome = false;
 
 static void GetGameStartPacket(uint8_t *data);
 static void SendGameStartPacket(int pnum);
-static void DisplayScores(void);
 static void DisplayHUDScores(struct tHUDItem *hitem);
 static void DisplayWelcomeMessage(int player_num);
 static void SortTeamScores(int *sortedindex, int *scores);
@@ -629,7 +628,7 @@ void SaveStatsToFile(char *filename) {
 // write out game stats
 #define BUFSIZE 150
   char buffer[BUFSIZE];
-  char tempbuffer[25];
+  char tempbuffer[26];
   int sortedslots[MAX_PLAYER_RECORDS];
   player_record *pr, *dpr;
   tPInfoStat stat;

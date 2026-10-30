@@ -271,10 +271,9 @@ int TableVersionCurrent() {
 int mng_MakeLocker() {
   CFILE *outfile = nullptr;
   int len;
-  char *locker;
-
   len = strlen(TableUser);
 #ifndef RELEASE
+  char *locker;
   if (!Network_up) {
     OutrageMessageBox("Error: You are not connected to the network.");
     return 0;
@@ -841,9 +840,8 @@ int mng_GetListOfLocks(mngs_Pagelock *pl, int max, char *who) {
 
 // Takes a pagelock and sets its holder name to UNLOCKED
 void mng_OverrideToUnlocked(mngs_Pagelock *temp_pl) {
-  int r;
 #ifndef RELEASE
-  r = mng_CheckIfPageOwned(temp_pl, TableUser);
+  int r = mng_CheckIfPageOwned(temp_pl, TableUser);
 
   if (r == 1) {
     OutrageMessageBox("You own this page, so there is no use in you setting it to unlocked!");

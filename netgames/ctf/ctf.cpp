@@ -1126,19 +1126,6 @@ void OnPlayerChangeTeam(int player_num, int newteam, bool announce, bool spew_on
 //    3) Reset colored balls
 //    4) If killed in a flag's home goal than put it in the center of the room
 void OnClientPlayerKilled(object *killer_obj, int victim_pnum) {
-  int kpnum = -1;
-
-  if (killer_obj) {
-    if ((killer_obj->type == OBJ_PLAYER) || (killer_obj->type == OBJ_GHOST) || (killer_obj->type == OBJ_OBSERVER))
-      kpnum = killer_obj->id;
-    else if (killer_obj->type == OBJ_ROBOT || killer_obj->type == OBJ_BUILDING) {
-      // countermeasure kill
-      kpnum = DMFCBase->GetCounterMeasureOwner(killer_obj);
-    } else {
-      kpnum = -1;
-    }
-  }
-
   HandlePlayerSpew(victim_pnum);
   DMFCBase->OnClientPlayerKilled(killer_obj, victim_pnum);
 }
@@ -1391,7 +1378,7 @@ void SaveStatsToFile(char *filename) {
 // write out game stats
 #define BUFSIZE 150
   char buffer[BUFSIZE];
-  char tempbuffer[25];
+  char tempbuffer[26];
   int sortedslots[MAX_PLAYER_RECORDS];
   player_record *pr, *dpr;
   tPInfoStat stat;
@@ -2422,7 +2409,7 @@ void ReceiveGameState(uint8_t *data) {
   for (i = 0; i < DLLMAX_TEAMS; i++) {
     if (server_objnums[i] != 65535) {
       // we should have a real object here
-      uint16_t our_objnum = DMFCBase->ConvertServerToLocalObjnum(server_objnums[i]);
+      int our_objnum = DMFCBase->ConvertServerToLocalObjnum(server_objnums[i]);
 
       if (our_objnum == -1) {
         // fatal error

@@ -310,15 +310,10 @@ static inline void Cinematic_DeleteCamera(int objhandle);
 static inline bool Cinematic_IsPlayerDead(void);
 static bool Cinematic_IsKeyPressed(void);
 static void CannedCinematicIntroCallback(int type);
-static void CannedCinematic_Intro(int PathID, char *Text, int PlayerPath, float Seconds, int camera_handle);
 static void CannedCinematicEndLevelCallback(int type);
-static void CannedCinematic_EndLevelPath(int PathID, char *Text, int PlayerPath, float Seconds, int camera_handle);
-static void CannedCinematic_EndLevelPoint(vector *pos, int room, char *Text, int PlayerPath, float Seconds,
-                                          int camera_handle);
 static void CannedCinematicMovePlayerFadeCallback(int type);
 static void CannedCinematic_MovePlayerFade(object *player, int room, vector *pos, matrix *orient, int camera_handle);
 static void CannedCinematicLevelEndFadeWhiteCallback(int type);
-static void CannedCinematic_LevelEndFadeWhite(int camera_handle, float time, char *text_to_display);
 static void Cinematic_DoFakeCannedCinematics(tCannedCinematicInfo *info);
 
 //	Returns the hud mode before cinematics
@@ -1253,6 +1248,9 @@ void Cinematic_DrawText(void) {
     ASSERT(start_y >= 0 && end_y < Max_window_h); // too many lines of text
 
   } break;
+  default:
+    grtext_SetFont(old_font);
+    return;
   }
 
   if ((GameCinema.flags & GCF_TEXT_MASK) == GCF_TEXT_WIPEIN) {
@@ -2199,16 +2197,12 @@ void Cinematic_StartCanned(tCannedCinematicInfo *info, int camera_handle) {
 // Demo file support
 //==================================================
 static void mf_WriteInt(uint8_t *buffer, int *pointer, int data);
-static void mf_WriteShort(uint8_t *buffer, int *pointer, int16_t data);
 static void mf_WriteByte(uint8_t *buffer, int *pointer, uint8_t data);
 static void mf_WriteFloat(uint8_t *buffer, int *pointer, float data);
-static void mf_WriteBytes(uint8_t *buffer, int *pointer, uint8_t *data, int len);
 static void mf_WriteString(uint8_t *buffer, int *pointer, const char *string);
 static int mf_ReadInt(uint8_t *buffer, int *pointer);
-static int16_t mf_ReadShort(uint8_t *buffer, int *pointer);
 static uint8_t mf_ReadByte(uint8_t *buffer, int *pointer);
 static float mf_ReadFloat(uint8_t *buffer, int *pointer);
-static void mf_ReadBytes(uint8_t *buffer, int *pointer, uint8_t *data, int len);
 static void mf_ReadString(uint8_t *buffer, int *pointer, char *string);
 
 void Cinematic_DoDemoFileData(uint8_t *buffer) {
@@ -2405,11 +2399,6 @@ void mf_WriteInt(uint8_t *buffer, int *pointer, int data) {
   (*pointer) += sizeof(int);
 }
 
-void mf_WriteShort(uint8_t *buffer, int *pointer, int16_t data) {
-  memcpy(&buffer[(*pointer)], &data, sizeof(int16_t));
-  (*pointer) += sizeof(int16_t);
-}
-
 void mf_WriteByte(uint8_t *buffer, int *pointer, uint8_t data) {
   memcpy(&buffer[(*pointer)], &data, sizeof(uint8_t));
   (*pointer) += sizeof(uint8_t);
@@ -2418,11 +2407,6 @@ void mf_WriteByte(uint8_t *buffer, int *pointer, uint8_t data) {
 void mf_WriteFloat(uint8_t *buffer, int *pointer, float data) {
   memcpy(&buffer[(*pointer)], &data, sizeof(float));
   (*pointer) += sizeof(float);
-}
-
-void mf_WriteBytes(uint8_t *buffer, int *pointer, uint8_t *data, int len) {
-  memcpy(&buffer[(*pointer)], data, len);
-  (*pointer) += len;
 }
 
 void mf_WriteString(uint8_t *buffer, int *pointer, const char *string) {
@@ -2440,13 +2424,6 @@ int mf_ReadInt(uint8_t *buffer, int *pointer) {
   return value;
 }
 
-int16_t mf_ReadShort(uint8_t *buffer, int *pointer) {
-  int16_t value;
-  memcpy(&value, &buffer[(*pointer)], sizeof(value));
-  (*pointer) += sizeof(value);
-  return value;
-}
-
 uint8_t mf_ReadByte(uint8_t *buffer, int *pointer) {
   uint8_t value;
   memcpy(&value, &buffer[(*pointer)], sizeof(value));
@@ -2459,11 +2436,6 @@ float mf_ReadFloat(uint8_t *buffer, int *pointer) {
   memcpy(&value, &buffer[(*pointer)], sizeof(value));
   (*pointer) += sizeof(value);
   return value;
-}
-
-void mf_ReadBytes(uint8_t *buffer, int *pointer, uint8_t *data, int len) {
-  memcpy(data, &buffer[(*pointer)], len);
-  (*pointer) += len;
 }
 
 void mf_ReadString(uint8_t *buffer, int *pointer, char *string) {

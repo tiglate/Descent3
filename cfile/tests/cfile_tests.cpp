@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <filesystem>
+#include <fstream>
 #include <vector>
 #include <gtest/gtest.h>
 #include "cfile.h"
@@ -42,9 +43,32 @@ TEST(D3, CFileIO) {
   cf_Rewind(file_handle);
 
   EXPECT_EQ(cf_ReadInt(file_handle), 1414743380);
+  EXPECT_EQ(cfgetc(file_handle), EOF);
   cf_Rewind(file_handle);
+  EXPECT_EQ(cfgetc(file_handle), 'T');
+  cfclose(file_handle);
 
   cf_CloseLibrary(lib_handle);
+}
+
+TEST(D3, CFileTextNewlines) {
+  const auto path = std::filesystem::temp_directory_path() / "descent3-cfile-newline-test.txt";
+  {
+    std::ofstream out(path, std::ios::binary | std::ios::trunc);
+    out << "a\r\nb\rc\n";
+    ASSERT_TRUE(out.good());
+  }
+  CFILE *file = cfopen(path, "rt");
+  ASSERT_NE(file, nullptr);
+  EXPECT_EQ(cfgetc(file), 'a');
+  EXPECT_EQ(cfgetc(file), '\n');
+  EXPECT_EQ(cfgetc(file), 'b');
+  EXPECT_EQ(cfgetc(file), '\n');
+  EXPECT_EQ(cfgetc(file), 'c');
+  EXPECT_EQ(cfgetc(file), '\n');
+  EXPECT_EQ(cfgetc(file), EOF);
+  cfclose(file);
+  std::filesystem::remove(path);
 }
 
 TEST(D3, CFileLibrary) {

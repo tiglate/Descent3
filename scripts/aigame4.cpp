@@ -59,7 +59,6 @@ static void PortalBreakGlass(int portalnum, int roomnum);
 // Returns the new child's handle
 static int CreateAndAttach(int me, const char *child_name, uint8_t child_type, char parent_ap, char child_ap,
                            bool f_aligned = true, bool f_set_parent = false);
-static float Obj_GetObjDist(int me, int it, bool f_sub_rads);
 
 void PortalBreakGlass(int portalnum, int roomnum) {
   msafe_struct mstruct;
@@ -371,28 +370,6 @@ int16_t STDCALL CallInstanceEvent(int id, void *ptr, int event, tOSIRISEventInfo
 //============================================
 // Functions
 //============================================
-
-float Obj_GetObjDist(int me, int it, bool f_sub_rads) {
-  vector me_pos;
-  vector it_pos;
-  float dist;
-
-  Obj_Value(me, VF_GET, OBJV_V_POS, &me_pos);
-  Obj_Value(it, VF_GET, OBJV_V_POS, &it_pos);
-
-  dist = vm_VectorDistance(&me_pos, &it_pos);
-
-  if (f_sub_rads) {
-    float size;
-
-    Obj_Value(me, VF_GET, OBJV_F_SIZE, &size);
-    dist -= size;
-    Obj_Value(it, VF_GET, OBJV_F_SIZE, &size);
-    dist -= size;
-  }
-
-  return dist;
-}
 
 static inline void AIClearNonHPGoals(int handle) {
   int i;

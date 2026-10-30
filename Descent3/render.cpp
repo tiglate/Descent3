@@ -1064,17 +1064,6 @@ void BuildRoomListSub(int start_room_num, clip_wnd *wnd, int depth) {
 }
 // compare function for room z sort
 float Room_z_depth[MAX_ROOMS + MAX_PALETTE_ROOMS];
-static int Room_z_sort_func(const int16_t *a, const int16_t *b) {
-  float az, bz;
-  az = Room_z_depth[*a];
-  bz = Room_z_depth[*b];
-  if (az < bz)
-    return 1;
-  else if (az > bz)
-    return -1;
-  else
-    return 0;
-}
 // build a list of rooms to be rendered
 // fills in Render_list & N_render_rooms
 void BuildRoomList(int start_room_num) {
@@ -1644,7 +1633,7 @@ void RenderScorchesForRoom(room *rp) {
 // Parameters:	rp - pointer to the room the face is un
 //				facenum - which face in the specified room
 void RenderLightmapFace(room *rp, int facenum) {
-  int vn, drawn = 0;
+  int vn;
   face *fp = &rp->faces[facenum];
   g3Point *pointlist[MAX_VERTS_PER_FACE];
   g3Point pointbuffer[MAX_VERTS_PER_FACE];
@@ -1708,7 +1697,7 @@ void RenderLightmapFace(room *rp, int facenum) {
   if (fp->flags & FF_TRIANGULATED)
     g3_SetTriangulationTest(1);
   // Draw the damn thing
-  drawn = g3_DrawPoly(fp->num_verts, pointlist, lm_handle, MAP_TYPE_LIGHTMAP);
+  g3_DrawPoly(fp->num_verts, pointlist, lm_handle, MAP_TYPE_LIGHTMAP);
   if (fp->flags & FF_TRIANGULATED)
     g3_SetTriangulationTest(0);
   // Restore if using saturated blending

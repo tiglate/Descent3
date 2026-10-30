@@ -412,6 +412,9 @@ void ui_RemoveWindow(UIWindow *wnd) {
     node = node->next;
   }
   ASSERT(found_wnd);
+  if (!found_wnd) {
+    LOG_WARNING << "Attempted to remove a window that is not in the UI list.";
+  }
 }
 //	Procedure to find which window should gain focus in the
 //		first check what window contains mouse pointer and save that window

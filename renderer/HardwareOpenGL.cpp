@@ -415,10 +415,6 @@ int opengl_Setup(oeApplication *app, const int *width, const int *height) {
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
   if (!GSDLWindow) {
-    int display_num = 0;
-    int display_arg = FindArg("-display");
-    int display_count = 0;
-
     // Video modes already specify the requested resolution. Multiplying by
     // desktop content scaling would enlarge a native-resolution window again.
 

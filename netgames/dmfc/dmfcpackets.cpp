@@ -379,7 +379,6 @@ void DMFCBase::GetDMFCGameInfo(uint8_t *data) {
 //
 //		Sends information about the DMFC game
 void DMFCBase::SendDMFCGameInfo(int player) {
-  int r_len, b_len, g_len, y_len;
   int count = 0;
   uint8_t data[MAX_GAME_DATA_SIZE];
 
@@ -387,11 +386,6 @@ void DMFCBase::SendDMFCGameInfo(int player) {
 
   if (GetNumTeams() > 1) {
     // team game
-    r_len = strlen(GetTeamString(RED_TEAM)) + 1;
-    b_len = strlen(GetTeamString(BLUE_TEAM) + 1);
-    g_len = strlen(GetTeamString(GREEN_TEAM) + 1);
-    y_len = strlen(GetTeamString(YELLOW_TEAM) + 1);
-
     MultiAddByte(m_iServerHUDCallsignLevel, data, &count);
     MultiAddByte(m_bMakeClientsWait, data, &count);
     MultiAddByte(GetNumTeams(), data, &count);

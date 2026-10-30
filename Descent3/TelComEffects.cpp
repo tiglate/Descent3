@@ -906,10 +906,8 @@ bool CreateBackgroundEffect(TCBKGDESC* desc, int monitor, int screen, int id) {
 
 bool CreatePolyModelEffect(TCPOLYDESC* desc, int monitor, int screen, int id) {
   ASSERT(desc);
-  int efxtype = -1;
   switch (desc->type) {
   case TC_POLY_STATIC:
-    efxtype = EFX_POLYMODEL;
     break;
   default:
     Int3();

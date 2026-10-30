@@ -1035,7 +1035,7 @@ void SaveStatsToFile(char *filename) {
 // write out game stats
 #define BUFSIZE 150
   char buffer[BUFSIZE];
-  char tempbuffer[25];
+  char tempbuffer[26];
   int sortedslots[MAX_PLAYER_RECORDS];
   player_record *pr, *dpr;
   tPInfoStat stat;
@@ -1307,6 +1307,7 @@ void DisplayHUDScores(struct tHUDItem *hitem) {
             color = (DMFCBase->GetPlayerColors())[pr->pnum];
             break;
           case HCM_NORMAL:
+          default:
             color = GR_RGB(40, 255, 40);
             break;
           };
@@ -1339,6 +1340,7 @@ void DisplayHUDScores(struct tHUDItem *hitem) {
               color = (DMFCBase->GetPlayerColors())[pr->pnum];
               break;
             case HCM_NORMAL:
+            default:
               color = GR_RGB(40, 255, 40);
               break;
             };

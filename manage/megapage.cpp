@@ -293,6 +293,9 @@ void mng_LoadNetMegacellPage(CFILE *infile) {
   if (mng_ReadNewMegacellPage(infile, &megacellpage)) {
     int ret = mng_SetAndLoadMegacell(&megacellpage);
     ASSERT(ret >= 0);
+    if (ret < 0) {
+      LOG_ERROR << "Failed to load megacell page.";
+    }
   } else
     LOG_ERROR.printf("Could not load megacellpage named %s!", megacellpage.megacell_struct.name);
 }
@@ -331,6 +334,10 @@ void mng_LoadLocalMegacellPage(CFILE *infile) {
     }
 
     ASSERT(ok == 1);
+    if (!ok) {
+      LOG_ERROR << "Failed to load local megacell page.";
+      return;
+    }
     if (Loading_addon_table == -1)
       mng_AllocTrackLock(megacellpage.megacell_struct.name, PAGETYPE_MEGACELL);
   } else

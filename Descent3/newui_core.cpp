@@ -560,7 +560,7 @@ void newui_FreeBitmap(UIBitmapItem *bmitem) { Newui_resources.Free(bmitem); }
 
 // touches all newui bitmaps, do before any newui menus open
 void newuiCore_PageInBitmaps() {
-  int i;
+  size_t i;
 
   if (Preloaded_bitmaps[0]) {
     Int3(); // we've already paged in stuff!
@@ -574,7 +574,7 @@ void newuiCore_PageInBitmaps() {
 
 // call when NO newui menus open
 void newuiCore_ReleaseBitmaps() {
-  int i;
+  size_t i;
 
   if (!Preloaded_bitmaps[0]) {
     Int3(); // we've already freed paged in stuff!
@@ -2034,6 +2034,13 @@ void newuiSheet::AddText(const char *text, ...) {
   va_start(arglist, text);
   len = std::vsnprintf(buf, 512, text, arglist);
   va_end(arglist);
+  if (len < 0) {
+    LOG_WARNING << "Unable to format UI text.";
+    return;
+  }
+  if (static_cast<size_t>(len) >= sizeof(buf)) {
+    LOG_WARNING << "UI text was too long and has been shortened.";
+  }
 
   newuiSheet::t_gadget_desc *gadget = AddGadget(-1, GADGET_STATIC_TXT, buf);
 
@@ -2791,7 +2798,7 @@ void newuiListBox::AddItem(const char *name) {
       real_index = -1;
       int result;
 
-      int old_r2v;
+      int old_r2v = 0;
       char *old_item = NULL;
 
       while (oidx <= m_NumItems) {
@@ -3528,7 +3535,7 @@ void newuiComboBox::AddItem(const char *name) {
       real_index = -1;
       int result;
 
-      int old_r2v;
+      int old_r2v = 0;
       char *old_item = NULL;
 
       while (oidx <= m_NumItems) {
@@ -4198,6 +4205,8 @@ int newuiTiledWindow::GetTopTileIndex(int tx, int window_width) {
   case NUWF_TITLELARGE:
     title_width = 6;
     break;
+  default:
+    return N_PIECE_IDX;
   }
 
   // If one width is odd and other even, then add an extra tile to the title

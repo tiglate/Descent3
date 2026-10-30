@@ -157,22 +157,27 @@ static bool joy_InitStick(tJoystick joy, char *server_adr) {
       caps.axes_mask |= JOYFLAG_VVALID;
       caps.minv = -32767;
       caps.maxv = 32768;
+      [[fallthrough]];
     case 5:
       caps.axes_mask |= JOYFLAG_UVALID;
       caps.minu = -32767;
       caps.maxu = 32768;
+      [[fallthrough]];
     case 4:
       caps.axes_mask |= JOYFLAG_RVALID;
       caps.minr = -32767;
       caps.maxr = 32768;
+      [[fallthrough]];
     case 3:
       caps.axes_mask |= JOYFLAG_ZVALID;
       caps.minz = -32767;
       caps.maxz = 32768;
+      [[fallthrough]];
     case 2:
       caps.axes_mask |= JOYFLAG_YVALID;
       caps.miny = -32767;
       caps.maxy = 32768;
+      [[fallthrough]];
     case 1:
       caps.axes_mask |= JOYFLAG_XVALID;
       caps.minx = -32767;
@@ -186,10 +191,13 @@ static bool joy_InitStick(tJoystick joy, char *server_adr) {
       // Fall through to 4 hats
     case 4:
       caps.axes_mask |= JOYFLAG_POV4VALID;
+      [[fallthrough]];
     case 3:
       caps.axes_mask |= JOYFLAG_POV3VALID;
+      [[fallthrough]];
     case 2:
       caps.axes_mask |= JOYFLAG_POV2VALID;
+      [[fallthrough]];
     case 1:
       caps.axes_mask |= JOYFLAG_POVVALID;
     case 0:
@@ -324,8 +332,8 @@ static int joyGetNumDevs(void) {
   // rcg06182000 add support for specific joydev.
   int rc = FindArgChar("-joystick", 'j');
   specificJoy = -1;
-  if ((rc > 0) && (GameArgs[rc + 1] != NULL)) {
-    specificJoy = atoi(GameArgs[rc + 1]);
+  if ((rc > 0) && GetArg(rc + 1)) {
+    specificJoy = atoi(GetArg(rc + 1));
     if ((specificJoy >= 0) && (specificJoy < joyCount)) {
       found = 1;
     } else {

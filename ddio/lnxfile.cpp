@@ -84,7 +84,12 @@
 //	File operations
 
 //	retrieve the current working folder where file operation will occur.
-void ddio_GetWorkingDir(char *path, int len) { getcwd(path, len); }
+void ddio_GetWorkingDir(char *path, int len) {
+  if (len > 0 && !getcwd(path, len)) {
+    LOG_ERROR.printf("Could not get working directory: %s", strerror(errno));
+    path[0] = '\0';
+  }
+}
 
 bool ddio_SetWorkingDir(const char *path) { return (chdir(path)) ? false : true; }
 

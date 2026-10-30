@@ -33,9 +33,10 @@
 
 #define GET_AND_VERIFY_OBJECT(o)                                                                                       \
   {                                                                                                                    \
-    o = VerifyMSafeObject(MultiGetUshort(data, &count));                                                               \
-    if (o == OBJECT_HANDLE_NONE)                                                                                       \
+    const int verified_handle = VerifyMSafeObject(MultiGetUshort(data, &count));                                      \
+    if (verified_handle == OBJECT_HANDLE_NONE)                                                                         \
       return;                                                                                                          \
+    o = verified_handle;                                                                                               \
   }
 
 // Makes sure the sever objnum passed in is actually real on our machine
@@ -424,7 +425,7 @@ void MultiDoMSafeFunction(uint8_t *data) {
   case MSAFE_INVEN_ADD_OBJECT:
     mstruct->flags = MultiGetInt(data, &count);
     MultiGetString(mstruct->message, data, &count);
-    // note the fall through
+    [[fallthrough]]; // note the fall through
   case MSAFE_INVEN_REMOVE_OBJECT:
     GET_AND_VERIFY_OBJECT(mstruct->objhandle);
     GET_AND_VERIFY_OBJECT(mstruct->ithandle);
@@ -684,7 +685,7 @@ void MultiSendMSafeFunction(uint8_t type, msafe_struct *mstruct) {
   case MSAFE_OBJECT_SETONFIRE:
     sequence = NETSEQ_OBJECTS;
     MultiAddUshort(mstruct->objhandle & HANDLE_OBJNUM_MASK, data, &count);
-    if (mstruct->ithandle == OBJECT_HANDLE_NONE) {
+    if (mstruct->ithandle == static_cast<uint32_t>(OBJECT_HANDLE_NONE)) {
       MultiAddByte(0, data, &count);
     } else {
       MultiAddByte(1, data, &count);
@@ -791,7 +792,7 @@ void MultiSendMSafeFunction(uint8_t type, msafe_struct *mstruct) {
       sequence = NETSEQ_OBJECTS;
 
     MultiAddUshort(mstruct->objhandle & HANDLE_OBJNUM_MASK, data, &count);
-    if (mstruct->ithandle != OBJECT_HANDLE_NONE && mstruct->ithandle != OBJECT_HANDLE_BAD)
+    if (mstruct->ithandle != static_cast<uint32_t>(OBJECT_HANDLE_NONE) && mstruct->ithandle != static_cast<uint32_t>(OBJECT_HANDLE_BAD))
       MultiAddUshort(mstruct->ithandle & HANDLE_OBJNUM_MASK, data, &count);
     else
       MultiAddUshort(HANDLE_OBJNUM_MASK, data, &count);
@@ -1051,7 +1052,7 @@ void MultiSendMSafeFunction(uint8_t type, msafe_struct *mstruct) {
   case MSAFE_INVEN_ADD_OBJECT:
     MultiAddInt(mstruct->flags, data, &count);
     MultiAddString(mstruct->message, data, &count);
-    // note the fall through
+    [[fallthrough]]; // note the fall through
   case MSAFE_INVEN_REMOVE_OBJECT:
     sequence = NETSEQ_PLAYERS;
     MultiAddUshort(mstruct->objhandle & HANDLE_OBJNUM_MASK, data, &count);
@@ -1136,8 +1137,8 @@ void MultiDoMSafePowerup(uint8_t *data) {
   objnum = MultiGetUshort(data, &count);
   mstruct->ithandle = VerifyMSafeObject(objnum);
 
-  ASSERT(mstruct->objhandle != -1 && mstruct->ithandle != -1);
-  if (mstruct->objhandle == -1 || mstruct->ithandle == -1)
+  ASSERT(mstruct->objhandle != static_cast<uint32_t>(OBJECT_HANDLE_NONE) && mstruct->ithandle != static_cast<uint32_t>(OBJECT_HANDLE_NONE));
+  if (mstruct->objhandle == static_cast<uint32_t>(OBJECT_HANDLE_NONE) || mstruct->ithandle == static_cast<uint32_t>(OBJECT_HANDLE_NONE))
     return;
   object *op = ObjGet(mstruct->objhandle);
   ASSERT(op);

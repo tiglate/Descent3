@@ -1346,11 +1346,8 @@ $$END
 void aAddGameMessage(const char *game_message, const char *hud_message) {
   msafe_struct mstruct;
 
-  strncpy(mstruct.message, game_message, sizeof(mstruct.message));
-  mstruct.message[sizeof(mstruct.message) - 1] = 0;
-
-  strncpy(mstruct.message2, hud_message, sizeof(mstruct.message2));
-  mstruct.message[sizeof(mstruct.message) - 1] = 0;
+  snprintf(mstruct.message, sizeof(mstruct.message), "%.*s", static_cast<int>(sizeof(mstruct.message) - 1), game_message);
+  snprintf(mstruct.message2, sizeof(mstruct.message2), "%.*s", static_cast<int>(sizeof(mstruct.message2) - 1), hud_message);
 
   mstruct.color = GR_RGB(0, 242, 148);
   mstruct.state = 0; // means all players
@@ -6160,7 +6157,7 @@ bool qObjCanSeePlayer(int cone, int handlesrc, float max_distance) {
     MSafe_GetValue(MSAFE_OBJECT_PLAYER_HANDLE, &mstruct);
 
     // See if this player active
-    if (mstruct.objhandle == OBJECT_HANDLE_NONE)
+    if (mstruct.objhandle == static_cast<uint32_t>(OBJECT_HANDLE_NONE))
       continue;
 
     // Get the target position
@@ -6237,7 +6234,7 @@ bool qObjCanSeePlayerAdvanced(int cone, int handlesrc, float max_distance, int f
     MSafe_GetValue(MSAFE_OBJECT_PLAYER_HANDLE, &mstruct);
 
     // See if this player active
-    if (mstruct.objhandle == OBJECT_HANDLE_NONE)
+    if (mstruct.objhandle == static_cast<uint32_t>(OBJECT_HANDLE_NONE))
       continue;
 
     // Get the target position
@@ -6324,7 +6321,7 @@ bool qObjCanSeePlayerAdvancedWithStore(int slot, int cone, int handlesrc, float 
     MSafe_GetValue(MSAFE_OBJECT_PLAYER_HANDLE, &mstruct);
 
     // See if this player active
-    if (mstruct.objhandle == OBJECT_HANDLE_NONE)
+    if (mstruct.objhandle == static_cast<uint32_t>(OBJECT_HANDLE_NONE))
       continue;
 
     // Get the target position
@@ -6612,7 +6609,7 @@ int qPlayerClosest(int objhandle, int varnum) {
     MSafe_GetValue(MSAFE_OBJECT_PLAYER_HANDLE, &mstruct);
 
     // See if this player active
-    if (mstruct.objhandle == OBJECT_HANDLE_NONE)
+    if (mstruct.objhandle == static_cast<uint32_t>(OBJECT_HANDLE_NONE))
       continue;
 
     // Get the target position

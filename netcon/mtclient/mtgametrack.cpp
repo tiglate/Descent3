@@ -228,12 +228,14 @@ void IdleGameTracker() {
   // mprintf(0,"IdleGameTracker() entered.\n");
   if ((TrackerGameIsRunning) && ((DLLtimer_GetTime() - LastTrackerUpdate) > TRACKER_UPDATE_INTERVAL)) {
 
+#if defined(LOGGER) && !defined(RELEASE)
     struct tm *newtime;
     time_t aclock;
     time(&aclock); /* Get time in seconds */
     newtime = localtime(&aclock);
     // Time to update the tracker again
     DLLmprintf(0, "[%.24s] Updating the PXO game tracker!\n", asctime(newtime));
+#endif
     SendGameTrackerPacker(&TrackerGameData);
     //		sendto(gamesock,(const char *)&TrackerGameData,TrackerGameData.len,0,(SOCKADDR
     //*)&gtrackaddr,sizeof(SOCKADDR_IN));
@@ -244,12 +246,14 @@ void IdleGameTracker() {
              ((DLLtimer_GetTime() - LastSentToTracker) > TRACKER_RESEND_TIME)) {
     // We still haven't been acked by the last packet and it's time to resend.
 
+#if defined(LOGGER) && !defined(RELEASE)
     struct tm *newtime;
     time_t aclock;
     time(&aclock); /* Get time in seconds */
     newtime = localtime(&aclock);
     // Time to update the tracker again
     DLLmprintf(0, "[%.24s] (Resending) Updating the PXO game tracker!\n", asctime(newtime));
+#endif
 
     SendGameTrackerPacker(&TrackerGameData);
     TrackerAckdUs = 0;
@@ -288,7 +292,10 @@ static void SendClientHolePunch(SOCKADDR_IN *addr) {
 
 void HandleGamePacket(uint8_t *data, int len, network_address *from) {
 
-  memcpy(&inpacket, data, sizeof(inpacket));
+  if (len < 0 || static_cast<size_t>(len) < GAME_HEADER_ONLY_SIZE || static_cast<size_t>(len) > sizeof(inpacket))
+    return;
+  memset(&inpacket, 0, sizeof(inpacket));
+  memcpy(&inpacket, data, len);
 
   // Check to make sure the packets ok
   if (len) {
@@ -301,15 +308,16 @@ void HandleGamePacket(uint8_t *data, int len, network_address *from) {
       }
       break;
     case GNT_GAMELIST_LITE_DATA:
-      if (len < (GAME_HEADER_ONLY_SIZE + sizeof(game_list))) {
+      if (static_cast<size_t>(len) < GAME_HEADER_ONLY_SIZE + sizeof(game_list)) {
         DLLmprintf(0, "(%d) packet is too small!\n", len);
+        return;
       }
       // Woohoo! Game data! put it in the buffer (if one's free)
       // DLLmprintf(0,"GNT_GAMELIST_LITE_DATA received.\n");
       for (int i = 0; i < MAX_GAME_BUFFERS; i++) {
         if (GameBuffer[i].game_type == GT_UNUSED) {
           memset(&GameBuffer[i], 0, sizeof(game_list));
-          memcpy(&GameBuffer[i], inpacket.data, len - GAME_HEADER_ONLY_SIZE);
+          memcpy(&GameBuffer[i], inpacket.data, sizeof(game_list));
           i = MAX_GAME_BUFFERS + 1;
         }
       }
@@ -317,7 +325,7 @@ void HandleGamePacket(uint8_t *data, int len, network_address *from) {
     case GNT_NAT_HOLE_PUNCH_REQ:
       if (len == (GAME_HEADER_ONLY_SIZE+sizeof(hole_punch_addr_ip6))) {
         // we don't support IPv6 yet so skip this one
-      } else {
+      } else if (static_cast<size_t>(len) >= GAME_HEADER_ONLY_SIZE + sizeof(hole_punch_addr)) {
         SOCKADDR_IN nataddr;
 
         auto ipv4 = reinterpret_cast<hole_punch_addr *>(&inpacket.data);
@@ -403,12 +411,14 @@ void AckPacket(int sig) {
 
 void StartTrackerGame(void *buffer) {
 
+#if defined(LOGGER) && !defined(RELEASE)
   struct tm *newtime;
   time_t aclock;
   time(&aclock); /* Get time in seconds */
   newtime = localtime(&aclock);
   // Time to update the tracker again
   DLLmprintf(0, "[%.24s] Updating the PXO game tracker with a new game!\n", asctime(newtime));
+#endif
 
   if (GameType == GT_FREESPACE) {
     //		memcpy(FreeSpaceTrackerGameData,buffer,sizeof(freespace_net_game_data));

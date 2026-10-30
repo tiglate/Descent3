@@ -401,9 +401,7 @@ void ChangeSoundFileName(const char *src, char *dest) {
   ddio_SplitPath(src, path, filename, ext);
 
   // Make sure we don't go over our name length limit
-  strncpy(dest, filename, limit);
-
-  strcat(dest, ".wav");
+  snprintf(dest, PAGENAME_LEN, "%.*s.wav", limit, filename);
 }
 
 // Given a filename, loads the sound file.

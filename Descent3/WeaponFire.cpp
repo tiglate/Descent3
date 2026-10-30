@@ -1529,7 +1529,6 @@ object *HomingAquireTarget(object *obj) {
   if (!track_goal) {
     int i;
     int best_index = -1;
-    int best_dist = MAX_HOMING_DIST + 1;
     float best_dot = -1.0f;
 
     if (Gametime > obj->ctype.laser_info.last_track_time + HOMING_FIND_LOC_INTERVAL) {
@@ -1592,7 +1591,6 @@ object *HomingAquireTarget(object *obj) {
                   fvi_FindIntersection(&fq, &hit_info);
                   if (hit_info.hit_type[0] == HIT_NONE) {
                     best_index = i;
-                    best_dist = dist_to_target;
                     best_dot = cur_dot;
                   }
                 }
@@ -2928,7 +2926,7 @@ void FireWeaponFromPlayer(object *objp, int weapon_type, int down_count, bool do
   }
 
   // Check for adequate energy
-  if ((wb->energy_usage * ammo_scalar) && (player->energy <= 0)) {
+  if (wb->energy_usage != 0 && ammo_scalar != 0 && player->energy <= 0) {
     AddHUDMessage(TXT_WPNNONRG);
     if (weapon_type == PW_PRIMARY)
       StopWeapon(objp, pw, wb);
@@ -2937,7 +2935,7 @@ void FireWeaponFromPlayer(object *objp, int weapon_type, int down_count, bool do
   }
 
   // Check for adequate ammo
-  if ((wb->ammo_usage * ammo_scalar) && (player->weapon_ammo[weapon_battery_index] <= 0)) {
+  if (wb->ammo_usage != 0 && ammo_scalar != 0 && player->weapon_ammo[weapon_battery_index] <= 0) {
     if (weapon_type == PW_PRIMARY)
       AddHUDMessage(TXT_WPNNOAMMO);
     else

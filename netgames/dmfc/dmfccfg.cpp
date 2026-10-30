@@ -174,11 +174,7 @@ char *CRegistry::SkipWhite(char *p) {
 // Parses a quoted string
 // Returns true if got string ok, else false
 char *CRegistry::ParseString(char *p, char *buf, int bufsize, char sdelim, char edelim) {
-  char *save_p;
-
   p = SkipWhite(p);
-
-  save_p = p;
 
   if (*p != sdelim) {
     return NULL;
@@ -209,9 +205,7 @@ char *CRegistry::ParseString(char *p, char *buf, int bufsize, char sdelim, char 
 
 // Parses a sequence of non-space characters
 char *CRegistry::ParseToken(char *p, char *buf, int bufsize) {
-  char *save_p;
   p = SkipWhite(p);
-  save_p = p;
 
   while (!isspace(*p) && (*p != ',') && *p && --bufsize)
     *buf++ = *p++;

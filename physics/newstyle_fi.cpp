@@ -70,31 +70,6 @@ static void CollideSubmodel(poly_model *pm, bsp_info *sm, uint32_t f_render_sub)
 static void CollidePolygonModel(vector *pos, matrix *orient, int model_num, float *normalized_time,
                                 uint32_t f_render_sub);
 
-static void BuildModelAngleMatrix(matrix *mat, angle ang, vector *axis) {
-  scalar x, y, z;
-  scalar s, c, t;
-
-  x = axis->x();
-  y = axis->y();
-  z = axis->z();
-
-  s = (scalar)FixSin(ang);
-  c = (scalar)FixCos(ang);
-  t = 1.0f - c;
-
-  mat->rvec.x() = t * x * x + c;
-  mat->rvec.y() = t * x * y + s * z;
-  mat->rvec.z() = t * x * z - s * y;
-
-  mat->uvec.x() = t * x * y - s * z;
-  mat->uvec.y() = t * y * y + c;
-  mat->uvec.z() = t * y * z + s * x;
-
-  mat->fvec.x() = t * x * z + s * y;
-  mat->fvec.y() = t * y * z - s * x;
-  mat->fvec.z() = t * z * z + c;
-}
-
 float fvi_hit_param;
 bool fvi_check_param;
 

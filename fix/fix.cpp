@@ -126,7 +126,9 @@ scalar FixCos(angle a) {
 }
 
 // Get rid of the "no return value" warnings in the next three functions
+#ifdef _MSC_VER
 #pragma warning(disable : 4035)
+#endif
 
 // compute inverse sine
 angle FixAsin(scalar v) {

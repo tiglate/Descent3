@@ -240,7 +240,7 @@ static int g_truecolor;
 static int create_videobuf_handler(unsigned char major, unsigned char minor, unsigned char *data, int len,
                                    void *context) {
   short w, h;
-  short count, truecolor;
+  short truecolor;
 
   if (videobuf_created)
     return 1;
@@ -249,12 +249,6 @@ static int create_videobuf_handler(unsigned char major, unsigned char minor, uns
 
   w = get_short(data);
   h = get_short(data + 2);
-
-  if (minor > 0) {
-    count = get_short(data + 4);
-  } else {
-    count = 1;
-  }
 
   if (minor > 1) {
     truecolor = get_short(data + 6);

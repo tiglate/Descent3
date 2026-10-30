@@ -287,7 +287,6 @@ int CBriefParse::ParseBriefing(const char *filename) {
 
   // the following block of 'globals' are for when parsing a text block, the information is stored
   // here until a $endtext is hit
-  char title_buf[128];
   bool reading_text = false;
   tTextBufferDesc text_buffer_desc = {};
   text_buffer_desc.text_id = -1; // id # for current textblock
@@ -308,10 +307,8 @@ int CBriefParse::ParseBriefing(const char *filename) {
   // Initialize vars
   linenum = 0;
   parse_error = 0;
-  title_buf[0] = 0;
 
   // Read & parse lines
-  int bytes_read;
   const char *p;
 
   linebuf = NULL;
@@ -327,19 +324,13 @@ int CBriefParse::ParseBriefing(const char *filename) {
     }
 
     // Read the line
-    bytes_read = ReadFullLine(&linebuf, ifile);
+    ReadFullLine(&linebuf, ifile);
     linenum++;
 
     if (!linebuf) {
       // no more data? or empty line
       continue;
     }
-
-    // Check for line too long
-    //@@if (bytes_read >= sizeof(linebuf)-1) {
-    //@@	ParseError("Line too long");
-    //@@	break;
-    //@@}
 
     // Check for keyword
     if (linebuf[0] == '$') {
@@ -790,7 +781,7 @@ int CBriefParse::ParseBriefing(const char *filename) {
       continue;
     else {
       // Not a comment, keyword, or text, so it's an error
-      ParseError("Unexpected text on line", p);
+      ParseError("Unexpected text on line", linebuf);
     }
   }
 
@@ -1108,7 +1099,7 @@ bool CBriefParse::ParseTextEffect(const char *p, tTextBufferDesc *tbd) {
       bool found = false;
       int i = 0;
       int feffect = 0;
-      int text_font;
+      int text_font = BRIEF_FONT_INDEX;
 
       PARSE_TOKEN(buffer);
       while (!found) {

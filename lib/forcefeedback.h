@@ -296,7 +296,7 @@ int ddio_ff_Unacquire(tDevice dev);
 // -------------------------------------------------------------------
 // ddio_ff_SetCoopLevel
 // -------------------------------------------------------------------
-static int ddio_ff_SetCoopLevel(tDevice dev, int coop_level);
+int ddio_ff_SetCoopLevel(tDevice dev, int coop_level);
 // -------------------------------------------------------------------
 // ddio_ffjoy_Query
 // Purpose:

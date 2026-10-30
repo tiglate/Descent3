@@ -1130,6 +1130,9 @@ void mng_LoadNetTexturePage(CFILE *infile, bool overlay) {
 
     int ret = mng_SetAndLoadTexture(&texpage1, infile);
     ASSERT(ret >= 0);
+    if (ret < 0) {
+      LOG_ERROR << "Failed to load texture page.";
+    }
   } else
     LOG_WARNING.printf("Could not load texpage named %s!", texpage1.tex_struct.name);
 }

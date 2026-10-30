@@ -241,8 +241,8 @@ bool BOA_PassablePortal(int room, int portal_index, bool f_for_sound, bool f_mak
         return false;
     }
 
-    if ((Rooms[room].portals[portal_index].flags & PF_RENDER_FACES) &&
-            !(Rooms[room].portals[portal_index].flags & PF_RENDERED_FLYTHROUGH) ||
+    if (((Rooms[room].portals[portal_index].flags & PF_RENDER_FACES) &&
+            !(Rooms[room].portals[portal_index].flags & PF_RENDERED_FLYTHROUGH)) ||
         (Rooms[room].portals[portal_index].flags & PF_BLOCK)) {
       return false;
     }
@@ -805,6 +805,10 @@ void compute_terrain_region_info() {
         "This terrain has too many fly through\nterrain-mine connections!\n\nAI will not work correctly outside!\nIf "
         "you really cannot fly outside\nignore this message.\n\nSee Chris for specific instructions!");
   }
+#else
+  if (f_warning) {
+    LOG_WARNING << "Terrain has too many fly-through connections for AI pathfinding.";
+  }
 #endif
 }
 
@@ -995,10 +999,11 @@ void FindPath(int i, int j) {
           ASSERT(next_room <= Highest_room_index + BOA_num_terrain_regions);
         }
 
-        int next_portal;
-        if (BOA_INDEX(next_room) != BOA_INDEX(cur_node->roomnum)) {
-          next_portal = BOA_DetermineStartRoomPortal(next_room, NULL, cur_node->roomnum, NULL);
-        }
+        if (BOA_INDEX(next_room) == BOA_INDEX(cur_node->roomnum))
+          continue;
+        int next_portal = BOA_DetermineStartRoomPortal(next_room, NULL, cur_node->roomnum, NULL);
+        if (next_portal < 0)
+          continue;
 
         new_cost = cur_node->cost + BOA_cost_array[BOA_INDEX(cur_node->roomnum)][counter] +
                    BOA_cost_array[BOA_INDEX(next_room)][next_portal];
@@ -1053,10 +1058,11 @@ void FindPath(int i, int j) {
           next_room = Highest_room_index + TERRAIN_REGION(cell) + 1;
         }
 
-        int next_portal;
-        if (BOA_INDEX(next_room) != BOA_INDEX(cur_node->roomnum)) {
-          next_portal = BOA_DetermineStartRoomPortal(next_room, NULL, cur_node->roomnum, NULL);
-        }
+        if (BOA_INDEX(next_room) == BOA_INDEX(cur_node->roomnum))
+          continue;
+        int next_portal = BOA_DetermineStartRoomPortal(next_room, NULL, cur_node->roomnum, NULL);
+        if (next_portal < 0)
+          continue;
 
         new_cost = cur_node->cost + BOA_cost_array[BOA_INDEX(cur_node->roomnum)][counter] +
                    BOA_cost_array[BOA_INDEX(next_room)][next_portal];
@@ -1195,7 +1201,9 @@ void compute_blockage_info() {
 // Goes through all the valid points in the indoor engine and returns a unique
 // checksum
 
+#ifdef _MSC_VER
 #pragma optimize("", off)
+#endif
 
 int BOAGetMineChecksum() {
   int i, t, k;
@@ -1283,7 +1291,9 @@ int BOAGetRoomChecksum(int i) {
   return (int)total;
 }
 
+#ifdef _MSC_VER
 #pragma optimize("", on)
+#endif
 
 bool IsPathPointValid(int room, vector *pos) {
   // vector c_pnt = Rooms[room].path_pnt;
@@ -1932,9 +1942,11 @@ void verify_connections() {
       int next_room = BOA_NEXT_ROOM(i, j);
 
       if (next_room != i && next_room != BOA_NO_PATH) {
-        int portal;
-        portal = BOA_DetermineStartRoomPortal(i, NULL, next_room, NULL);
-        portal = BOA_DetermineStartRoomPortal(next_room, NULL, i, NULL);
+        int forward_portal = BOA_DetermineStartRoomPortal(i, NULL, next_room, NULL);
+        int reverse_portal = BOA_DetermineStartRoomPortal(next_room, NULL, i, NULL);
+        if (forward_portal < 0 || reverse_portal < 0) {
+          LOG_WARNING.printf("Invalid path connection between rooms %d and %d", i, next_room);
+        }
       }
     }
   }
@@ -2095,26 +2107,6 @@ void MakeBOA(void) {
   LOG_INFO << "BOA is done";
 }
 
-static int Current_sort_room;
-
-static int face_sort_func1(const int16_t *a, const int16_t *b) {
-  if (Rooms[Current_sort_room].faces[*a].min_xyz.y() > Rooms[Current_sort_room].faces[*b].min_xyz.y())
-    return -1;
-  else if (Rooms[Current_sort_room].faces[*a].min_xyz.y() < Rooms[Current_sort_room].faces[*b].min_xyz.y())
-    return 1;
-  else
-    return 0;
-}
-
-static int face_sort_func2(const int16_t *a, const int16_t *b) {
-  if (Rooms[Current_sort_room].faces[*a].max_xyz.y() < Rooms[Current_sort_room].faces[*b].max_xyz.y())
-    return -1;
-  else if (Rooms[Current_sort_room].faces[*a].max_xyz.y() > Rooms[Current_sort_room].faces[*b].max_xyz.y())
-    return 1;
-  else
-    return 0;
-}
-
 #define MAX_REGIONS_PER_ROOM 200
 
 void ComputeAABB(bool f_full) {
@@ -2158,7 +2150,6 @@ void ComputeAABB(bool f_full) {
     LOG_DEBUG << "Computing AABB's (full)!";
 
     for (i = 0; i <= Highest_room_index; i++) {
-      Current_sort_room = i;
       if (Rooms[i].used) {
         float average_y;
         average_y = 0.0f;
@@ -2386,7 +2377,6 @@ void ComputeAABB(bool f_full) {
     for (i = 0; i <= Highest_room_index; i++) {
       if (Rooms[i].used) {
         int x;
-        Current_sort_room = i;
         room *rp = &Rooms[i];
 
         if (BOA_AABB_ROOM_checksum[i] != 0 && BOA_AABB_ROOM_checksum[i] == computed_room_check[i])
@@ -2394,7 +2384,6 @@ void ComputeAABB(bool f_full) {
 
         vector min_xyz;
         vector max_xyz;
-        int pamount[6];
         int nonpart = 0;
 
         if (rp->num_bbf_regions != 0) {
@@ -2460,10 +2449,6 @@ void ComputeAABB(bool f_full) {
         rp->bbf_max_xyz = max_xyz;
 
         // chrishack -- add post face add snap
-
-        for (count = 0; count < 6; count++) {
-          pamount[count] = 0;
-        }
 
         for (count = 0; count < rp->num_bbf_regions; count++) {
           rp->num_bbf[count] = 0;
@@ -2611,6 +2596,7 @@ void ComputeAABB(bool f_full) {
               break;
             default:
               Int3();
+              continue;
             }
 
             if (r_struct_list[i][count] == 0)

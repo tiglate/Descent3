@@ -262,7 +262,9 @@ void SlewResetOrient(object *obj) {
 
 // Moves the object for one frame
 int SlewFrame(object *obj, int movement_limitations) {
+#ifdef EDITOR
   static int16_t old_joy_x = 0, old_joy_y = 0; // position last time around
+#endif
   int ret_flags = 0;
   vector svel, movement; // scaled velocity (per this frame)
   matrix rotmat, new_pm;

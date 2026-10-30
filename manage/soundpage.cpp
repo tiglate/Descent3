@@ -452,6 +452,9 @@ void mng_LoadNetSoundPage(CFILE *infile, bool overlay) {
     }
     int ret = mng_SetAndLoadSound(&soundpage);
     ASSERT(ret >= 0);
+    if (ret < 0) {
+      LOG_ERROR << "Failed to load sound page.";
+    }
   } else
     LOG_WARNING.printf("Could not load soundpage named %s!", soundpage.sound_struct.name);
 }

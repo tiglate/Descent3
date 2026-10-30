@@ -219,6 +219,7 @@ static void dispatchDecoder(unsigned char **pFrame, unsigned char codeType, unsi
   case 0x0:
     /* block is copied from block in current frame */
     copyFrame(*pFrame, *pFrame + ((unsigned char *)g_vBackBuf2 - (unsigned char *)g_vBackBuf1));
+    [[fallthrough]];
   case 0x1:
     /* block is unchanged from two frames ago */
     *pFrame += 8;

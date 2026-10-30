@@ -597,9 +597,8 @@ char *ParseIRCMessage(char *Line, int iMode) {
   char szCmd[MAXLOCALSTRING];
   char szCTCPCmd[MAXLOCALSTRING];
 
-  static char szResponse[MAXLOCALSTRING];
+  static char szResponse[3 * MAXLOCALSTRING + 32];
 
-  int iNickLen;
   int iPrefixLen = 0;
 
   szPrefix[0] = '\0';
@@ -629,14 +628,12 @@ char *ParseIRCMessage(char *Line, int iMode) {
       szNick[31] = 0;
     }
     // strcpy(NewMsg.Nickname,szNick);
-    iNickLen = strlen(szNick);
     iPrefixLen = strlen(szPrefix);
   } else if (iMode == MSG_LOCAL) {
     strcpy(szRemLine, Line);
     strcpy(szNick, Nick_name);
     strcpy(szPrefix, Nick_name);
     // strcpy(NewMsg.Nickname,szNick);
-    iNickLen = -2;
     iPrefixLen = -2;
   }
   // Next is the command
@@ -658,12 +655,12 @@ char *ParseIRCMessage(char *Line, int iMode) {
     strcpy(szRemLine, Line + iPrefixLen + strlen(szCmd) + strlen(szTarget) + 4);
     if (szRemLine[0] == ':') {
       strcpy(szCTCPCmd, GetWordNum(0, szRemLine + 1));
-      if (szCTCPCmd[strlen(szCTCPCmd) - 1] == 0x01)
+      if (szCTCPCmd[0] && szCTCPCmd[strlen(szCTCPCmd) - 1] == 0x01)
         szCTCPCmd[strlen(szCTCPCmd) - 1] = 0x00;
 
     } else {
       strcpy(szCTCPCmd, GetWordNum(0, szRemLine));
-      if (szCTCPCmd[strlen(szCTCPCmd) - 1] == 0x01)
+      if (szCTCPCmd[0] && szCTCPCmd[strlen(szCTCPCmd) - 1] == 0x01)
         szCTCPCmd[strlen(szCTCPCmd) - 1] = 0x00;
     }
     if (szCTCPCmd[0] == 0x01) {
@@ -726,12 +723,12 @@ char *ParseIRCMessage(char *Line, int iMode) {
     strcpy(szRemLine, Line + iPrefixLen + strlen(szCmd) + strlen(szTarget) + 4);
     if (szRemLine[0] == ':') {
       strcpy(szCTCPCmd, GetWordNum(0, szRemLine + 1));
-      if (szCTCPCmd[strlen(szCTCPCmd) - 1] == 0x01)
+      if (szCTCPCmd[0] && szCTCPCmd[strlen(szCTCPCmd) - 1] == 0x01)
         szCTCPCmd[strlen(szCTCPCmd) - 1] = 0x00;
 
     } else {
       strcpy(szCTCPCmd, GetWordNum(0, szRemLine));
-      if (szCTCPCmd[strlen(szCTCPCmd) - 1] == 0x01)
+      if (szCTCPCmd[0] && szCTCPCmd[strlen(szCTCPCmd) - 1] == 0x01)
         szCTCPCmd[strlen(szCTCPCmd) - 1] = 0x00;
     }
     if (szCTCPCmd[0] == 0x01) {
@@ -822,7 +819,7 @@ char *ParseIRCMessage(char *Line, int iMode) {
       // Yup, it's me!
       strcpy(Nick_name, GetWordNum(0, szRemLine));
     }
-    char nicks[70];
+    char nicks[2 * MAXLOCALSTRING + 2];
     snprintf(nicks, sizeof(nicks), "%s %s", szNick, GetWordNum(0, szRemLine));
     AddChatCommandToQueue(CC_NICKCHANGED, nicks, strlen(nicks) + 1);
     RemoveChatUser(szNick);
@@ -1002,7 +999,7 @@ char *ParseIRCMessage(char *Line, int iMode) {
   if (stricmp(szCmd, "433") == 0) {
     // Channel Mode info
     char new_nick[33];
-    snprintf(new_nick, sizeof(new_nick), "%s%d", Orignial_nick_name, Nick_variety);
+    snprintf(new_nick, sizeof(new_nick), "%.20s%d", Orignial_nick_name, Nick_variety);
     strcpy(Nick_name, new_nick);
     Nick_variety++;
     snprintf(szResponse, sizeof(szResponse), "/NICK %s", new_nick);

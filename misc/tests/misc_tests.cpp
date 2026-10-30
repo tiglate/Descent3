@@ -40,6 +40,9 @@ TEST(D3, CleanupStr) {
     CleanupStr(result, i.first, 32);
     ASSERT_STREQ(result, i.second);
   }
+  result[0] = 'x';
+  EXPECT_EQ(CleanupStr(result, "text", 0), 0u);
+  EXPECT_EQ(result[0], 'x');
 }
 
 TEST(D3, StringJoinSplit) {

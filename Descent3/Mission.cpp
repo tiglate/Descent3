@@ -933,7 +933,6 @@ bool LoadMission(const char *mssn) {
   int srclinenum = 0; // Current line of source.
   int curlvlnum;      // Current level number
   int numlevels;      // Number of levels required to read in.
-  int cur_objective;  // current objective reading.
   bool indesc;        // are we in a multi-line block
   bool res = false;   // used to specify if no error has occurred.
   std::filesystem::path pathname;
@@ -969,7 +968,6 @@ bool LoadMission(const char *mssn) {
   numlevels = -1;
   curlvlnum = 0;
   indesc = false;
-  cur_objective = -1;
   msn->multiplayable = true;
   msn->singleplayable = true;
   msn->training_mission = false;
@@ -979,19 +977,18 @@ bool LoadMission(const char *mssn) {
     char srcline[128]; // One line of mission source
     char command[32];  // Command read from line.
     char operand[96];  // operand read from line
-    char *keyword;     // parsed keyword
     int readcount;     // read-in count
     readcount = cf_ReadString(srcline, sizeof(srcline), fp);
     if (readcount) {
       //	we have a line of source.  parse out primary keyword
       //	then parse out remainder.
-      keyword = strtok(srcline, " \t");
+      strtok(srcline, " \t");
       CleanupStr(command, srcline, sizeof(command));
       CleanupStr(operand, srcline + strlen(command) + 1, sizeof(operand));
       if (strlen(command) && indesc)
         indesc = false;
       if (!stricmp(command, "NAME")) {
-        strncpy(msn->name, operand, MSN_NAMELEN - 1);
+        snprintf(msn->name, sizeof(msn->name), "%.*s", MSN_NAMELEN - 1, operand);
       } else if (!stricmp(command, "MULTI")) {
         if (stricmp("no", operand) == 0)
           msn->multiplayable = false;
@@ -1006,7 +1003,7 @@ bool LoadMission(const char *mssn) {
           goto msnfile_error;
         }
       } else if (!stricmp(command, "AUTHOR")) {
-        strncpy(msn->author, operand, MSN_NAMELEN - 1);
+        snprintf(msn->author, sizeof(msn->author), "%.*s", MSN_NAMELEN - 1, operand);
       } else if (!stricmp(command, "KEYWORDS")) {
         // Don't do anything with this
       } else if (!stricmp(command, "DESCRIPTION") || indesc) {
@@ -1293,6 +1290,9 @@ bool LoadMissionLevel(int level) {
     boa = false;
   if (GetTerrainGeometryChecksum() != Terrain_checksum)
     terrain = false;
+  if (!boa || !terrain) {
+    LOG_DEBUG.printf("Level visibility data is out of date (BOA: %d, terrain: %d)", boa, terrain);
+  }
 
   // JC: This isn't going to be fixed for a while, so silence the error
   /*
@@ -1420,14 +1420,11 @@ void LoadLevelProgress(int step, float percent, const char *chunk) {
   StartFrame(0, 0, Max_window_w, Max_window_h);
   // do background.
   if (!level_bmp_loaded) {
-    int text_height;
     ASSERT(Current_level);
     rend_ClearScreen(GR_BLACK);
     grtext_SetFont(MENU_FONT);
-    text_height = grfont_GetHeight(MENU_FONT);
     grtext_SetColor(GR_WHITE);
     grtext_CenteredPrintf(0, Max_window_h / 2, TXT_LOADINGLEVEL);
-    // grtext_CenteredPrintf(0, (Max_window_h/2)+(text_height*2), Current_level->name);
   } else {
 #ifdef STEALTH // DAJ
     rend_ClearScreen(GR_BLACK);
@@ -1727,18 +1724,17 @@ bool GetMissionInfo(const std::filesystem::path &msnfile, tMissionInfo *msn) {
     char srcline[128]; // One line of mission source
     char command[32];  // Command read from line.
     char operand[96];  // operand read from line
-    char *keyword;     // parsed keyword
     int readcount;     // read-in count
     readcount = cf_ReadString(srcline, sizeof(srcline), fp);
     if (readcount) {
       // We have a line of source. Parse out primary keyword then parse out remainder.
-      keyword = strtok(srcline, " \t");
+      strtok(srcline, " \t");
       CleanupStr(command, srcline, sizeof(command));
       CleanupStr(operand, srcline + strlen(command) + 1, sizeof(operand));
       if (strlen(command) && indesc)
         indesc = false;
       if (!stricmp(command, "NAME")) {
-        strncpy(msn->name, operand, MSN_NAMELEN - 1);
+        snprintf(msn->name, sizeof(msn->name), "%.*s", MSN_NAMELEN - 1, operand);
       } else if (!stricmp(command, "MULTI")) {
         if (stricmp("no", operand) == 0)
           msn->multi = false;
@@ -1748,7 +1744,7 @@ bool GetMissionInfo(const std::filesystem::path &msnfile, tMissionInfo *msn) {
       } else if (!stricmp(command, "TRAINER")) {
         msn->training = true;
       } else if (!stricmp(command, "AUTHOR")) {
-        strncpy(msn->author, operand, MSN_NAMELEN - 1);
+        snprintf(msn->author, sizeof(msn->author), "%.*s", MSN_NAMELEN - 1, operand);
       } else if (!stricmp(command, "DESCRIPTION") || indesc) {
         // Multi-line descriptions require the strcat. The initial strings should be empty for this to work.
         strcat(msn->desc, operand);

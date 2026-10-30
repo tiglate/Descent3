@@ -278,6 +278,9 @@ void mng_LoadNetGamefilePage(CFILE *infile, bool overlay) {
 
     int ret = mng_SetAndLoadGamefile(&gamefilepage);
     ASSERT(ret >= 0);
+    if (ret < 0) {
+      LOG_ERROR << "Failed to load game file page.";
+    }
   } else {
     LOG_ERROR.printf("Could not load gamefilepage named %s!", gamefilepage.gamefile_struct.name);
   }

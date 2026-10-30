@@ -915,7 +915,7 @@ void UpdateCustomtext2HUDItem(char *text) {
     if (HUD_array[i].stat && (HUD_array[i].type == HUD_ITEM_CUSTOMTEXT2)) {
       ASSERT(HUD_array[i].data.text != NULL);
       strncpy(HUD_array[i].data.text, text, HUD_array[i].buffer_size);
-      HUD_array[i].data.text[HUD_array[i].buffer_size - 1];
+      HUD_array[i].data.text[HUD_array[i].buffer_size - 1] = '\0';
       break;
     }
   }
@@ -1090,14 +1090,13 @@ void LoadHUDConfig(const char *filename, bool (*fn)(const char *, const char *, 
     while (!cfeof(fp)) {
       char command[32]; // Command read from line.
       char operand[96]; // operand read from line
-      char *keyword;    // parsed keyword
       int readcount;    // read-in count
 
       readcount = cf_ReadString(srcline, sizeof(srcline), fp);
       if (readcount) {
         //	we have a line of source.  parse out primary keyword
         //	then parse out remainder.
-        keyword = strtok(srcline, " \t=");
+        strtok(srcline, " \t=");
         CleanupStr(command, srcline, sizeof(command));
         CleanupStr(operand, srcline + strlen(command) + 1, sizeof(operand));
 
@@ -1406,7 +1405,7 @@ extern bool Demo_make_movie;
 void RenderHUDItems(tStatMask stat_mask) {
   static float framerate_timer = 0;
   static float last_fps;
-  float font_aspect_x, font_aspect_y;
+  float font_aspect_x;
   int i;
 
   grtext_Reset();
@@ -1414,7 +1413,6 @@ void RenderHUDItems(tStatMask stat_mask) {
 
   //	for lores screens, we use different fonts, so DONT SCALE.
   font_aspect_x = (float)Game_window_w / Max_window_w;
-  font_aspect_y = (float)Game_window_h / Max_window_h;
 
   // Add HUD text scaling for large screens
   constexpr float scaling_height_threshold = 1080.0f;

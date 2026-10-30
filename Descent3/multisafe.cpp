@@ -924,6 +924,7 @@ void msafe_GetValue(int type, msafe_struct *mstruct) {
   case MSAFE_OBJECT_ENERGY_WEAPON: {
     object *objp = ObjGet(mstruct->objhandle);
     mstruct->state = (objp && (objp->type == OBJ_WEAPON) && !(Weapons[objp->id].flags & WF_MATTER_WEAPON));
+    break;
   }
   case MSAFE_OBJECT_DAMAGE_AMOUNT: {
     mstruct->amount = 0; // default
@@ -1599,7 +1600,7 @@ void msafe_CallFunction(uint8_t type, msafe_struct *mstruct) {
     // We should really have a function to set the key flags
     Players[slot].keys |= KEY_FLAG(mstruct->index);
     Global_keys |= KEY_FLAG(mstruct->index);
-    if (mstruct->objhandle != OBJECT_HANDLE_NONE) {
+    if (mstruct->objhandle != static_cast<uint32_t>(OBJECT_HANDLE_NONE)) {
       object *keyobj = ObjGet(mstruct->objhandle);
       if (keyobj) {
         LOG_DEBUG.printf("Adding key from multisafe to player %d", slot);
@@ -1660,12 +1661,12 @@ void msafe_CallFunction(uint8_t type, msafe_struct *mstruct) {
       return;
     send_it = 0; // Don't need to send because ApplyDamage does the work
     if (MOBJ->type == OBJ_PLAYER) {
-      if (mstruct->killer_handle == OBJECT_HANDLE_NONE)
+      if (mstruct->killer_handle == static_cast<uint32_t>(OBJECT_HANDLE_NONE))
         ApplyDamageToPlayer(MOBJ, NULL, mstruct->damage_type, mstruct->amount);
       else
         ApplyDamageToPlayer(MOBJ, KOBJ, mstruct->damage_type, mstruct->amount);
     } else {
-      if (mstruct->killer_handle == OBJECT_HANDLE_NONE)
+      if (mstruct->killer_handle == static_cast<uint32_t>(OBJECT_HANDLE_NONE))
         ApplyDamageToGeneric(MOBJ, NULL, mstruct->damage_type, mstruct->amount);
       else
         ApplyDamageToGeneric(MOBJ, KOBJ, mstruct->damage_type, mstruct->amount);
@@ -2369,9 +2370,9 @@ void msafe_CallFunction(uint8_t type, msafe_struct *mstruct) {
         if (mstruct->index >= SECONDARY_INDEX) {
           type = PW_SECONDARY;
           // remove ammo
-          Players[player->id].weapon_ammo[mstruct->index] += mstruct->count;
-          if (Players[player->id].weapon_ammo[mstruct->index] < 0)
-            Players[player->id].weapon_ammo[mstruct->index] = 0;
+          // weapon_ammo is unsigned, so clamp before storing to avoid wrap-around
+          int new_ammo = Players[player->id].weapon_ammo[mstruct->index] + mstruct->count;
+          Players[player->id].weapon_ammo[mstruct->index] = (new_ammo < 0) ? 0 : new_ammo;
           if (Players[player->id].weapon_ammo[mstruct->index] == 0) {
             weap_removed = true;
             if (mstruct->state == 1) {
@@ -2573,7 +2574,7 @@ extern uint8_t AutomapVisMap[MAX_ROOMS];
 bool HandleWeaponPowerups(char *pname, msafe_struct *mstruct, uint8_t *pickup) {
   object *player = ObjGet(mstruct->ithandle);
   object *powerup = ObjGet(mstruct->objhandle);
-  int p;
+  size_t p;
   if (!player || !powerup)
     return 0;
   bool handled = false;

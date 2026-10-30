@@ -428,7 +428,7 @@ bool AddLineToHUDMessages(char *temp_message, ddgr_color color) {
 
   AddMessageToRollback(temp_message);
 
-  if (color == -1)
+  if (color == static_cast<ddgr_color>(-1))
     color = GR_RGB(0, 255, 0);
 
   if (Num_hud_messages == MAX_HUD_MESSAGES) {

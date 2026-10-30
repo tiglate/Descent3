@@ -96,14 +96,12 @@ void BuddyDisplay(void) {
   newuiTiledWindow gbcommand_wnd;
   newuiSheet *sheet;
   bool exit_menu = false;
-  int strs_to_print, index, height;
+  int index, height;
 
   if (Game_mode & GM_MULTI && (!(Netgame.flags & NF_ALLOWGUIDEBOT))) {
     // only in single player games, and multiplayer games that allow guidebot
     return;
   }
-
-  strs_to_print = 0;
 
   if (BuddyBotDownloadData() != 1)
     return;

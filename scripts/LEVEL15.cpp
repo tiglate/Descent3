@@ -892,6 +892,8 @@ const char *GetMyMessage(int id) {
 
 // Turns a MatCen off
 void SetMatCenToLevel0(int id) {
+  if (id < 0 || id > 4)
+    return;
   aMatcenSetEnableState(0, GetMyMatCen(id));
 
   int spew_handle;
@@ -917,6 +919,8 @@ void SetMatCenToLevel0(int id) {
     spew_handle = 0;
     obj_handle = GetMyObject(MatCenSpewer1);
     break;
+  default:
+    return;
   };
 
   // Make it spew!
@@ -926,6 +930,8 @@ void SetMatCenToLevel0(int id) {
 
 // Turns a MatCen to normal production
 void SetMatCenToLevel1(int id) {
+  if (id < 0 || id > 4)
+    return;
   int matcen_id = GetMyMatCen(id);
 
   aMatcenSetEnableState(1, matcen_id);
@@ -949,6 +955,8 @@ void SetMatCenToLevel1(int id) {
   case 4:
     spew_handle = 0;
     break;
+  default:
+    return;
   };
 
   aTurnOffSpew(spew_handle);
@@ -957,6 +965,8 @@ void SetMatCenToLevel1(int id) {
 
 //	Turns a MatCen to high production
 void SetMatCenToLevel2(int id) {
+  if (id < 0 || id > 4)
+    return;
   int matcen_id = GetMyMatCen(id);
 
   aMatcenSetEnableState(1, matcen_id);
@@ -979,6 +989,8 @@ void SetMatCenToLevel2(int id) {
   case 4:
     spew_handle = 0;
     break;
+  default:
+    return;
   };
 
   aTurnOffSpew(spew_handle);

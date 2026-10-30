@@ -1663,6 +1663,9 @@ void mng_LoadNetWeaponPage(CFILE *infile, bool overlay) {
 
     int ret = mng_SetAndLoadWeapon(&weaponpage, infile);
     ASSERT(ret >= 0);
+    if (ret < 0) {
+      LOG_ERROR << "Failed to load weapon page.";
+    }
   } else
     LOG_WARNING.printf("Could not load weaponpage named %s!", weaponpage.weapon_struct.name);
 }

@@ -156,14 +156,14 @@ std::filesystem::path cf_LocatePathCaseInsensitiveHelper(const std::filesystem::
 
 std::vector<std::filesystem::path> cf_LocatePathMultiplePathsHelper(const std::filesystem::path &relative_path,
                                                                     bool stop_after_first_result) {
-  ASSERT(("realative_path should be a relative path.", relative_path.is_relative()));
+  ASSERT(relative_path.is_relative() && "relative_path should be a relative path");
   std::vector<std::filesystem::path> return_value = { };
   for (auto base_directories_iterator = Base_directories.rbegin();
        base_directories_iterator != Base_directories.rend();
        ++base_directories_iterator) {
-    ASSERT(("base_directory should be an absolute path.", base_directories_iterator->is_absolute()));
+    ASSERT(base_directories_iterator->is_absolute() && "base_directory should be an absolute path");
     auto to_append = cf_LocatePathCaseInsensitiveHelper(relative_path, *base_directories_iterator);
-    ASSERT(("to_append should be either empty or an absolute path.", to_append.empty() || to_append.is_absolute()));
+    ASSERT((to_append.empty() || to_append.is_absolute()) && "to_append should be empty or an absolute path");
     if (std::filesystem::exists(to_append)) {
       return_value.push_back(to_append);
       if (stop_after_first_result) {
@@ -236,7 +236,7 @@ static CFILE *open_file_in_lib(const char *filename);
 // Returns: 0 if error, else library handle that can be used to close the library
 int cf_OpenLibrary(const std::filesystem::path &libname) {
   FILE *fp;
-  int i;
+  uint32_t i;
   uint32_t offset;
   static int first_time = 1;
   tHogHeader header{};
@@ -397,7 +397,6 @@ CFILE *cf_OpenFileInLibrary(const std::filesystem::path &filename, int libhandle
 
   // open the file for reading
   FILE *fp;
-  int r;
   // See if there's an available FILE
   if (lib->file) {
     fp = lib->file;
@@ -421,8 +420,11 @@ CFILE *cf_OpenFileInLibrary(const std::filesystem::path &filename, int libhandle
   cfile->lib_offset = lib->entries[i]->offset;
   cfile->position = 0;
   cfile->flags = 0;
-  r = fseek(fp, cfile->lib_offset, SEEK_SET);
-  ASSERT(r == 0);
+  if (fseek(fp, cfile->lib_offset, SEEK_SET) != 0) {
+    fclose(fp);
+    mem_free(cfile);
+    return nullptr;
+  }
   return cfile;
 }
 
@@ -450,7 +452,6 @@ CFILE *open_file_in_lib(const char *filename) {
     } while (true);
     if (found) {
       FILE *fp;
-      int r;
       // See if there's an available FILE
       if (lib->file) {
         fp = lib->file;
@@ -474,8 +475,11 @@ CFILE *open_file_in_lib(const char *filename) {
       cfile->lib_offset = lib->entries[i]->offset;
       cfile->position = 0;
       cfile->flags = 0;
-      r = fseek(fp, cfile->lib_offset, SEEK_SET);
-      ASSERT(r == 0);
+      if (fseek(fp, cfile->lib_offset, SEEK_SET) != 0) {
+        fclose(fp);
+        mem_free(cfile);
+        return nullptr;
+      }
       return cfile;
     }
     lib = lib->next;
@@ -630,7 +634,8 @@ int cfgetc(CFILE *cfp) {
   if (cfp->position >= cfp->size)
     return EOF;
 
-  fread(ch, 1, 1, cfp->file);
+  if (fread(ch, 1, 1, cfp->file) != 1)
+    return EOF;
   c = ch[0];
   // c = getc( cfp->file );
   if (cfeof(cfp))
@@ -644,10 +649,9 @@ int cfgetc(CFILE *cfp) {
       if (c == 10) // return LF as newline
         c = '\n';
       else if (c == 13) { // check for CR/LF pair
-        fread(ch, 1, 1, cfp->file);
-        int cc = ch[0]; // getc(cfp->file);
+        int cc = fread(ch, 1, 1, cfp->file) == 1 ? ch[0] : EOF;
         // if (cc != EOF) {
-        if (!cfeof(cfp)) {
+        if (cc != EOF && !cfeof(cfp)) {
           if (cc == 10)      // line feed?
             cfp->position++; //..yes, so swallow it
           else {
@@ -726,8 +730,8 @@ int cf_ReadBytes(uint8_t *buf, int count, CFILE *cfp) {
     if (!feof(cfp->file))
       error_msg = strerror(errno);
   }
-  LOG_ERROR.printf("Error reading %d bytes from position %d of file <%s>; errno=%d.", count, cfp->position, cfp->name,
-                   errno);
+  LOG_ERROR.printf("Error reading %d bytes from position %d of file <%s>: %s.", count, cfp->position, cfp->name,
+                   error_msg);
   return 0;
 }
 // The following functions read numeric vales from a CFILE.  All values are
@@ -797,7 +801,7 @@ int cf_ReadString(char *buf, size_t n, CFILE *cfp) {
 
     if ((!(cfp->flags & CFF_TEXT) && (c == 0)) || ((cfp->flags & CFF_TEXT) && (c == '\n')))
       break;           // end-of-string
-    if (count < n - 1) // store char if room in buffer
+    if (static_cast<size_t>(count) < n - 1) // store char if room in buffer
       *bp++ = c;
   }
   *bp = 0; // write terminator
@@ -903,7 +907,7 @@ bool cf_CopyFile(const std::filesystem::path &dest, const std::filesystem::path 
     cfclose(infile);
     return false;
   }
-  int progress = 0;
+  uint32_t progress = 0;
   int readcount = 0;
 #define COPY_CHUNK_SIZE 5000
   uint8_t copybuf[COPY_CHUNK_SIZE];
@@ -942,8 +946,10 @@ void cf_CopyFileTime(const std::filesystem::path &dest, const std::filesystem::p
 //	rewinds cfile position
 void cf_Rewind(CFILE *fp) {
   if (fp->lib_offset) {
-    int r = fseek(fp->file, fp->lib_offset, SEEK_SET);
-    ASSERT(r == 0);
+    if (fseek(fp->file, fp->lib_offset, SEEK_SET) != 0) {
+      LOG_ERROR.printf("Could not rewind file <%s>: %s", fp->name, strerror(errno));
+      return;
+    }
   } else {
     rewind(fp->file);
   }

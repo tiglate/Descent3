@@ -461,23 +461,23 @@ bool AudioStream::ReopenDigitalStream(uint8_t fbufidx, int nbufs) {
   }
 
   //	convert bufsize to true bufsize (bufsize = samples per measure for now.)
-  int bytesize, granularity;
+  int granularity;
   switch (m_archive.StreamFormat()) {
   case SAF_8BIT_M:
     granularity = 1;
     break;
   case SAF_8BIT_S:
     granularity = 2;
-    bytesize = digihdr->measure << 1;
     break;
   case SAF_16BIT_M:
     granularity = 2;
-    bytesize = digihdr->measure << 1;
     break;
   case SAF_16BIT_S:
     granularity = 4;
-    bytesize = digihdr->measure << 2;
     break;
+  default:
+    LOG_WARNING.printf("STRM[%d]: Unsupported stream format.", m_curid);
+    return false;
   }
 
   //	bufsize is bytes per measure.  now scale according to memory requirements.
@@ -747,7 +747,9 @@ void AudioStream::Reset() {
 }
 //////////////////////////////////////////////////////////////////////////////
 // invoked by AudioStreamCB.
+#ifdef _MSC_VER
 #pragma optimize("", off)
+#endif
 void *AudioStream::StreamCallback(int *size) {
   uint8_t nextbuffer = (m_sbufidx + 1) % STRM_BUFCOUNT;
   void *data = NULL;
@@ -810,7 +812,9 @@ void *AudioStream::StreamCallback(int *size) {
   }
   return data;
 }
+#ifdef _MSC_VER
 #pragma optimize("", on)
+#endif
 // reads in decompressed raw data.
 int AudioStream::ReadFileData(int buf, int len) {
   if (!m_archive.Opened())
@@ -833,7 +837,9 @@ int AudioStream::ReadFileData(int buf, int len) {
 }
 // TURN OFF OPTIMIZATIONS HERE.  Placement of instructions is VERY IMPORTANT here.  synched with StreamCallback,
 //	which also has optimizations off.
+#ifdef _MSC_VER
 #pragma optimize("", off)
+#endif
 // updates file buffers
 void AudioStream::UpdateData() {
   int nextbuffer = ((m_fbufidx + 1) % STRM_BUFCOUNT);
@@ -888,7 +894,9 @@ void AudioStream::UpdateData() {
   }
 }
 
+#ifdef _MSC_VER
 #pragma optimize("", on)
+#endif
 ///////////////////////////////////////////////////////////////////////////////
 //	decoder
 int ADecodeFileRead(void *data, void *buf, uint32_t qty) {
@@ -920,10 +928,9 @@ void StreamVolume(float master_volume) {
   User_audio_stream.SetVolume(Stream_volume * master_volume);
 }
 //	these functions are the 'simplified' stream interface from Jeff (most of this code is from Jeff)
-int StreamPlay(const std::filesystem::path &filename, float volume, int flags) {
+int StreamPlay(const std::filesystem::path &filename, float volume, [[maybe_unused]] int flags) {
   int retval = -1;
   try {
-    flags = 0;
     User_audio_stream.Close();
     User_audio_stream.Open(filename, STRM_OPNF_ONETIME);
     Stream_volume = volume;

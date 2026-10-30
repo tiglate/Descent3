@@ -1306,7 +1306,7 @@ void LoadGameSettings() {
   Database->read("Specmapping", &Detail_settings.Specular_lighting);
   Database->read("RS_bitdepth", &Render_preferred_bitdepth, sizeof(Render_preferred_bitdepth));
   Database->read_int("RS_resolution", &tempint);
-  if (tempint >= 0 && tempint < std::size(Video_res_list))
+  if (tempint >= 0 && static_cast<size_t>(tempint) < std::size(Video_res_list))
     Current_video_resolution_id = tempint;
   else
     LOG_WARNING << "Game settings contain a display resolution index that is out of bounds. Starting with default resolution.";
@@ -1355,9 +1355,7 @@ void LoadGameSettings() {
   Database->read("DetailCoronas", &Detail_settings.Coronas_enabled);
   Database->read("DetailProcedurals", &Detail_settings.Procedurals_enabled);
   Database->read_int("DetailObjectComp", &tempint);
-  Detail_settings.Object_complexity = tempint;
-  if (Detail_settings.Object_complexity < 0 || Detail_settings.Object_complexity > 2)
-    Detail_settings.Object_complexity = 1;
+  Detail_settings.Object_complexity = (tempint < 0 || tempint > 2) ? 1 : tempint;
 
   Database->read("DetailPowerupHalos", &Detail_settings.Powerup_halos);
 
@@ -1525,7 +1523,7 @@ void InitIOSystems(bool editor) {
 
   // Init hogfiles
   INIT_MESSAGE(("Checking for HOG files."));
-  int d3_hid, extra_hid, sys_hid, extra13_hid;
+  int extra_hid, sys_hid;
   std::filesystem::path hog_name;
 
 #ifdef DEMO
@@ -1534,7 +1532,9 @@ void InitIOSystems(bool editor) {
 #else
   hog_name = "d3.hog";
 #endif
-  d3_hid = cf_OpenLibrary(hog_name);
+  if (!cf_OpenLibrary(hog_name)) {
+    LOG_WARNING.printf("Could not open game archive %s", PATH_TO_CSTR(hog_name));
+  }
 
   // JC: Steam release uses extra1.hog instead of extra.hog, so try loading it first
   // Open this file if it's present for stuff we might add later
@@ -1551,7 +1551,7 @@ void InitIOSystems(bool editor) {
   }
 
   // Open this for extra 1.3 code (Black Pyro, etc)
-  extra13_hid = cf_OpenLibrary("extra13.hog");
+  cf_OpenLibrary("extra13.hog");
 
   // last library opened is the first to be searched for dynamic libs, so put
   // this one at the end to find our newly build script libraries first

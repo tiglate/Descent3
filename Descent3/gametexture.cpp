@@ -377,10 +377,6 @@ int FindTextureBitmapName(const char *name) {
   for (i = 0; i < MAX_TEXTURES; i++) {
     if (GameTextures[i].used) {
       if (GameTextures[i].flags & TF_ANIMATED) {
-        int not_res = 0;
-        if (GameVClips[GameTextures[i].bm_handle].flags & VCF_NOT_RESIDENT)
-          not_res = 1;
-
         PageInVClip(GameTextures[i].bm_handle);
         vclip *vc = &GameVClips[GameTextures[i].bm_handle];
         ASSERT(vc->used);

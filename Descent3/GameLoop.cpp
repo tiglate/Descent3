@@ -1034,6 +1034,7 @@ void SelectNextCameraView(int window) {
       break;
     }
     // If no GB, then fall into next case
+    [[fallthrough]];
   }
   case CV_GUIDEBOT:
   case CV_MARKER1:
@@ -1545,7 +1546,6 @@ extern bool Cinematics_enabled;
 
 // Deal with keys that only work for testing & debugging (eg., slew)
 void ProcessTestKeys(int key) {
-  static int ffret = -1;
   int i;
 
   // Debug break
@@ -2487,7 +2487,7 @@ void GameDrawMainView() {
   extern bool Guided_missile_smallview; // smallviews.cpp
 
   bool rear_view = 0;
-  object *save_view;
+  object *save_view = nullptr;
 
   // Start rendering
   StartFrame(false);
@@ -2507,7 +2507,7 @@ void GameDrawMainView() {
   Rendering_main_view = false;
 
   // Restore viewer object if guided
-  if (!Cinematic_inuse && Players[Player_num].guided_obj != NULL && !Guided_missile_smallview)
+  if (save_view)
     Viewer_object = save_view;
 
   // Room changes
@@ -2915,6 +2915,8 @@ void GameFrame(void) {
 
       udp_rx = ((float)(netstat.udp_total_bytes_rec - old_netstat.udp_total_bytes_rec)) / time_diff;
       udp_tx = ((float)(netstat.udp_total_bytes_sent - old_netstat.udp_total_bytes_sent)) / time_diff;
+      LOG_DEBUG.printf("Network bytes/s: TCP receive %.0f, send %.0f, resend %.0f; UDP receive %.0f, send %.0f",
+                       tcp_rx, tcp_tx, tcp_rtx, udp_rx, udp_tx);
 
       old_netstat = netstat;
       netstat_time = newt;

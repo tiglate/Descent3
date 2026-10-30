@@ -386,7 +386,7 @@ int pilot::flush(bool new_file) {
     return PLTW_NO_FILENAME; // no filename was given
   }
 
-  CFILE *file;
+  CFILE *file = nullptr;
   std::filesystem::path real_filename = cf_GetWritableBaseDirectory() / filename;
 
   if (new_file && cfexist(real_filename)) {
@@ -423,13 +423,15 @@ int pilot::flush(bool new_file) {
     write_controls(file);
 
     cfclose(file);
+    file = nullptr;
 
   } catch (cfile_error) {
     // catch and handle CFILE errors
     LOG_FATAL << "PLTW: CFILE Exception writing data";
     Int3();
     try {
-      cfclose(file);
+      if (file)
+        cfclose(file);
     } catch (...) {
       LOG_FATAL << "PLTW: Unable to close file due to exception";
     }
@@ -439,7 +441,8 @@ int pilot::flush(bool new_file) {
     LOG_FATAL << "PLTW: Unknown exception writing data";
     Int3();
     try {
-      cfclose(file);
+      if (file)
+        cfclose(file);
     } catch (...) {
       LOG_FATAL << "PLTW: Unable to close file due to exception";
     }
@@ -468,7 +471,7 @@ int pilot::read(bool skip_config, bool skip_mission_data) {
     return PLTR_NO_FILENAME; // no filename was given
   }
 
-  CFILE *file;
+  CFILE *file = nullptr;
   std::filesystem::path real_filename = cf_GetWritableBaseDirectory() / filename;
 
   if (!cfexist(real_filename)) {
@@ -539,12 +542,14 @@ int pilot::read(bool skip_config, bool skip_mission_data) {
     Key_ramp_speed = key_ramping;
 
     cfclose(file);
+    file = nullptr;
   } catch (cfile_error) {
     // catch and handle CFILE errors
     LOG_FATAL << "PLTR: CFILE Exception reading data";
     Int3();
     try {
-      cfclose(file);
+      if (file)
+        cfclose(file);
     } catch (...) {
       LOG_FATAL << "PLTR: Unable to close file due to exception";
     }
@@ -555,7 +560,8 @@ int pilot::read(bool skip_config, bool skip_mission_data) {
     LOG_FATAL << "PLTR: Unknown exception reading data";
     Int3();
     try {
-      cfclose(file);
+      if (file)
+        cfclose(file);
     } catch (...) {
       LOG_FATAL << "PLTR: Unable to close file due to exception";
     }

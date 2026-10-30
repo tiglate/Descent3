@@ -483,7 +483,7 @@ void DemoWriteChangedObj(object *op) {
 void DemoWriteWeaponFire(uint16_t objectnum, vector *pos, vector *dir, uint16_t weaponnum, uint16_t weapobjnum,
                          int16_t gunnum) {
   uint32_t uniqueid = MultiGetMatchChecksum(OBJ_WEAPON, weaponnum);
-  if (weapobjnum == -1)
+  if (weapobjnum == 65535)
     return;
   if (!Weapons[weaponnum].used) {
     Int3();
@@ -560,23 +560,21 @@ extern float turret_holder[MAX_COOP_TURRETS];
 void DemoWriteTurretChanged(uint16_t objnum) { Demo_turretchanged[objnum] = true; }
 
 void DemoReadTurretChanged(void) {
-  multi_turret multi_turret_info;
+  multi_turret multi_turret_info{};
   int objnum;
   uint16_t num_turrets;
-  float turr_time;
-  float do_time;
-
-  do_time = cf_ReadFloat(Demo_cfp);
+  cf_ReadFloat(Demo_cfp);
   int16_t old_objnum = cf_ReadShort(Demo_cfp);
   objnum = Demo_obj_map[old_objnum];
 
-  turr_time = cf_ReadFloat(Demo_cfp);
+  multi_turret_info.time = cf_ReadFloat(Demo_cfp);
   num_turrets = cf_ReadShort(Demo_cfp);
   multi_turret_info.keyframes = (float *)&turret_holder;
-  multi_turret_info.num_turrets = num_turrets;
+  multi_turret_info.num_turrets = std::min<int>(num_turrets, UINT8_MAX);
   for (int i = 0; i < num_turrets; i++) {
-    if (MAX_COOP_TURRETS > i)
-      multi_turret_info.keyframes[i] = cf_ReadFloat(Demo_cfp);
+    float keyframe = cf_ReadFloat(Demo_cfp);
+    if (i < multi_turret_info.num_turrets)
+      multi_turret_info.keyframes[i] = keyframe;
   }
 
   if (Objects[objnum].type != OBJ_NONE) {
@@ -609,8 +607,7 @@ void DemoWriteObjAnimChanged(uint16_t objnum) {
 void DemoReadObjAnimChanged(void) {
   custom_anim multi_anim_info;
   int objnum;
-  float changetime;
-  changetime = cf_ReadFloat(Demo_cfp);
+  cf_ReadFloat(Demo_cfp);
   objnum = cf_ReadShort(Demo_cfp);
 
   multi_anim_info.server_time = cf_ReadFloat(Demo_cfp);
@@ -649,7 +646,7 @@ void DemoReadKillObject(void) {
     return; // bail if invalid object type
 
   ps_srand(seed);
-  KillObject(&Objects[hit_objnum], (killer != 65535) ? &Objects[killer] : NULL, damage, death_flags, delay);
+  KillObject(&Objects[hit_objnum], (killer != -1) ? &Objects[killer] : NULL, damage, death_flags, delay);
 }
 
 void DemoWritePlayerDeath(object *player, bool melee, int fate) {
@@ -949,7 +946,6 @@ void DemoReadHudMessage() {
 
 void DemoReadWeaponFire() {
   vector pos, dir;
-  float gametime;
   uint32_t uniqueid;
   object *obj;
   int16_t weaponnum, objnum, weapobjnum;
@@ -975,7 +971,7 @@ void DemoReadWeaponFire() {
     ASSERT(napalm_id != -1); // DAJ -1FIX
   }
 
-  gametime = cf_ReadFloat(Demo_cfp);
+  cf_ReadFloat(Demo_cfp);
   int16_t old_objnum = cf_ReadShort(Demo_cfp);
   objnum = Demo_obj_map[old_objnum];
   obj = &Objects[objnum];
@@ -1530,7 +1526,7 @@ void DemoPostPlaybackMenu(void) {
   NewUIButton cancel_btn;
   NewUIButton loop_btn;
   UIText wndtitle, fps_min, fps_avg, fps_max;
-  bool exit_menu = false, ret = true;
+  bool exit_menu = false;
   int cury = 9;
   char sztemp[200] = "";
 
@@ -1571,12 +1567,10 @@ void DemoPostPlaybackMenu(void) {
       Demo_fname = Old_demo_fname;
       Demo_looping = true;
       exit_menu = true;
-      ret = true;
       break;
     case NEWUIRES_FORCEQUIT:
     case UID_OK:
       exit_menu = true;
-      ret = true;
       if ((Players[Player_num].flags & PLAYER_FLAGS_DYING) || (Players[Player_num].flags & PLAYER_FLAGS_DEAD)) {
         EndPlayerDeath(Player_num);
         SetFunctionMode(MENU_MODE);

@@ -23,8 +23,8 @@
 #include <cstdio>
 
 typedef int32_t ReadSampleFunction(void *data);
-enum AudioError {
-  ReadSampleEof = 0x80000000,
+enum AudioError : int32_t {
+  ReadSampleEof = INT32_MIN,
 };
 
 int32_t AudioEncode(ReadSampleFunction *read, void *data, unsigned channels, unsigned sample_rate, float volume,

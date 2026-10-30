@@ -1362,12 +1362,16 @@ void DCDetermineObjFate(int objhandle, bool new_droid);
 // this function will return a random free index in a max (bit must be 0)
 // if there are none, then return a random index??
 inline int FIND_FREE_INDEX(unsigned mask, unsigned max_items, bool allow_duplicates) {
-  int i;
+  if (max_items == 0)
+    return -1;
+  if (max_items > 32)
+    max_items = 32;
+  unsigned i;
   int8_t indices[32];
   int8_t nindices = 0;
 
   for (i = 0; i < max_items; i++) {
-    if ((mask & (1 << i)) == 0) {
+    if ((mask & (1u << i)) == 0) {
       indices[nindices++] = i;
     }
   }

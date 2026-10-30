@@ -2494,7 +2494,7 @@ void MultiGetDestFireRooms() {
   for (int i = 0; i < MAX_PLAYERS; i++) {
     if (!(NetPlayers[i].flags & NPF_CONNECTED))
       continue;
-    if (NetPlayers[i].flags != NETSEQ_PLAYING)
+    if (NetPlayers[i].sequence != NETSEQ_PLAYING)
       continue;
 
     if (Player_fire_packet[i].fired_on_this_frame == PFP_NO_FIRED)
@@ -2503,7 +2503,6 @@ void MultiGetDestFireRooms() {
     // Ok, so now we know the player has fired, so just cast a ray and see where it hits
     fvi_query fq;
     fvi_info hit_data;
-    int fate;
 
     vector dest_vector = Objects[Players[i].objnum].pos + (Objects[Players[i].objnum].orient.fvec * 50000);
 
@@ -2515,7 +2514,7 @@ void MultiGetDestFireRooms() {
     fq.ignore_obj_list = NULL;
     fq.flags = FQ_IGNORE_NON_LIGHTMAP_OBJECTS | FQ_CHECK_OBJS;
 
-    fate = fvi_FindIntersection(&fq, &hit_data);
+    fvi_FindIntersection(&fq, &hit_data);
 
     if (hit_data.hit_room < 0)
       Player_fire_packet[i].dest_roomnum = hit_data.hit_room;

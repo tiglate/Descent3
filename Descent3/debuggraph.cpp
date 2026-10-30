@@ -436,6 +436,8 @@ void tGraphNode::Render(void) {
   case DATA_TYPE_INT:
     GetGraphY(&last_y, i_data[index], init_data.i_max_value, init_data.i_min_value);
     break;
+  default:
+    return;
   };
   index++;
   last_x = TOP_L;
@@ -452,6 +454,8 @@ void tGraphNode::Render(void) {
     case DATA_TYPE_INT:
       GetGraphY(&y, i_data[index], init_data.i_max_value, init_data.i_min_value);
       break;
+    default:
+      return;
     };
 
     rend_DrawLine(last_x, last_y, last_x + 1, y);

@@ -422,7 +422,7 @@ void SpewClearEvent(int handle, bool force) {
 
   int slot = GET_SLOT(handle);
 
-  if ((slot < 0) || (slot > MAX_SPEW_EFFECTS))
+  if ((slot < 0) || (slot >= MAX_SPEW_EFFECTS))
     return;
 
   vis = &SpewEffects[slot];
@@ -430,7 +430,10 @@ void SpewClearEvent(int handle, bool force) {
   if ((!force) && (handle != vis->handle))
     return;
 
-  vis->inuse = vis->random = vis->use_gunpoint = vis->real_obj = false;
+  vis->inuse = false;
+  vis->random = false;
+  vis->use_gunpoint = false;
+  vis->real_obj = false;
   vis->pt.origin = vector{};
   vis->pt.room_num = 0;
   vis->pt.normal = vector{};

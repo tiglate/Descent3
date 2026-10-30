@@ -1324,7 +1324,7 @@ static constexpr const char *dead_object_types[] = {
 // Creates a dead version of the given object
 void CreateDeadObject(object *objp) {
   if (objp->type == OBJ_ROBOT) {
-    for (int i = 0; i < N_DEAD_OBJECT_TYPES; i++) {
+    for (size_t i = 0; i < N_DEAD_OBJECT_TYPES; i++) {
       if (stricmp(Object_info[objp->id].name, dead_object_types[i * 2]) == 0) {
         int id = FindObjectIDName(dead_object_types[i * 2 + 1]);
         if (id != -1) {
@@ -1386,6 +1386,7 @@ void DestroyObject(object *objp, float explosion_mag, int death_flags) {
       break;
     default:
       Int3();
+      size_scale = 1.0f;
     }
     // Create big fireball
     fireball_visnum = CreateObjectFireball(objp, size_scale);
@@ -1568,10 +1569,8 @@ void DoGravityFieldEffect(object *obj) {
         vm_NormalizeVector(&rand_vector);
         test_vector = obj->pos + (rand_vector * 1000);
         vector dest_pos;
-        int dest_room;
         fvi_query fq;
         fvi_info hit_info;
-        int fate;
         fq.p0 = &obj->pos;
         fq.p1 = &test_vector;
         fq.startroom = obj->roomnum;
@@ -1580,9 +1579,8 @@ void DoGravityFieldEffect(object *obj) {
         fq.flags = FQ_CHECK_OBJS | FQ_IGNORE_NON_LIGHTMAP_OBJECTS;
         fq.thisobjnum = OBJNUM(obj);
         fq.ignore_obj_list = NULL;
-        fate = fvi_FindIntersection(&fq, &hit_info);
+        fvi_FindIntersection(&fq, &hit_info);
         dest_pos = hit_info.hit_pnt;
-        dest_room = hit_info.hit_room;
         if (count < 5) {
           if (vm_VectorDistance(&obj->pos, &dest_pos) < 2) {
             count++;
@@ -1786,13 +1784,11 @@ void MakeShockwave(object *explode_obj_ptr, int parent_handle) {
 // object *object_create_explosion_sub(object *explode_obj_ptr, int16_t segnum, vms_vector * position, fix size, int
 // vclip_type, fix maxdamage, fix maxdistance, fix maxforce, int parent )
 void DoConcussiveForce(object *explode_obj_ptr, int parent_handle, float player_scalar) {
-  int objnum;
   float max_player_damage = explode_obj_ptr->impact_player_damage;
   float max_generic_damage = explode_obj_ptr->impact_generic_damage;
   float maxforce = explode_obj_ptr->impact_force;
   float maxdistance = explode_obj_ptr->impact_size;
   float effect_distance;
-  int16_t parent;
   object *parent_obj;
   if (explode_obj_ptr->type == OBJ_SHOCKWAVE) {
     effect_distance =
@@ -1803,9 +1799,6 @@ void DoConcussiveForce(object *explode_obj_ptr, int parent_handle, float player_
     effect_distance = explode_obj_ptr->impact_size;
   }
   parent_obj = ObjGet(parent_handle);
-  if (parent_obj != NULL)
-    parent = OBJNUM(parent_obj);
-  objnum = OBJNUM(explode_obj_ptr);
   if (explode_obj_ptr->impact_size <= 0.0)
     return;
   {
@@ -2293,9 +2286,6 @@ void DrawBlastRingObject(object *obj) {
   rend_SetAlphaValue(255);
   ring_angle = 0;
   cur_size *= 2;
-  scalar alpha = 1.0;
-  if (lifenorm > .5)
-    alpha = 1.0 - ((lifenorm - .5) / .5);
   for (i = 0; i < num_segments; i++, ring_angle += ring_increment) {
     scalar ring_sin = FixSin(((int)(ring_angle + (lifenorm * 65536)) % 65536));
     scalar ring_cos = FixCos(((int)(ring_angle + (lifenorm * 65536)) % 65536));

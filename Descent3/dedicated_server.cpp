@@ -296,9 +296,9 @@ int RunServerConfigs() {
 }
 
 int DedicatedServerLex(const char *command) {
-  for (int i = 0; i < MAX_CVARS; i++)
+  for (size_t i = 0; i < MAX_CVARS; i++)
     if (stricmp(CVars[i].varname, command) == 0)
-      return i;
+      return static_cast<int>(i);
 
   return INFFILE_ERROR;
 }
@@ -601,7 +601,7 @@ void SetCVarString(int index, const char *val) {
 
 // The accessor function that sets the value of a cvar
 void SetCVar(const char *cvar_string, const char *cvar_argument, bool game_init) {
-  int i;
+  size_t i;
   int done = 0;
 
   for (i = 0; i < MAX_CVARS && !done; i++) {
@@ -653,7 +653,7 @@ void SetCVar(const char *cvar_string, const char *cvar_argument, bool game_init)
 
 // The accessor function that sets the value of a cvar...INT only
 void SetCVar(const char *cvar_string, int cvar_argument) {
-  int i;
+  size_t i;
   int done = 0;
 
   for (i = 0; i < MAX_CVARS && !done; i++) {
@@ -674,7 +674,7 @@ void SetCVar(const char *cvar_string, int cvar_argument) {
 
 // The accessor function that sets the value of a cvar...FLOAT only
 void SetCVar(const char *cvar_string, float cvar_argument) {
-  int i;
+  size_t i;
   int done = 0;
 
   for (i = 0; i < MAX_CVARS && !done; i++) {
@@ -795,7 +795,9 @@ void PrintDedicatedMessage(const char *fmt, ...) {
 #endif
 #define SOCKADDR_IN sockaddr_in
 #define SOCKADDR sockaddr
-#define INVALID_SOCKET -1
+#ifndef INVALID_SOCKET
+#define INVALID_SOCKET (-1)
+#endif
 
 // Winsock = sockets error translation
 
@@ -807,7 +809,9 @@ void PrintDedicatedMessage(const char *fmt, ...) {
 #define WSAGetLastError() errno
 #endif
 
-#define SOCKET_ERROR -1
+#ifndef SOCKET_ERROR
+#define SOCKET_ERROR (-1)
+#endif
 
 #endif
 

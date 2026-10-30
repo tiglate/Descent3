@@ -354,6 +354,7 @@ void UIRadioButton::OnDraw() {
   switch (m_State) {
   case UI_BTS_HILITE:
     iterations = 1;
+    [[fallthrough]];
   case UI_BTS_INACTIVE:
   case UI_BTS_DISABLED:
     if (m_Flags & UIRB_NOBUTTON)
@@ -489,6 +490,7 @@ void UICheckBox::OnDraw() {
   switch (m_State) {
   case UI_BTS_HILITE:
     iterations = 2;
+    [[fallthrough]];
   case UI_BTS_INACTIVE:
   case UI_BTS_DISABLED:
     snprintf(btnstr, sizeof(btnstr), "%c ", UI_CHECKBOX_OFF_CHAR);

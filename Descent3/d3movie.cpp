@@ -355,7 +355,7 @@ intptr_t mve_SequenceStart(const char *mvename, void *fhandle, oeApplication *ap
 #endif
 }
 
-intptr_t mve_SequenceFrame(intptr_t handle, void *fhandle, bool sequence, int *bm_handle) {
+intptr_t mve_SequenceFrame(intptr_t handle, void *fhandle, [[maybe_unused]] bool sequence, int *bm_handle) {
 #ifndef NO_MOVIES
   if (bm_handle) {
     *bm_handle = -1;
@@ -388,7 +388,6 @@ reread_frame:
 
   if (Movie_looping && err == MVE_ERR_EOF) {
     mve_reset((MVESTREAM *)handle);
-    sequence = true;
     goto reread_frame;
   }
 

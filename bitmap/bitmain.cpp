@@ -628,7 +628,8 @@ void bm_FreeBitmapMain(int handle) {
 }
 // Returns -1 if this name is not already in use, else index of bitmap that is using name
 int bm_TestName(const char *src) {
-  uint32_t i, limit;
+  int i;
+  uint32_t limit;
 
   char namedest[256];
   char path[256], ext[256], filename[256];
@@ -647,7 +648,7 @@ int bm_TestName(const char *src) {
 }
 // gets the filename from a path, plus appends our .ogf extension
 void bm_ChangeEndName(const char *src, char *dest) {
-  uint32_t i, limit;
+  uint32_t limit;
   int curnum = -1;
   char namedest[256 + 16];
   char path[256], ext[256], filename[256];
@@ -663,7 +664,7 @@ Start:
     strcpy(namedest, filename);
   // Now, make sure there are no other bitmaps with this name
   strcat(namedest, ".ogf");
-  if ((i = bm_FindBitmapName(namedest)) != -1) {
+  if (bm_FindBitmapName(namedest) != -1) {
     curnum++;
     // This name is already taken.  Try same name with different number
     // appended
@@ -1282,14 +1283,11 @@ int bm_bpp(int handle) { return BPP_16; }
 // Given two bitmaps, scales the data from src to the size of dest
 // Not a particularly fast implementation
 void bm_ScaleBitmapToBitmap(int dest, int src) {
-  uint16_t *dp = bm_data(dest, 0);
-  uint16_t *sp = bm_data(src, 0);
-  ASSERT(GameBitmaps[dest].used && dp);
-  ASSERT(GameBitmaps[src].used && sp);
+  ASSERT(GameBitmaps[dest].used && bm_data(dest, 0));
+  ASSERT(GameBitmaps[src].used && bm_data(src, 0));
   int smipped = bm_mipped(src);
-  int dmipped = bm_mipped(dest);
   int limit;
-  ASSERT(smipped == dmipped);
+  ASSERT(smipped == bm_mipped(dest));
   ASSERT(GameBitmaps[dest].format == GameBitmaps[src].format);
 
   int sw = bm_w(src, 0);

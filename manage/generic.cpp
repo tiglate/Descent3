@@ -1307,18 +1307,23 @@ int mng_ReadNewGenericPage(CFILE *infile, mngs_generic_page *genericpage) {
         Int3();            // this version no longer supported
       }
 
-      genericpage->objinfo_struct.death_types[i].flags = flags;
-      genericpage->objinfo_struct.death_types[i].delay_min = cf_ReadFloat(infile);
-      genericpage->objinfo_struct.death_types[i].delay_max = cf_ReadFloat(infile);
-      genericpage->objinfo_struct.death_probabilities[i] = cf_ReadByte(infile);
+      float delay_min = cf_ReadFloat(infile);
+      float delay_max = cf_ReadFloat(infile);
+      uint8_t probability = cf_ReadByte(infile);
 
       // Fix up for changed flags
       if (version < 27) {
         if ((flags & OLD_DF_DELAY_MASK) != OLD_DF_DELAY_MIN_MAX) {
-          genericpage->objinfo_struct.death_types[i].delay_min = 0.0;
-          genericpage->objinfo_struct.death_types[i].delay_max = 0.0;
+          delay_min = 0.0;
+          delay_max = 0.0;
         }
         flags &= ~DF_UNUSED;
+      }
+      if (i < MAX_DEATH_TYPES) {
+        genericpage->objinfo_struct.death_types[i].flags = flags;
+        genericpage->objinfo_struct.death_types[i].delay_min = delay_min;
+        genericpage->objinfo_struct.death_types[i].delay_max = delay_max;
+        genericpage->objinfo_struct.death_probabilities[i] = probability;
       }
     }
   }
@@ -2161,7 +2166,7 @@ void mng_AssignObjInfoToGenericPage(int n, mngs_generic_page *genericpage) {
 
   for (i = 0; i < MAX_WBS_PER_OBJ; i++) {
     for (j = 0; j < MAX_WB_FIRING_MASKS; j++) {
-      if (objinfopointer->static_wb && objinfopointer->static_wb[i].fm_fire_sound_index[j] >= 0)
+      if (objinfopointer->static_wb)
         strcpy(genericpage->fire_sound_name[i][j], Sounds[objinfopointer->static_wb[i].fm_fire_sound_index[j]].name);
       else
         strcpy(genericpage->fire_sound_name[i][j], "");
@@ -2179,7 +2184,7 @@ void mng_AssignObjInfoToGenericPage(int n, mngs_generic_page *genericpage) {
 
   for (i = 0; i < MAX_WBS_PER_OBJ; i++) {
     for (j = 0; j < MAX_WB_GUNPOINTS; j++) {
-      if (objinfopointer->static_wb && objinfopointer->static_wb[i].gp_weapon_index[j] >= 0)
+      if (objinfopointer->static_wb)
         strcpy(genericpage->weapon_name[i][j], Weapons[objinfopointer->static_wb[i].gp_weapon_index[j]].name);
       else
         strcpy(genericpage->weapon_name[i][j], "Laser");
@@ -2212,6 +2217,9 @@ void mng_LoadNetGenericPage(CFILE *infile, bool overlay) {
 
     int ret = mng_SetAndLoadGeneric(&genericpage, infile);
     ASSERT(ret >= 0);
+    if (ret < 0) {
+      LOG_ERROR << "Failed to load generic page.";
+    }
     // Free allocated memory
     if (genericpage.objinfo_struct.description) {
       mem_free(genericpage.objinfo_struct.description);

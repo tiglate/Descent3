@@ -1188,10 +1188,9 @@ void DrawVisLightningBolt(vis_effect *vis) {
   line_norm = vis->pos - vis->end_pos;
   line_mag = vm_GetMagnitudeFast(&line_norm);
 
-  line_norm /= line_mag;
-
   if (line_mag < 1)
     return;
+  line_norm /= line_mag;
 
   float alpha_norm;
 
@@ -1394,7 +1393,7 @@ void DrawVisThickLightning(vis_effect *vis) {
   int bm_handle = GetTextureBitmap(texnum, 0, true);
   float tile_factor = vis->velocity.z();
   float alpha_norm;
-  int i, codes_and;
+  int i;
 
   if (vis->flags & VF_EXPAND)
     alpha_norm = vis->lifeleft / vis->lifetime;
@@ -1410,7 +1409,7 @@ void DrawVisThickLightning(vis_effect *vis) {
   rend_SetAlphaValue(255 * alpha_norm);
   rend_SetZBufferWriteMask(0);
 
-  for (i = 0, codes_and = 0xff; i < 4; i++) {
+  for (i = 0; i < 4; i++) {
     pntlist[i] = &pnts[i];
   }
 
@@ -2109,7 +2108,7 @@ void VisEffectMoveOne(vis_effect *vis) {
               GetPolyModelPointInWorld(&this_vis->pos, pm, &obj->pos, &obj->orient, this_vis->attach_info.subnum,
                                        normalized_time, &sm->verts[this_vis->attach_info.vertnum], NULL);
 
-              if (this_vis->attach_info.end_vertnum != -1)
+              if (this_vis->attach_info.end_vertnum != (uint16_t)-1)
                 GetPolyModelPointInWorld(&this_vis->end_pos, pm, &obj->pos, &obj->orient, this_vis->attach_info.subnum,
                                          normalized_time, &sm->verts[this_vis->attach_info.end_vertnum], NULL);
             }
@@ -2218,7 +2217,7 @@ void AttachRandomNapalmEffectsToObject(object *obj) {
   vm_NormalizeVector(&velocity_norm);
   vector pos = obj->pos - (velocity_norm * (obj->size / 2));
 
-  if (obj->movement_type == MT_PHYSICS && (OBJECT_OUTSIDE(obj) && (ps_rand() % 3) == 0) || (ps_rand() % 3) == 0)
+  if ((obj->movement_type == MT_PHYSICS && (OBJECT_OUTSIDE(obj) && (ps_rand() % 3) == 0)) || (ps_rand() % 3) == 0)
     CreateFireball(&pos, BLACK_SMOKE_INDEX, obj->roomnum, VISUAL_FIREBALL);
 
   float size_scalar = obj->size / 7.0;

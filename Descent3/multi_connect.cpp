@@ -734,7 +734,7 @@ void MultiDoLevelInfo(uint8_t *data) {
 
   Netgame.difficulty = MultiGetByte(data, &count);
 
-  if ((Netgame.difficulty > 4) || (Netgame.difficulty < 0))
+  if (Netgame.difficulty > 4)
     Netgame.difficulty = 2;
 
   if (join_response != JOIN_ANSWER_OK)
