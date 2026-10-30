@@ -1493,7 +1493,7 @@ int FindValidID(int type) {
 }
 
 // bash/converts generics, from those not allowed, to something that is allowed
-void ConvertObject(int *type, int *id) {
+void ConvertObject([[maybe_unused]] int *type, [[maybe_unused]] int *id) {
   // NOTE: Only type/id are valid at this point
 #if ((!defined(OEM)) && (!defined(DEMO)))
   // Non-OEM build
@@ -2624,7 +2624,8 @@ int ReadRoom(CFILE *ifile, room *rp, int version) {
 }
 
 // Build a translation table for various items
-void BuildXlateTable(CFILE *ifile, int (*lookup_func)(const char *), int16_t *xlate_table, int max_items, int type) {
+void BuildXlateTable(CFILE *ifile, int (*lookup_func)(const char *), int16_t *xlate_table, int max_items,
+                     [[maybe_unused]] int type) {
   char name[PAGENAME_LEN];
   int n;
   int i;
@@ -2963,7 +2964,7 @@ void ReadGamePathsChunk(CFILE *fp, int version) {
   }
 }
 
-void ReadOverrideSoundChunk(CFILE *fp, int version) {
+void ReadOverrideSoundChunk(CFILE *fp, [[maybe_unused]] int version) {
   char soundname[PAGENAME_LEN];
 
   cf_ReadString(soundname, sizeof(soundname), fp);
@@ -3127,7 +3128,7 @@ void ReadBOAChunk(CFILE *fp, int version) {
   }
 }
 
-bool ReadRoomAABBChunk(CFILE *fp, int version) {
+bool ReadRoomAABBChunk(CFILE *fp, [[maybe_unused]] int version) {
   int save_highest_room_index;
   int i;
 
@@ -3211,7 +3212,7 @@ bool ReadRoomAABBChunk(CFILE *fp, int version) {
   return true;
 }
 
-void ReadMatcenChunk(CFILE *fp, int version) {
+void ReadMatcenChunk(CFILE *fp, [[maybe_unused]] int version) {
   int i;
 
   Num_matcens = cf_ReadInt(fp);
@@ -3221,13 +3222,13 @@ void ReadMatcenChunk(CFILE *fp, int version) {
   }
 }
 
-void ReadALifeChunk(CFILE *fp, int version) {
+void ReadALifeChunk(CFILE *fp, [[maybe_unused]] int version) {
 #ifndef NEWEDITOR
   a_life.LoadData(fp);
 #endif
 }
 
-void ReadLevelGoalsChunk(CFILE *fp, int version) { Level_goals.LoadLevelGoalInfo(fp); }
+void ReadLevelGoalsChunk(CFILE *fp, [[maybe_unused]] int version) { Level_goals.LoadLevelGoalInfo(fp); }
 
 // Reads relevant info about the terrain sky and lights
 void ReadTerrainSkyAndLightChunk(CFILE *fp, int version) {
@@ -3692,7 +3693,7 @@ extern bool Disable_editor_rendering;
 #define LEVEL_LOADED_PCT_CALC (filelen) ? (float)(chunk_size + chunk_start) / (float)filelen : 0.0f
 // Load a level file
 // Returns 1 if file read ok, else 0
-int LoadLevel(char *filename, void (*cb_fn)(const char *, int, int)) {
+int LoadLevel(char *filename, [[maybe_unused]] void (*cb_fn)(const char *, int, int)) {
   CFILE *ifile;
   int n, i, retval = 1;
 

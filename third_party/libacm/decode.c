@@ -179,7 +179,7 @@ static const int map_3bit[] = { -4, -3, -2, -1, +1, +2, +3, +4 };
 
 /************ Fillers **********/
 
-static int f_zero(ACMStream *acm, unsigned ind, unsigned col)
+static int f_zero(ACMStream *acm, [[maybe_unused]] unsigned ind, unsigned col)
 {
 	unsigned i;
 	for (i = 0; i < acm->info.acm_rows; i++)
@@ -188,7 +188,7 @@ static int f_zero(ACMStream *acm, unsigned ind, unsigned col)
 	return 1;
 }
 
-static int f_bad(ACMStream *acm, unsigned ind, unsigned col)
+static int f_bad([[maybe_unused]] ACMStream *acm, [[maybe_unused]] unsigned ind, [[maybe_unused]] unsigned col)
 {
 	/* corrupt block? */
 	return ACM_ERR_CORRUPT;
@@ -206,7 +206,7 @@ static int f_linear(ACMStream *acm, unsigned ind, unsigned col)
 	return 1;
 }
 
-static int f_k13(ACMStream *acm, unsigned ind, unsigned col)
+static int f_k13(ACMStream *acm, [[maybe_unused]] unsigned ind, unsigned col)
 {
 	unsigned i, b;
 	for (i = 0; i < acm->info.acm_rows; i++) {
@@ -232,7 +232,7 @@ static int f_k13(ACMStream *acm, unsigned ind, unsigned col)
 	return 1;
 }
 
-static int f_k12(ACMStream *acm, unsigned ind, unsigned col)
+static int f_k12(ACMStream *acm, [[maybe_unused]] unsigned ind, unsigned col)
 {
 	unsigned i, b;
 	for (i = 0; i < acm->info.acm_rows; i++) {
@@ -250,7 +250,7 @@ static int f_k12(ACMStream *acm, unsigned ind, unsigned col)
 	return 1;
 }
 
-static int f_k24(ACMStream *acm, unsigned ind, unsigned col)
+static int f_k24(ACMStream *acm, [[maybe_unused]] unsigned ind, unsigned col)
 {
 	unsigned i, b;
 	for (i = 0; i < acm->info.acm_rows; i++) {
@@ -277,7 +277,7 @@ static int f_k24(ACMStream *acm, unsigned ind, unsigned col)
 	return 1;
 }
 
-static int f_k23(ACMStream *acm, unsigned ind, unsigned col)
+static int f_k23(ACMStream *acm, [[maybe_unused]] unsigned ind, unsigned col)
 {
 	unsigned i, b;
 	for (i = 0; i < acm->info.acm_rows; i++) {
@@ -295,7 +295,7 @@ static int f_k23(ACMStream *acm, unsigned ind, unsigned col)
 	return 1;
 }
 
-static int f_k35(ACMStream *acm, unsigned ind, unsigned col)
+static int f_k35(ACMStream *acm, [[maybe_unused]] unsigned ind, unsigned col)
 {
 	unsigned i, b;
 	for (i = 0; i < acm->info.acm_rows; i++) {
@@ -331,7 +331,7 @@ static int f_k35(ACMStream *acm, unsigned ind, unsigned col)
 	return 1;
 }
 
-static int f_k34(ACMStream *acm, unsigned ind, unsigned col)
+static int f_k34(ACMStream *acm, [[maybe_unused]] unsigned ind, unsigned col)
 {
 	unsigned i, b;
 	for (i = 0; i < acm->info.acm_rows; i++) {
@@ -357,7 +357,7 @@ static int f_k34(ACMStream *acm, unsigned ind, unsigned col)
 	return 1;
 }
 
-static int f_k45(ACMStream *acm, unsigned ind, unsigned col)
+static int f_k45(ACMStream *acm, [[maybe_unused]] unsigned ind, unsigned col)
 {
 	unsigned i, b;
 	for (i = 0; i < acm->info.acm_rows; i++) {
@@ -385,7 +385,7 @@ static int f_k45(ACMStream *acm, unsigned ind, unsigned col)
 	return 1;
 }
 
-static int f_k44(ACMStream *acm, unsigned ind, unsigned col)
+static int f_k44(ACMStream *acm, [[maybe_unused]] unsigned ind, unsigned col)
 {
 	unsigned i, b;
 	for (i = 0; i < acm->info.acm_rows; i++) {
@@ -403,7 +403,7 @@ static int f_k44(ACMStream *acm, unsigned ind, unsigned col)
 	return 1;
 }
 
-static int f_t15(ACMStream *acm, unsigned ind, unsigned col)
+static int f_t15(ACMStream *acm, [[maybe_unused]] unsigned ind, unsigned col)
 {
 	unsigned i, b;
 	int n1, n2, n3, tmp;
@@ -429,7 +429,7 @@ static int f_t15(ACMStream *acm, unsigned ind, unsigned col)
 	return 1;
 }
 
-static int f_t27(ACMStream *acm, unsigned ind, unsigned col)
+static int f_t27(ACMStream *acm, [[maybe_unused]] unsigned ind, unsigned col)
 {
 	unsigned i, b;
 	int n1, n2, n3, tmp;
@@ -455,7 +455,7 @@ static int f_t27(ACMStream *acm, unsigned ind, unsigned col)
 	return 1;
 }
 
-static int f_t37(ACMStream *acm, unsigned ind, unsigned col)
+static int f_t37(ACMStream *acm, [[maybe_unused]] unsigned ind, unsigned col)
 {
 	unsigned i, b;
 	int n1, n2;

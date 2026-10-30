@@ -2410,7 +2410,7 @@ public:
 // able to be used.  IT IS VERY IMPORTANT WHEN SAVING THE STATE TO RETURN THE NUMBER OF _BYTES_ WROTE
 // TO THE FILE.  When restoring the data, the return value is ignored.  saving_state is 1 when you should
 // write data to the file_ptr, 0 when you should read in the data.
-int STDCALL SaveRestoreState(void *file_ptr, uint8_t saving_state) { return 0; }
+int STDCALL SaveRestoreState([[maybe_unused]] void *file_ptr, [[maybe_unused]] uint8_t saving_state) { return 0; }
 
 char STDCALL InitializeDLL(tOSIRISModuleInit *func_list) {
   osicommon_Initialize((tOSIRISModuleInit *)func_list);
@@ -2428,7 +2428,7 @@ char STDCALL InitializeDLL(tOSIRISModuleInit *func_list) {
 
 void STDCALL ShutdownDLL(void) {}
 
-int STDCALL GetGOScriptID(const char *name, uint8_t isdoor) {
+int STDCALL GetGOScriptID(const char *name, [[maybe_unused]] uint8_t isdoor) {
   for (int i = 0; i < NUM_IDS; i++) {
     if (!stricmp(name, ScriptInfo[i].name)) {
       return ScriptInfo[i].id;
@@ -2714,7 +2714,7 @@ void STDCALL DestroyInstance(int id, void *ptr) {
   }
 }
 
-int16_t STDCALL CallInstanceEvent(int id, void *ptr, int event, tOSIRISEventInfo *data) {
+int16_t STDCALL CallInstanceEvent([[maybe_unused]] int id, void *ptr, int event, tOSIRISEventInfo *data) {
   return ((BaseObjScript *)ptr)->CallEvent(event, data);
 }
 
@@ -2760,7 +2760,9 @@ static inline bool IsGoalFinishedNotify(int index) {
 //============================================
 // Script Implementation
 //============================================
-int16_t BaseObjScript::CallEvent(int event, tOSIRISEventInfo *data) { return CONTINUE_CHAIN | CONTINUE_DEFAULT; }
+int16_t BaseObjScript::CallEvent([[maybe_unused]] int event, [[maybe_unused]] tOSIRISEventInfo *data) {
+  return CONTINUE_CHAIN | CONTINUE_DEFAULT;
+}
 
 //-----------------
 // Josh Bell
@@ -2837,7 +2839,7 @@ int16_t ExplodeOnContact::CallEvent(int event, tOSIRISEventInfo *data) {
 // Destroy On Contact
 //-----------------
 
-void DestroyOnContact::DoCollide(int me, int it) {
+void DestroyOnContact::DoCollide([[maybe_unused]] int me, int it) {
   int type;
   Obj_Value(it, VF_GET, OBJV_I_TYPE, &type);
 
@@ -5561,8 +5563,8 @@ void GuideBot::DoCollide(int me, tOSIRISEVTCOLLIDE *evt_collide) {
         } else if (rand_val > 0.4) {
           DoMessage(TXT_GBHIT3, false, "GBotConcern1");
         }
-      } else if (memory->last_retreat_time + 5.0 < Game_GetTime())
-        ;
+      } else if (memory->last_retreat_time + 5.0 < Game_GetTime()) {
+      }
       {
         if (rand_val > 0.7) {
           AI_AddGoal(me, AIG_GET_TO_OBJ, 2, 1.0f, -1, 0, memory->my_player);
@@ -6185,7 +6187,7 @@ int16_t GuideBot::CallEvent(int event, tOSIRISEventInfo *data) {
 // Thief
 //---------------
 
-void Thief::DoAttack(int me, int it) {}
+void Thief::DoAttack([[maybe_unused]] int me, [[maybe_unused]] int it) {}
 
 bool Thief::DoSteal(int me, int it, int attempt_num, bool f_last_success) {
   int max_tries = numThiefableItems;
@@ -6367,7 +6369,7 @@ bool Thief::DoSteal(int me, int it, int attempt_num, bool f_last_success) {
   return false; // we didn't take anything this try
 }
 
-void Thief::DoKidnap(int me, int it) {
+void Thief::DoKidnap([[maybe_unused]] int me, int it) {
   if (memory->num_stolen_objs < MAX_STOLEN_OBJS) {
     Obj_Ghost(it, true);
     memory->stolen_objs[memory->num_stolen_objs++] = it;
@@ -6589,7 +6591,7 @@ void Thief::DoInit(int me) {
   SetSubMode(me, THIEF_SUB_NONE);
 }
 
-void Thief::DoCollide(int me, tOSIRISEVTCOLLIDE *evt_collide) {}
+void Thief::DoCollide([[maybe_unused]] int me, [[maybe_unused]] tOSIRISEVTCOLLIDE *evt_collide) {}
 
 bool Thief::DoNotify(int me, tOSIRISEVTAINOTIFY *notify) {
   switch (notify->notify_type) {
@@ -6842,7 +6844,7 @@ void Thief::SpewEverything(int me) {
   memory->num_stolen_inv = 0;
 }
 
-void Thief::DoDestroy(int me, tOSIRISEVTDESTROY *evt_destroy) { SpewEverything(me); }
+void Thief::DoDestroy(int me, [[maybe_unused]] tOSIRISEVTDESTROY *evt_destroy) { SpewEverything(me); }
 
 int16_t Thief::CallEvent(int event, tOSIRISEventInfo *data) {
   switch (event) {
@@ -7097,7 +7099,7 @@ void Sickle::DoFrame(int me) {
   }
 }
 
-bool Sickle::DoNotify(int me_handle, tOSIRISEVTAINOTIFY *notify) {
+bool Sickle::DoNotify([[maybe_unused]] int me_handle, tOSIRISEVTAINOTIFY *notify) {
   if ((IsGoalFinishedNotify(notify->notify_type)) &&
       (memory->mode == SICKLE_GOING_HOME || memory->mode == SICKLE_LAND_ON_CEILING) && (notify->goal_num == 2)) {
 
@@ -7713,7 +7715,7 @@ int16_t OldScratch::CallEvent(int event, tOSIRISEventInfo *data) {
 // BarnSwallow
 //---------------------
 
-void BarnSwallow::ComputeNextNestPnt(int me, vector *pos) {
+void BarnSwallow::ComputeNextNestPnt([[maybe_unused]] int me, vector *pos) {
   pos->x() = (0.5f - (float)rand() / (float)RAND_MAX);
   pos->y() = (0.5f - (float)rand() / (float)RAND_MAX);
   pos->z() = (0.5f - (float)rand() / (float)RAND_MAX);
@@ -7931,7 +7933,7 @@ void BarnSwallow::ComputeNest(int me) {
     memory->nest_rad = 5.0f;
 }
 
-void BarnSwallow::UpdateFriendList(int me) {
+void BarnSwallow::UpdateFriendList([[maybe_unused]] int me) {
   int i;
   int j;
 
@@ -9135,7 +9137,7 @@ bool MantaRay::ReceiveCommand(int me, int it, char command, void *ptr) {
   return false;
 }
 
-void MantaRay::UpdateSquadList(int me) {
+void MantaRay::UpdateSquadList([[maybe_unused]] int me) {
   int i;
 
   for (i = 0; i < memory->num_teammates; i++) {
@@ -9556,7 +9558,7 @@ bool Skiff::ReceiveCommand(int me, int it, char command, void *ptr) {
   return false;
 }
 
-void Skiff::UpdateSquadList(int me) {
+void Skiff::UpdateSquadList([[maybe_unused]] int me) {
   int i;
 
   for (i = 0; i < memory->num_teammates; i++) {
@@ -10079,7 +10081,7 @@ int16_t SpyHunter::CallEvent(int event, tOSIRISEventInfo *data) {
 // Sniper class
 //------------------
 
-bool Sniper::DoNotify(int me_handle, tOSIRISEventInfo *data) { return true; }
+bool Sniper::DoNotify([[maybe_unused]] int me_handle, [[maybe_unused]] tOSIRISEventInfo *data) { return true; }
 
 void Sniper::SetMode(int me, char mode) {
   switch (mode) {
@@ -10215,7 +10217,7 @@ int16_t Sniper::CallEvent(int event, tOSIRISEventInfo *data) {
 // SniperNoRun class
 //------------------
 
-bool SniperNoRun::DoNotify(int me_handle, tOSIRISEventInfo *data) { return true; }
+bool SniperNoRun::DoNotify([[maybe_unused]] int me_handle, [[maybe_unused]] tOSIRISEventInfo *data) { return true; }
 
 void SniperNoRun::SetMode(int me, char mode) {
   switch (mode) {
@@ -10348,7 +10350,7 @@ int16_t SniperNoRun::CallEvent(int event, tOSIRISEventInfo *data) {
 #define EMA_NORMAL 0
 #define EMA_GET_BEHIND 1
 
-bool EvaderModA::DoNotify(int me_handle, tOSIRISEventInfo *data) { return true; }
+bool EvaderModA::DoNotify([[maybe_unused]] int me_handle, [[maybe_unused]] tOSIRISEventInfo *data) { return true; }
 
 void EvaderModA::SetMode(int me, char mode) {
   switch (mode) {
@@ -10462,7 +10464,7 @@ int16_t EvaderModA::CallEvent(int event, tOSIRISEventInfo *data) {
 
 // Based off EvaderModA
 
-bool FlameRAS::DoNotify(int me_handle, tOSIRISEventInfo *data) { return true; }
+bool FlameRAS::DoNotify([[maybe_unused]] int me_handle, [[maybe_unused]] tOSIRISEventInfo *data) { return true; }
 
 void FlameRAS::SetMode(int me, char mode) {
   switch (mode) {

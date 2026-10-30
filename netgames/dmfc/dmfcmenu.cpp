@@ -984,7 +984,7 @@ void BanPlayer(int pnum) {
   basethis->BanPlayerFromGame(pnum);
 }
 // Server Only. Ends the current level
-void EndMultiLevel(int i) {
+void EndMultiLevel([[maybe_unused]] int i) {
   if (basethis->GetLocalRole() != LR_SERVER) {
     mprintf(0, "You're Not The Server\n");
     return;
@@ -1174,7 +1174,7 @@ void ChangeTeams(int team) {
 }
 
 // Send a request to DMFC to save the game stats to file
-void SaveStatsToFile(int i) { basethis->CallOnSaveStatsToFile(); }
+void SaveStatsToFile([[maybe_unused]] int i) { basethis->CallOnSaveStatsToFile(); }
 
 // Turns on/off Observer Mode
 void SwitchObserverMode(int i) {
@@ -1228,7 +1228,7 @@ void SwitchStatHUDMessages(int i) {
 }
 
 //	Exits the on-screen menu
-void MenuExitMenu(int i) { basethis->EnableOnScreenMenu(false); }
+void MenuExitMenu([[maybe_unused]] int i) { basethis->EnableOnScreenMenu(false); }
 
 //	Switches on/off auto saving of the stats to file on level end
 void SwitchSaveStatsLevelEnd(int i) { basethis->EnableAutoSaveLevelEnd((i) ? true : false); }
@@ -1249,7 +1249,7 @@ void SwitchNetGameInfo(int i) { basethis->SwitchNetGameInfoDisplay(i); }
 void SwitchDeathMessageFilter(int i) { basethis->SetDeathMessageFilter(i); }
 
 // brings up the team config dialog for the server
-void OnScreenDisplayTeamConfig(int i) {
+void OnScreenDisplayTeamConfig([[maybe_unused]] int i) {
   if (basethis->GetLocalRole() != LR_SERVER)
     return;
   if (basethis->GetNumTeams() < 2)
@@ -1275,7 +1275,7 @@ void SwitchAudioTauntsEnable(int i) {
 }
 
 // Rehashs the hosts.allow/deny lists
-void RehashAllowDenyLists(int i) {
+void RehashAllowDenyLists([[maybe_unused]] int i) {
   if (basethis->GetLocalRole() != LR_SERVER)
     return;
 

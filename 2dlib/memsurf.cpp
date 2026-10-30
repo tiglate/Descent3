@@ -300,12 +300,12 @@ bool gr_mem_surf_Lock(ddgr_surface *sf, void **ptr, int *rowsize) {
 //	---------------------------------------------------------------------------
 //	invalidates sf members
 
-bool gr_mem_surf_Unlock(ddgr_surface *sf, void *ptr) { return true; }
+bool gr_mem_surf_Unlock([[maybe_unused]] ddgr_surface *sf, [[maybe_unused]] void *ptr) { return true; }
 
 //	---------------------------------------------------------------------------
 //	does shit.
 
-bool gr_mem_surf_AttachHandle(ddgr_surface *sf, unsigned handle) { return true; }
+bool gr_mem_surf_AttachHandle([[maybe_unused]] ddgr_surface *sf, [[maybe_unused]] unsigned handle) { return true; }
 
 //	---------------------------------------------------------------------------
 //	performs 16-bit blts.

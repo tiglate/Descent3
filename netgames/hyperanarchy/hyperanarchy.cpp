@@ -150,7 +150,7 @@ static int FindHyperOrbInInventory(void);
 static void ResetTimer(void);
 static void SaveStatsToFile(char *filename);
 
-void DetermineScore(int precord_num, int column_num, char *buffer, int buffer_size) {
+void DetermineScore(int precord_num, [[maybe_unused]] int column_num, char *buffer, int buffer_size) {
   player_record *pr = DMFCBase->GetPlayerRecord(precord_num);
   if (!pr || pr->state == STATE_EMPTY) {
     buffer[0] = '\0';
@@ -162,7 +162,8 @@ void DetermineScore(int precord_num, int column_num, char *buffer, int buffer_si
   snprintf(buffer, buffer_size, "%d[%d]", stat->Score[DSTAT_LEVEL], stat->Score[DSTAT_OVERALL]);
 }
 
-void ShowStatBitmap(int precord_num, int column_num, int x, int y, int w, int h, uint8_t alpha_to_use) {
+void ShowStatBitmap(int precord_num, [[maybe_unused]] int column_num, int x, int y, [[maybe_unused]] int w,
+                    [[maybe_unused]] int h, uint8_t alpha_to_use) {
   player_record *pr = DMFCBase->GetPlayerRecord(precord_num);
 
   if (pr && pr->state == STATE_INGAME) {
@@ -188,7 +189,7 @@ void DLLFUNCCALL DLLGetGameInfo(tDLLOptions *options) {
 }
 
 // Initializes the game function pointers
-void DLLFUNCCALL DLLGameInit(int *api_func, uint8_t *all_ok, int num_teams_to_use) {
+void DLLFUNCCALL DLLGameInit(int *api_func, uint8_t *all_ok, [[maybe_unused]] int num_teams_to_use) {
   *all_ok = 1;
   DMFCBase = CreateDMFC();
   if (!DMFCBase) {
@@ -1133,7 +1134,7 @@ void SendHyperGameState(int playernum) {
 }
 
 // Displays HUD scores
-void DisplayHUDScores(struct tHUDItem *hitem) {
+void DisplayHUDScores([[maybe_unused]] struct tHUDItem *hitem) {
   if (display_my_welcome) {
     DisplayWelcomeScreen(DMFCBase->GetPlayerNum());
     display_my_welcome = false;

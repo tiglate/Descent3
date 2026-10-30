@@ -776,7 +776,7 @@ void STDCALL ShutdownDLL(void) { ClearMessageList(); }
 // ===============
 // GetGOScriptID()
 // ===============
-int STDCALL GetGOScriptID(const char *name, uint8_t isdoor) { return -1; }
+int STDCALL GetGOScriptID([[maybe_unused]] const char *name, [[maybe_unused]] uint8_t isdoor) { return -1; }
 
 // ================
 // CreateInstance()
@@ -993,7 +993,7 @@ int16_t STDCALL CallInstanceEvent(int id, void *ptr, int event, tOSIRISEventInfo
 // ==================
 // SaveRestoreState()
 // ==================
-int STDCALL SaveRestoreState(void *file_ptr, uint8_t saving_state) { return 0; }
+int STDCALL SaveRestoreState([[maybe_unused]] void *file_ptr, [[maybe_unused]] uint8_t saving_state) { return 0; }
 
 // ====================
 // GetTriggerScriptID()
@@ -1076,7 +1076,7 @@ int STDCALL GetCOScriptList(int **list, int **id_list) {
 // Script Implementation
 //=======================
 
-int16_t BaseScript::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t BaseScript::CallEvent([[maybe_unused]] int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   mprintf(0, "BaseScript::CallEvent()\n");
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
@@ -1675,7 +1675,7 @@ int16_t TriggerScript_000C::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_0011::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_0011::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 008: Fire Sphere Room
@@ -1711,7 +1711,7 @@ int16_t TriggerScript_0011::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_0000::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_0000::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 016: Goal Zero Completed & Waypoint 3
@@ -1728,7 +1728,7 @@ int16_t TriggerScript_0000::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_0001::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_0001::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 017: Waypoint 1
@@ -1771,7 +1771,7 @@ int16_t TriggerScript_0002::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_0003::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_0003::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 019: Waypoint 4
@@ -1787,7 +1787,7 @@ int16_t TriggerScript_0003::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_0004::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_0004::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 020: Waypoint 5
@@ -1803,7 +1803,7 @@ int16_t TriggerScript_0004::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_0006::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_0006::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 021: Waypoint 6 Left
@@ -1819,7 +1819,7 @@ int16_t TriggerScript_0006::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_0005::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_0005::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 022: Waypoint 6 Right

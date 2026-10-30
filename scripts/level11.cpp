@@ -2155,7 +2155,7 @@ void STDCALL ShutdownDLL(void) { ClearMessageList(); }
 // ===============
 // GetGOScriptID()
 // ===============
-int STDCALL GetGOScriptID(const char *name, uint8_t isdoor) { return -1; }
+int STDCALL GetGOScriptID([[maybe_unused]] const char *name, [[maybe_unused]] uint8_t isdoor) { return -1; }
 
 // ================
 // CreateInstance()
@@ -3240,7 +3240,7 @@ int16_t STDCALL CallInstanceEvent(int id, void *ptr, int event, tOSIRISEventInfo
 // ==================
 // SaveRestoreState()
 // ==================
-int STDCALL SaveRestoreState(void *file_ptr, uint8_t saving_state) { return 0; }
+int STDCALL SaveRestoreState([[maybe_unused]] void *file_ptr, [[maybe_unused]] uint8_t saving_state) { return 0; }
 
 // ====================
 // GetTriggerScriptID()
@@ -3511,7 +3511,7 @@ int STDCALL GetCOScriptList(int **list, int **id_list) {
 // Script Implementation
 //=======================
 
-int16_t BaseScript::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t BaseScript::CallEvent([[maybe_unused]] int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   mprintf(0, "BaseScript::CallEvent()\n");
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
@@ -3637,7 +3637,7 @@ int16_t LevelScript_0000::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_0985::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_0985::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_CREATED: {
     // Script 120: IntroCam
@@ -4163,7 +4163,7 @@ int16_t CustomObjectScript_1919::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_0911::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_0911::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_CREATED: {
     // Script 017: RockWallALL Invulnerable
@@ -4187,7 +4187,7 @@ int16_t CustomObjectScript_0911::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_310B::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_310B::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 018: RockWallTopExplode(1)
@@ -5754,7 +5754,7 @@ int16_t CustomObjectScript_0A53::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_080F::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_080F::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 136: Exit Abort Timer
@@ -6170,7 +6170,7 @@ int16_t CustomObjectScript_227E::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_0007::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_0007::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 124: WayPoint-Last2
@@ -6186,7 +6186,7 @@ int16_t TriggerScript_0007::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_0006::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_0006::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 123: WayPoint-Last1
@@ -6202,7 +6202,7 @@ int16_t TriggerScript_0006::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_0008::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_0008::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 122: WayPoint-1
@@ -6304,7 +6304,7 @@ int16_t TriggerScript_0002::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_0005::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_0005::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 008: Cross (RL) Doors-1
@@ -6323,7 +6323,7 @@ int16_t TriggerScript_0005::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_0004::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_0004::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 009: Cross (RL) Doors-2
@@ -6342,7 +6342,7 @@ int16_t TriggerScript_0004::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_0003::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_0003::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 010: Cross (RL) Doors-3
@@ -6382,7 +6382,7 @@ int16_t TriggerScript_0009::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_0024::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_0024::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 156: PipeDemo 2
@@ -6399,7 +6399,7 @@ int16_t TriggerScript_0024::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_000B::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_000B::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 132: PipeDemo 1
@@ -6416,7 +6416,7 @@ int16_t TriggerScript_000B::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_0010::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_0010::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 129: EscapeDoor-Bar
@@ -6432,7 +6432,7 @@ int16_t TriggerScript_0010::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_000D::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_000D::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 153: EscapeDoor-2
@@ -6448,7 +6448,7 @@ int16_t TriggerScript_000D::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_000C::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_000C::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 118: EscapeDoor-1
@@ -6788,7 +6788,7 @@ int16_t TriggerScript_001E::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_0025::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_0025::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 155: PlayerCheat-2
@@ -6804,7 +6804,7 @@ int16_t TriggerScript_0025::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_0023::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_0023::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 154: PlayerCheat-1
@@ -6820,7 +6820,7 @@ int16_t TriggerScript_0023::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_0026::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_0026::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 170: Prison Cinema

@@ -87,13 +87,15 @@ public:
 
 protected:
   // Handles all possible OSIRIS events.
-  virtual void OnInit(int me_handle){};                                            //	EVT_AI_INIT
-  virtual void OnDestroy(int me_handle, tOSIRISEVTDESTROY *evt){};                 // EVT_DESTROY
-  virtual void OnInterval(tOSIRISEventInfo *data){};                               // EVT_AI_FRAME
-  virtual void OnCollide(int me_handle, int it_handle){};                          // EVT_COLLIDE
-  virtual bool OnNotify(int me_handle, tOSIRISEVTAINOTIFY *data) { return true; }; //	EVT_AI_NOTIFY
-  virtual void OnDamaged(int me_handle, tOSIRISEVTDAMAGED *evt){};                 // EVT_DAMAGED
-  virtual void OnMemRestore(void *ptr){};                                          // EVT_MEMRESTORE
+  virtual void OnInit([[maybe_unused]] int me_handle) {};                                             //	EVT_AI_INIT
+  virtual void OnDestroy([[maybe_unused]] int me_handle, [[maybe_unused]] tOSIRISEVTDESTROY *evt) {}; // EVT_DESTROY
+  virtual void OnInterval([[maybe_unused]] tOSIRISEventInfo *data) {};                                // EVT_AI_FRAME
+  virtual void OnCollide([[maybe_unused]] int me_handle, [[maybe_unused]] int it_handle) {};          // EVT_COLLIDE
+  virtual bool OnNotify([[maybe_unused]] int me_handle, [[maybe_unused]] tOSIRISEVTAINOTIFY *data) {
+    return true;
+  };                                                                                                  //	EVT_AI_NOTIFY
+  virtual void OnDamaged([[maybe_unused]] int me_handle, [[maybe_unused]] tOSIRISEVTDAMAGED *evt) {}; // EVT_DAMAGED
+  virtual void OnMemRestore([[maybe_unused]] void *ptr) {};                                           // EVT_MEMRESTORE
 };
 
 //	ai base class
@@ -270,7 +272,7 @@ void STDCALL ShutdownDLL(void) {}
 //	or OBJ_ROBOT), therefore, a 1 is passed in for isdoor if the given object name refers to a
 //	door, else it is a 0.  The return value is the unique identifier, else -1 if the script
 //	does not exist in the DLL.
-int STDCALL GetGOScriptID(const char *name, uint8_t isdoor) {
+int STDCALL GetGOScriptID(const char *name, [[maybe_unused]] uint8_t isdoor) {
   int i;
   for (i = 0; i < NUM_IDS; i++) {
     if (strcmp(name, Script_names[i]) == 0) {
@@ -341,7 +343,7 @@ void STDCALL DestroyInstance(int id, void *ptr) {
 //	the game for that event.  This only pertains to certain events.  If the chain continues
 //	after this script, than the CONTINUE_DEFAULT setting will be overridden by lower priority
 //	scripts return value.
-int16_t STDCALL CallInstanceEvent(int id, void *ptr, int event, tOSIRISEventInfo *data) {
+int16_t STDCALL CallInstanceEvent([[maybe_unused]] int id, void *ptr, int event, tOSIRISEventInfo *data) {
   return ((aiObjScript *)ptr)->CallEvent(event, data);
 }
 
@@ -355,7 +357,7 @@ int16_t STDCALL CallInstanceEvent(int id, void *ptr, int event, tOSIRISEventInfo
 //	able to be used.  IT IS VERY IMPORTANT WHEN SAVING THE STATE TO RETURN THE NUMBER OF _BYTES_ WROTE
 //	TO THE FILE.  When restoring the data, the return value is ignored.  saving_state is 1 when you should
 //	write data to the file_ptr, 0 when you should read in the data.
-int STDCALL SaveRestoreState(void *file_ptr, uint8_t saving_state) { return 0; }
+int STDCALL SaveRestoreState([[maybe_unused]] void *file_ptr, [[maybe_unused]] uint8_t saving_state) { return 0; }
 
 static int CreateAndAttach(int me, const char *child_name, uint8_t child_type, char parent_ap, char child_ap,
                            bool f_aligned = true, bool f_set_parent = false);
@@ -494,7 +496,7 @@ void aiSamirPest::OnInit(int me_handle) {
   AI_SetType(me_handle, AIT_EVADER1);
 }
 
-void aiSamirPest::OnDestroy(int me_handle, tOSIRISEVTDESTROY *evt) {
+void aiSamirPest::OnDestroy([[maybe_unused]] int me_handle, [[maybe_unused]] tOSIRISEVTDESTROY *evt) {
   mprintf(0, "OnDestroy\n");
 
   msafe_struct mstruct;
@@ -544,7 +546,7 @@ void aiSamirPest::OnCollide(int me_handle, int it_handle) {
   }
 }
 
-bool aiSamirPest::OnNotify(int me_handle, tOSIRISEVTAINOTIFY *data) { return true; }
+bool aiSamirPest::OnNotify([[maybe_unused]] int me_handle, [[maybe_unused]] tOSIRISEVTAINOTIFY *data) { return true; }
 
 //////////////////////////////////////////////////////////////////////////////
 //	aiBlackStormTrooper
@@ -610,7 +612,7 @@ void aiBlackStormTrooper::OnInit(int me_handle) {
   set_state(me_handle, STATE_INIT);
 }
 
-void aiBlackStormTrooper::find_targets(int me_handle, bool new_snipe_point) {
+void aiBlackStormTrooper::find_targets(int me_handle, [[maybe_unused]] bool new_snipe_point) {
   vector pos; // position of trooper
   int room;   // room of trooper
 
@@ -675,7 +677,7 @@ void aiBlackStormTrooper::find_targets(int me_handle, bool new_snipe_point) {
   // do something with snipe point if new_snipe_point is true (like find an ideal one)
 }
 
-void aiBlackStormTrooper::OnDestroy(int me_handle, tOSIRISEVTDESTROY *evt) {
+void aiBlackStormTrooper::OnDestroy([[maybe_unused]] int me_handle, [[maybe_unused]] tOSIRISEVTDESTROY *evt) {
   msafe_struct mstruct;
 
   mstruct.objhandle = memory->ammo_barrel;
@@ -1091,7 +1093,7 @@ void aiCreeper::OnDamaged(int me_handle, tOSIRISEVTDAMAGED *evt) {
   }
 }
 
-void aiCreeper::OnDestroy(int me_handle, tOSIRISEVTDESTROY *evt) {
+void aiCreeper::OnDestroy([[maybe_unused]] int me_handle, [[maybe_unused]] tOSIRISEVTDESTROY *evt) {
   msafe_struct mstruct;
 
   mstruct.objhandle = memory->eye_obj;
@@ -1341,7 +1343,7 @@ void aiSTBlackBarrel::OnInit(int me_handle) {
   Obj_Value(me_handle, VF_GET, OBJV_M_ORIENT, &memory->orient);
 }
 
-void aiSTBlackBarrel::OnDestroy(int me_handle, tOSIRISEVTDESTROY *evt) {
+void aiSTBlackBarrel::OnDestroy(int me_handle, [[maybe_unused]] tOSIRISEVTDESTROY *evt) {
   // Create a frag burst effect
   vector pos, new_dir;
   int room;
@@ -1359,6 +1361,6 @@ void aiSTBlackBarrel::OnDestroy(int me_handle, tOSIRISEVTDESTROY *evt) {
   // mprintf(0,"Barrel destroyed.\n");
 }
 
-void aiSTBlackBarrel::OnDamaged(int me_handle, tOSIRISEVTDAMAGED *evt) {
+void aiSTBlackBarrel::OnDamaged([[maybe_unused]] int me_handle, [[maybe_unused]] tOSIRISEVTDAMAGED *evt) {
   // mprintf(0,"Barrel damaged...\n");
 }

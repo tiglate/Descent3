@@ -2169,7 +2169,7 @@ void MultiProcessIncoming() {
 }
 
 // Starts a packet of data
-int START_DATA(int type, uint8_t *data, int *count, uint8_t reliable) {
+int START_DATA(int type, uint8_t *data, int *count, [[maybe_unused]] uint8_t reliable) {
   int size_offset;
 
   MultiAddByte(type, data, count);
@@ -2621,7 +2621,7 @@ void MultiDoPlayer(uint8_t *data) {
 }
 
 // Tells all our clients about a new player entering the game
-void MultiSendNewPlayer(int slot) {}
+void MultiSendNewPlayer([[maybe_unused]] int slot) {}
 
 void MultiDoPlayerEnteredGame(uint8_t *data) {
   int count = 0;
@@ -3671,7 +3671,7 @@ void MultiDoLeaveGame(uint8_t *data) {
   ScoreAPIPlayerLeft(slot);
 }
 
-void MultiDoServerQuit(uint8_t *data) {
+void MultiDoServerQuit([[maybe_unused]] uint8_t *data) {
   ShowProgressScreen(TXT_MLTSERVERQUIT);
   // Abort all file transfers
   // ddio_DeleteFile(NetPlayers[filewho].file_xfer_cfile->name);
@@ -3769,7 +3769,7 @@ int MultiFindFreeSlot() {
 
 // Someone is asking to join our game
 // Tell them if it is ok
-void MultiDoAskToJoin(uint8_t *data, network_address *from_addr) {
+void MultiDoAskToJoin([[maybe_unused]] uint8_t *data, network_address *from_addr) {
   uint8_t outdata[MAX_GAME_DATA_SIZE];
   int count = 0;
   int size;
@@ -5001,7 +5001,7 @@ void MultiDoMessageToServer(uint8_t *data) {
 }
 
 // Sends a message from the server to the client
-void MultiSendMessageToServer(int color, char *message, int to_who) {
+void MultiSendMessageToServer([[maybe_unused]] int color, char *message, int to_who) {
   int count = 0;
   uint8_t data[MAX_GAME_DATA_SIZE];
   int size_offset;
@@ -6237,7 +6237,7 @@ void MultiSendVisiblePlayers(int to_slot) {
   nw_Send(&NetPlayers[to_slot].addr, data, count, 0);
 }
 
-void MultiDoRequestPeerDamage(uint8_t *data, network_address *from_addr) {
+void MultiDoRequestPeerDamage(uint8_t *data, [[maybe_unused]] network_address *from_addr) {
   int count = 0;
 
   if (Netgame.local_role != LR_SERVER)
@@ -6353,7 +6353,7 @@ void MultiMassageAllObjects(int kill_powerups, int kill_robots) {
 int MultiGetShipChecksum(int ship_index);
 // Starts multiplayer-specific stuff for a new level
 // Anything not specific to multiplayer should be in StartNewLevel()
-bool MultiStartNewLevel(int level) {
+bool MultiStartNewLevel([[maybe_unused]] int level) {
   Time_last_taunt_request = 0;
 
   // Figure the ships into the checksum
@@ -6465,7 +6465,7 @@ void MultiSendFullPacket(int slot, int flags) {
 // Sends a full packet out the the server
 // Resets the send_size variable
 // Client and Server
-void MultiSendFullReliablePacket(int slot, int flags) {
+void MultiSendFullReliablePacket(int slot, [[maybe_unused]] int flags) {
   if (slot == SERVER_PLAYER)
     MULTI_ASSERT_NOMESSAGE(Netgame.local_role != LR_SERVER);
 
@@ -7193,7 +7193,7 @@ void MultiDoClientInventoryUseItem(int slot, uint8_t *data) {
 }
 
 // Handle a remove item from inventory
-void MultiDoClientInventoryRemoveItem(int slot, uint8_t *data) {
+void MultiDoClientInventoryRemoveItem([[maybe_unused]] int slot, uint8_t *data) {
   int count = 0;
   int type;
   int id;
@@ -7339,7 +7339,7 @@ void MultiAddObjWBAnimUpdate(int objnum) {
   }
 }
 
-int MultiStuffObjWBAnimUpdate(uint16_t objnum, uint8_t *data) {
+int MultiStuffObjWBAnimUpdate([[maybe_unused]] uint16_t objnum, [[maybe_unused]] uint8_t *data) {
   // multi_anim multi_anim_info;
 
   if (Netgame.local_role != LR_SERVER) {

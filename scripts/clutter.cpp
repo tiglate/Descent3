@@ -68,7 +68,9 @@ static int NumScriptIDs = std::size(ScriptIDs);
 class ClutterScript {
 public:
   virtual ~ClutterScript() = default;
-  virtual int16_t CallEvent(int event, tOSIRISEventInfo *data) { return CONTINUE_CHAIN | CONTINUE_DEFAULT; }
+  virtual int16_t CallEvent([[maybe_unused]] int event, [[maybe_unused]] tOSIRISEventInfo *data) {
+    return CONTINUE_CHAIN | CONTINUE_DEFAULT;
+  }
 };
 
 class FragCrate final : public ClutterScript {
@@ -241,7 +243,7 @@ void STDCALL DestroyInstance(int id, void *ptr) {
 //	the game for that event.  This only pertains to certain events.  If the chain continues
 //	after this script, than the CONTINUE_DEFAULT setting will be overridden by lower priority
 //	scripts return value.
-int16_t STDCALL CallInstanceEvent(int id, void *ptr, int event, tOSIRISEventInfo *data) {
+int16_t STDCALL CallInstanceEvent([[maybe_unused]] int id, void *ptr, int event, tOSIRISEventInfo *data) {
   return ((ClutterScript *)ptr)->CallEvent(event, data);
 }
 
@@ -255,7 +257,7 @@ int16_t STDCALL CallInstanceEvent(int id, void *ptr, int event, tOSIRISEventInfo
 //	able to be used.  IT IS VERY IMPORTANT WHEN SAVING THE STATE TO RETURN THE NUMBER OF _BYTES_ WROTE
 //	TO THE FILE.  When restoring the data, the return value is ignored.  saving_state is 1 when you should
 //	write data to the file_ptr, 0 when you should read in the data.
-int STDCALL SaveRestoreState(void *file_ptr, uint8_t saving_state) { return 0; }
+int STDCALL SaveRestoreState([[maybe_unused]] void *file_ptr, [[maybe_unused]] uint8_t saving_state) { return 0; }
 
 int GetObjectType(int object) {
   msafe_struct ms;

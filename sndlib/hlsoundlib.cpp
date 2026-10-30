@@ -1160,7 +1160,8 @@ int hlsSystem::Play3dSound(int sound_index, pos_state *cur_pos, object *cur_obj,
 int hlsSystem::Play2dSound(int sound_index, float volume, float pan, uint16_t frequency) {
   return hlsSystem::Play2dSound(sound_index, SND_PRIORITY_NORMAL, volume, pan, frequency);
 }
-int hlsSystem::Play2dSound(int sound_index, int priority, float volume, float pan, uint16_t frequency) {
+int hlsSystem::Play2dSound(int sound_index, [[maybe_unused]] int priority, float volume, float pan,
+                           [[maybe_unused]] uint16_t frequency) {
   int i = 0;
   int sound_uid;
   int sound_obj_index;
@@ -1336,12 +1337,14 @@ void hlsSystem::SetVolumeObject(int objhandle, float volume) {
 }
 // Queued sound functions
 // Adds a sound to a queue
-void hlsSystem::Add2dSoundQueued(int q_num, int sound_index, float volume, float pan, uint16_t frequency) {
+void hlsSystem::Add2dSoundQueued([[maybe_unused]] int q_num, [[maybe_unused]] int sound_index,
+                                 [[maybe_unused]] float volume, [[maybe_unused]] float pan,
+                                 [[maybe_unused]] uint16_t frequency) {
   if (!m_f_hls_system_init)
     return;
 }
 // Cleans a queue (if sound is playing it will finish normally)
-void hlsSystem::KillQueue(int q_num) {
+void hlsSystem::KillQueue([[maybe_unused]] int q_num) {
   if (!m_f_hls_system_init)
     return;
 }

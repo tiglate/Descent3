@@ -1845,8 +1845,8 @@ bool move_relative_object_vec(object *obj, vector *vec, object *target, float ci
   return f_done;
 }
 
-void move_away_from_position(object *obj, vector *pos /*, bool random_evade*/, float scale, vector *mdir,
-                             bool *f_moved) {
+void move_away_from_position(object *obj, vector *pos /*, bool random_evade*/, [[maybe_unused]] float scale,
+                             vector *mdir, bool *f_moved) {
   vector dir;
 
   // Reverse of move towards
@@ -3486,7 +3486,7 @@ done:
 int AIGoalGotoRandomRoom() { return -1; }
 
 int AIFindRandomRoom(object *obj, ai_frame *ai_info, goal *goal_ptr, int avoid_room, int min_depth, int max_depth,
-                     bool f_check_path, bool f_cur_room_ok, int *depth) {
+                     bool f_check_path, bool f_cur_room_ok, [[maybe_unused]] int *depth) {
   int random_room = obj->roomnum;
   int n_tries = 0;
   bool valid = false;
@@ -3803,7 +3803,7 @@ bool AIInit(object *obj, uint8_t ai_class, uint8_t ai_type, uint8_t ai_movement)
 }
 
 // chrishack -- fix the problem with the object being needed for AIInit
-void AISetDefault(t_ai_info *ai_info_ptr) {}
+void AISetDefault([[maybe_unused]] t_ai_info *ai_info_ptr) {}
 
 void AIInitAll() {
   LOG_DEBUG << "Initializing AI systems";
@@ -4046,10 +4046,10 @@ bool AIStatusCircleFrame(object *obj, object *g_obj, float dist, float c_dist, i
 }
 
 // MTS: Unused?
-bool ai_target_need_path(object *obj) { return true; }
+bool ai_target_need_path([[maybe_unused]] object *obj) { return true; }
 
 // MTS: Unused?
-bool ai_move_need_path(object *obj, vector *pos, int roomnum) {
+bool ai_move_need_path(object *obj, [[maybe_unused]] vector *pos, int roomnum) {
   if (obj->roomnum == roomnum) {
     return false;
   }
@@ -4153,11 +4153,11 @@ static inline bool IsTargetLocal(object *obj, object *target) {
 #define COHESION_FALL_OFF 110.0f
 
 // MTS: commented out/returns a bool instead of a float
-float AIGoalIsEnabledForDist(goal *goal, float dist) {
+float AIGoalIsEnabledForDist([[maybe_unused]] goal *goal, [[maybe_unused]] float dist) {
   return true; // chrishack -- test code -- temp
 }
 
-void AIGoalDoRepulse(object *obj, float dist, vector *dir, goal *goal, vector *mdir) {
+void AIGoalDoRepulse([[maybe_unused]] object *obj, float dist, vector *dir, [[maybe_unused]] goal *goal, vector *mdir) {
   float influence = 2.0f; // chrishack - temp - test code
 
   if (/*scale = AIGoalIsEnabledForDist(goal, dist)*/ 1) // chrishack - temp - test code - works like an enabler  What
@@ -4177,7 +4177,7 @@ void AIGoalDoRepulse(object *obj, float dist, vector *dir, goal *goal, vector *m
   }
 }
 
-void AIGoalDoCohesion(object *obj, object *g_obj, float dist, goal *goal, vector *mdir) {
+void AIGoalDoCohesion(object *obj, object *g_obj, float dist, [[maybe_unused]] goal *goal, vector *mdir) {
   float influence = 2.0f; // chrishack - temp - test code
 
   if (/*scale = AIGoalIsEnabledForDist(goal, dist)*/ 1) // chrishack - temp - test code - works like an enabler  What
@@ -4203,7 +4203,8 @@ void AIGoalDoCohesion(object *obj, object *g_obj, float dist, goal *goal, vector
   }
 }
 
-void AIGoalDoAlignment(object *obj, float dist, vector *fvec, goal *goal, vector *mdir) {
+void AIGoalDoAlignment([[maybe_unused]] object *obj, float dist, vector *fvec, [[maybe_unused]] goal *goal,
+                       vector *mdir) {
   float influence = 3.0f; // chrishack - temp - test code
 
   if (/*scale = AIGoalIsEnabledForDist(goal, dist)*/ 1) // chrishack - temp - test code - works like an enabler  What
@@ -6273,7 +6274,10 @@ int AIFindRoomWithFlag(object *obj, int flag) {
   return best_room;
 }
 
-bool AIFindHidePos(object *hide_obj, object *view_obj, vector *hpos, int *hroom, float max_hide_time) { return false; }
+bool AIFindHidePos([[maybe_unused]] object *hide_obj, [[maybe_unused]] object *view_obj, [[maybe_unused]] vector *hpos,
+                   [[maybe_unused]] int *hroom, [[maybe_unused]] float max_hide_time) {
+  return false;
+}
 
 object *AIFindObjOfType(object *obj, int type, int id, bool f_ignore_init_room, int parent_handle) {
   int cur_room = obj->roomnum;
@@ -6330,7 +6334,7 @@ object *AIFindObjOfType(object *obj, int type, int id, bool f_ignore_init_room, 
   return best_obj;
 }
 
-int AIMakeNextRoomList(int roomnum, int *next_rooms, int max_rooms) {
+int AIMakeNextRoomList(int roomnum, int *next_rooms, [[maybe_unused]] int max_rooms) {
   int num_next_rooms = 0;
   int i, j;
   int croom;

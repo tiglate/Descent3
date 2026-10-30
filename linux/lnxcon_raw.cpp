@@ -174,7 +174,7 @@ void con_raw_Destroy() {
 }
 
 // put some data up on the screen
-void con_raw_Puts(int window, const char *str) {
+void con_raw_Puts([[maybe_unused]] int window, const char *str) {
   fputs(str, stdout);
   fflush(stdout);
 }

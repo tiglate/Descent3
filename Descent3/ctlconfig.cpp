@@ -561,7 +561,7 @@ public:
   virtual void finish() = 0;
   virtual void realize() = 0;
   virtual void unrealize() = 0;
-  virtual void process(int res){};
+  virtual void process([[maybe_unused]] int res) {};
 };
 //////////////////////////////////////////////////////////////////////////////
 // KEY CONFIG
@@ -1403,7 +1403,8 @@ struct t_ctlcfgswitchcb_data {
 };
 
 // called when we switch menus
-void CtlConfigSwitchCB(newuiMenu *menu, int16_t old_option_id, int16_t new_option_id, void *data) {
+void CtlConfigSwitchCB([[maybe_unused]] newuiMenu *menu, [[maybe_unused]] int16_t old_option_id, int16_t new_option_id,
+                       void *data) {
   t_ctlcfgswitchcb_data *cfgdata = (t_ctlcfgswitchcb_data *)data;
   // performs custom gadget deinitialization and reinitilization
   if (cfgdata->curcfg) {

@@ -21,7 +21,7 @@
 
 bool Debug_break = false;
 
-bool Debug_Init(bool debugger) {
+bool Debug_Init([[maybe_unused]] bool debugger) {
 #ifndef RELEASE
   Debug_break = debugger;
   LOG_DEBUG_IF(Debug_break) << "Debug Break enabled.";

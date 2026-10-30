@@ -453,7 +453,7 @@ bool PlayBriefing(tTelComInfo *tcs) {
   return true;
 }
 
-void PBAddTextEffect(TCTEXTDESC* desc, char *text, char *description, int id) {
+void PBAddTextEffect(TCTEXTDESC *desc, char *text, [[maybe_unused]] char *description, int id) {
   if (IsMissionMaskOK(desc->mission_mask_set, desc->mission_mask_unset) && ok_to_parse_screen) {
     char *new_text = NULL;
     const bool new_stuff = ParseForHotTags(text, &new_text);
@@ -466,33 +466,33 @@ void PBAddTextEffect(TCTEXTDESC* desc, char *text, char *description, int id) {
   }
 }
 
-void PBAddBmpEffect(TCBMPDESC* desc, char *description) {
+void PBAddBmpEffect(TCBMPDESC *desc, [[maybe_unused]] char *description) {
   if (IsMissionMaskOK(desc->mission_mask_set, desc->mission_mask_unset) && ok_to_parse_screen)
     CreateBitmapEffect(desc, MONITOR_MAIN, current_screen);
 }
 
-void PBAddMovieEffect(TCMOVIEDESC* desc, char *description) {
+void PBAddMovieEffect(TCMOVIEDESC *desc, [[maybe_unused]] char *description) {
   if (IsMissionMaskOK(desc->mission_mask_set, desc->mission_mask_unset) && ok_to_parse_screen)
     CreateMovieEffect(desc, MONITOR_MAIN, current_screen);
 }
 
-void PBAddBkgEffect(TCBKGDESC* desc, char *description) {
+void PBAddBkgEffect(TCBKGDESC *desc, [[maybe_unused]] char *description) {
   if (IsMissionMaskOK(desc->mission_mask_set, desc->mission_mask_unset) && ok_to_parse_screen) {
     LOG_DEBUG.printf("PB: Add Bkg");
   }
 }
 
-void PBAddPolyEffect(TCPOLYDESC* desc, char *description) {
+void PBAddPolyEffect(TCPOLYDESC *desc, [[maybe_unused]] char *description) {
   if (IsMissionMaskOK(desc->mission_mask_set, desc->mission_mask_unset) && ok_to_parse_screen)
     CreatePolyModelEffect(desc, MONITOR_MAIN, current_screen);
 }
 
-void PBAddSoundEffect(TCSNDDESC* desc, char *description) {
+void PBAddSoundEffect(TCSNDDESC *desc, [[maybe_unused]] char *description) {
   if (IsMissionMaskOK(desc->mission_mask_set, desc->mission_mask_unset) && ok_to_parse_screen)
     CreateSoundEffect(desc, MONITOR_MAIN, current_screen);
 }
 
-void PBAddButtonEffect(TCBUTTONDESC* desc, char *description, int id) {
+void PBAddButtonEffect(TCBUTTONDESC *desc, [[maybe_unused]] char *description, int id) {
   if (IsMissionMaskOK(desc->mission_mask_set, desc->mission_mask_unset) && ok_to_parse_screen) {
     desc->x += osb_xoff;
     desc->y += osb_yoff;
@@ -501,7 +501,8 @@ void PBAddButtonEffect(TCBUTTONDESC* desc, char *description, int id) {
   }
 }
 
-void PBStartScreen(int screen_num, char *description, char *layout, uint32_t mask_set, uint32_t mask_unset) {
+void PBStartScreen(int screen_num, [[maybe_unused]] char *description, char *layout, uint32_t mask_set,
+                   uint32_t mask_unset) {
   if (!IsMissionMaskOK(mask_set, mask_unset)) {
     ok_to_parse_screen = false;
     skipped_screens++;
@@ -591,7 +592,7 @@ void PBSetGlitch(float amount) {
     TelcomEnableGlitch(amount);
 }
 
-void PBAddVoice(char *filename, int flags,char *description) {}
+void PBAddVoice([[maybe_unused]] char *filename, [[maybe_unused]] int flags, [[maybe_unused]] char *description) {}
 
 bool ParseBriefing(const char *filename, tTelComInfo *tcs) {
   if (!cfexist(filename)) {

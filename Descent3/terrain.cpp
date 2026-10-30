@@ -649,7 +649,7 @@ void CloseTerrain(void) {
 
 // Given a 3space triplet, computes the u,v coords for a texture map at that position
 // on a sphere.
-void SphereMap(float x, float y, float z, float radius, float *u, float *v, int h) {
+void SphereMap([[maybe_unused]] float x, float y, [[maybe_unused]] float z, float radius, float *u, float *v, int h) {
   if (y < 0)
     Int3();
 

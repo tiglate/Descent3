@@ -888,7 +888,7 @@ void ReadModelVector(vector *vec, CFILE *infile) {
   vec->z() = cf_ReadFloat(infile);
 }
 
-void ReadModelStringLen(char *ptr, int len, CFILE *infile) {
+void ReadModelStringLen(char *ptr, [[maybe_unused]] int len, CFILE *infile) {
   int i;
 
   int mlen = cf_ReadInt(infile);
@@ -2819,8 +2819,8 @@ void DoneLightInstance() {
 // an animation state we are
 
 // This is the static light version
-void DrawPolygonModel(vector *pos, matrix *orient, int model_num, float *normalized_time, int flags, float r, float g,
-                      float b, uint32_t f_render_sub, uint8_t use_effect, uint8_t overlay) {
+void DrawPolygonModel(vector *pos, matrix *orient, int model_num, float *normalized_time, [[maybe_unused]] int flags,
+                      float r, float g, float b, uint32_t f_render_sub, uint8_t use_effect, uint8_t overlay) {
   poly_model *po;
 
   ASSERT(Poly_models[model_num].used);
@@ -2894,8 +2894,9 @@ void DrawPolygonModel(vector *pos, matrix *orient, int model_num, float *normali
 }
 
 // This draws a gouraud shaded version
-void DrawPolygonModel(vector *pos, matrix *orient, int model_num, float *normalized_time, int flags, vector *lightdir,
-                      float r, float g, float b, uint32_t f_render_sub, uint8_t use_effect, uint8_t overlay) {
+void DrawPolygonModel(vector *pos, matrix *orient, int model_num, float *normalized_time, [[maybe_unused]] int flags,
+                      vector *lightdir, float r, float g, float b, uint32_t f_render_sub, uint8_t use_effect,
+                      uint8_t overlay) {
   poly_model *po;
   vector light_vec = *lightdir;
 
@@ -2971,7 +2972,7 @@ void DrawPolygonModel(vector *pos, matrix *orient, int model_num, float *normali
 }
 
 // This draws a lightmap shaded version
-void DrawPolygonModel(vector *pos, matrix *orient, int model_num, float *normalized_time, int flags,
+void DrawPolygonModel(vector *pos, matrix *orient, int model_num, float *normalized_time, [[maybe_unused]] int flags,
                       lightmap_object *lm_object, uint32_t f_render_sub, uint8_t use_effect, uint8_t overlay) {
   poly_model *po;
 

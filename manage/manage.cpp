@@ -954,7 +954,7 @@ void mng_FreeTrackLock(int n) {
   GlobalTrackLocks[n].name[0] = 0;
 }
 // Displays all the network locks of "name"
-void mng_DisplayLockList(char *name) {
+void mng_DisplayLockList([[maybe_unused]] char *name) {
 #ifndef RELEASE
   mngs_Pagelock list[100];
   char temp[200];

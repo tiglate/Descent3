@@ -114,7 +114,7 @@ tOSIRISModuleInit Multi_d3m_osiris_funcs;
 std::filesystem::path Multi_game_dll_name;
 
 static void DUMMYrend_DrawScaledBitmap(int x1, int y1, int x2, int y2, int bm, float u0, float v0, float u1, float v1,
-                                       float zval, int color, float *alphas) {
+                                       [[maybe_unused]] float zval, int color, float *alphas) {
   ASSERT(zval >= 0.0f && zval <= 1.0f);
   rend_DrawScaledBitmap(x1, y1, x2, y2, bm, u0, v0, u1, v1, color, alphas);
 }
@@ -714,7 +714,7 @@ void CallGameDLL(int eventnum, dllinfo *data) {
   }
 }
 // Call this function right after a player connects to the game to see if a player is banned
-bool GameDLLIsAddressBanned(network_address *addr, const char *tracker_id) {
+bool GameDLLIsAddressBanned(network_address *addr, [[maybe_unused]] const char *tracker_id) {
   ASSERT(addr);
   DLLInfo.special_data = (uint8_t *)addr;
   // This used to be tracker_id, but storing a pointer as an int is a problem in 64 bit

@@ -191,7 +191,7 @@ msn_urls *msn_GetURL(network_address *net_addr) {
 }
 
 // Get the list of URLs in the msn file
-msn_urls *msn_GetURL(char *msnfile) {
+msn_urls *msn_GetURL([[maybe_unused]] char *msnfile) {
   // static msn_urls url;
   // strcpy(url.msnname,msnfile);
   return &Net_msn_URLs;
@@ -509,7 +509,7 @@ bool msn_DownloadWithStatus(const char *url, const std::filesystem::path &filena
   return (ret > 0);
 }
 
-void msn_DoAskForURL(uint8_t *indata, network_address *net_addr) {
+void msn_DoAskForURL([[maybe_unused]] uint8_t *indata, network_address *net_addr) {
   static msn_urls *url;
   int count = 0;
   int size;
@@ -566,7 +566,7 @@ void msn_DoAskForURL(uint8_t *indata, network_address *net_addr) {
   }
 }
 
-void msn_DoCurrMsnURLs(uint8_t *data, network_address *net_addr) {
+void msn_DoCurrMsnURLs(uint8_t *data, [[maybe_unused]] network_address *net_addr) {
   int count = 0;
   int num_urls = 0;
   int i;
@@ -870,7 +870,7 @@ int CheckGetD3M(char *d3m) {
 // Return codes:
 // 0 Failed or cancelled
 // 1 Success
-int ModDownloadWithStatus(char *url, char *filename) {
+int ModDownloadWithStatus([[maybe_unused]] char *url, [[maybe_unused]] char *filename) {
   return 0;
   /*
   char qualfile[_MAX_PATH*2];

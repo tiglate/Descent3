@@ -349,7 +349,7 @@ void opengl_SetDefaults() {
 
 extern renderer_preferred_state Render_preferred_state;
 
-int opengl_Setup(oeApplication *app, const int *width, const int *height) {
+int opengl_Setup([[maybe_unused]] oeApplication *app, const int *width, const int *height) {
   int winw = Video_res_list[Current_video_resolution_id].width;
   int winh = Video_res_list[Current_video_resolution_id].height;
 
@@ -1269,7 +1269,7 @@ void opengl_ChangeChunkedBitmap(int bm_handle, chunked_bitmap *chunk) {
 }
 
 // Tells the software renderer whether or not to use mipping
-void rend_SetMipState(int8_t mipstate) {}
+void rend_SetMipState([[maybe_unused]] int8_t mipstate) {}
 
 // Init our renderer
 int rend_Init(renderer_type state, oeApplication *app, renderer_preferred_state *pref_state) {
@@ -1746,7 +1746,7 @@ int rend_ReInit() {
 
 // Takes a bitmap and blits it to the screen using linear frame buffer stuff
 // X and Y are the destination X,Y
-void rend_CopyBitmapToFramebuffer(int bm_handle, int x, int y) {
+void rend_CopyBitmapToFramebuffer(int bm_handle, [[maybe_unused]] int x, [[maybe_unused]] int y) {
   ASSERT(opengl_Framebuffer_ready);
 
   if (opengl_Framebuffer_ready == 1) {

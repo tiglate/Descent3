@@ -660,7 +660,7 @@ void ApplyFreezeDamageEffect(object *obj) {
 }
 
 // Event to handle damage effect
-void DoDamageEffect(int eventnum, void *data) {
+void DoDamageEffect([[maybe_unused]] int eventnum, [[maybe_unused]] void *data) {
   float damage_norm = Players[Player_num].damage_magnitude / MAX_DAMAGE_MAG;
 
   if (damage_norm > 1.0)
@@ -693,7 +693,7 @@ void DecreasePlayerShields(int slot, float damage) {
 }
 
 // Event to handle damage effect
-void DoEDrainEffect(int eventnum, void *data) {
+void DoEDrainEffect([[maybe_unused]] int eventnum, [[maybe_unused]] void *data) {
   float edrain_norm = Players[Player_num].edrain_magnitude / MAX_EDRAIN_MAG;
 
   if (edrain_norm > 1.0)

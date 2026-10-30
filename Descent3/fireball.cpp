@@ -1037,7 +1037,7 @@ void BreakApartModel(object *obj, float explosion_mag, int death_flags) {
 // Splinter stuff
 #define MAX_SPLINTERS_PER_OBJECT 10
 // Creates individual face particles from the main body of an object
-void CreateSplintersFromBody(object *obj, float explosion_mag, float lifetime) {
+void CreateSplintersFromBody(object *obj, [[maybe_unused]] float explosion_mag, float lifetime) {
   ASSERT(obj->flags & OF_POLYGON_OBJECT);
   int facenums[MAX_SPLINTERS_PER_OBJECT];
   vector rot_vecs[MAX_SUBOBJECTS];
@@ -2132,7 +2132,8 @@ void DrawColoredRing(vector *pos, float r, float g, float b, float inner_alpha, 
 
 // TODO: MTS: not used?
 // Draws a sphere with the appropriate texture.  If texture=-1, then uses rgb as colors
-void DrawSphere(vector *pos, float r, float g, float b, float alpha, float size, int texture, uint8_t saturate) {
+void DrawSphere(vector *pos, float r, float g, float b, float alpha, float size, int texture,
+                [[maybe_unused]] uint8_t saturate) {
   static vector sphere_vecs[16][16];
   static int first = 1;
   g3Point sphere_points[16][16], *pntlist[4], draw_points[4];
@@ -2325,13 +2326,13 @@ void DrawBlastRingObject(object *obj) {
 }
 
 // Creates a blast ring
-void DoBlastRingEvent(int eventnum, void *data) {
+void DoBlastRingEvent([[maybe_unused]] int eventnum, void *data) {
   object *obj = (object *)data;
   CreateObjectBlastRing(obj);
 }
 // TODO: MTS: only used in this file.
 //  Creates an explosion
-void DoExplosionEvent(int eventnum, void *data) {
+void DoExplosionEvent([[maybe_unused]] int eventnum, void *data) {
   float *vals = (float *)data;
   vector pos;
   int fireball_num, roomnum;
@@ -2371,7 +2372,7 @@ void DoExplosionEvent(int eventnum, void *data) {
 }
 // An event handler that simply draws an alpha blended poly on top of the screen
 // Takes a 4 element array of floats int r,g,b,a format
-void DrawAlphaEvent(int eventnum, void *data) {
+void DrawAlphaEvent([[maybe_unused]] int eventnum, void *data) {
   float *vals = (float *)data;
 
   DrawAlphaBlendedScreen(vals[0], vals[1], vals[2], vals[3]);

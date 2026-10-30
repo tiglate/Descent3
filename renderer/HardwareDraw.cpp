@@ -143,7 +143,7 @@ int Triangulate_test = 0;
 //					pointlist - a pointer to a list of pointers to points
 //					bm - the bitmap handle if texturing.  ignored if flat shading
 // Returns 0 if clipped away
-int g3_DrawPoly(int nv, g3Point **pointlist, int bm, int map_type, g3Codes *clip_codes) {
+int g3_DrawPoly(int nv, g3Point **pointlist, int bm, int map_type, [[maybe_unused]] g3Codes *clip_codes) {
   rend_DrawPolygon3D(bm, pointlist, nv, map_type);
   return 1;
 
@@ -407,7 +407,7 @@ void g3_DrawPlanarRotatedBitmap(vector *pos, vector *norm, angle rot_angle, floa
 // Parameters:	color - the color to draw the lines
 //					pnt - the center point
 //					rad - specifies the width/2 & height/2 of the box
-void g3_DrawBox(ddgr_color color, g3Point *pnt, float rad) {
+void g3_DrawBox([[maybe_unused]] ddgr_color color, g3Point *pnt, float rad) {
   if (!(pnt->p3_codes & CC_BEHIND)) {
     if (!(pnt->p3_flags & PF_PROJECTED))
       g3_ProjectPoint(pnt);

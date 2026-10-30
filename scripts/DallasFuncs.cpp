@@ -2700,7 +2700,7 @@ Parameters:
   State: the value to set the flag to
 $$END
 */
-void aMissionSetLevelFlag(int flagnum, bool state) {
+void aMissionSetLevelFlag([[maybe_unused]] int flagnum, [[maybe_unused]] bool state) {
   //!!Add code here
 }
 
@@ -3842,7 +3842,8 @@ ONCE AGAIN, THE TARGET IS NOT USED, IT'S HERE FOR BACKWARD COMPATIBILITY
 ONCE AGAIN, THE TARGET IS NOT USED, IT'S HERE FOR BACKWARD COMPATIBILITY
 $$END
 */
-void aCinematicIntro(int camera_path, const char *Text, int NoLongerUserTarget, int PlayerPath, float Seconds) {
+void aCinematicIntro(int camera_path, const char *Text, [[maybe_unused]] int NoLongerUserTarget, int PlayerPath,
+                     float Seconds) {
   tCannedCinematicInfo info;
 
   info.type = CANNED_LEVEL_INTRO;
@@ -5733,7 +5734,7 @@ Parameters:
   FlagNum: the flag to get
 $$END
 */
-bool aMissionGetLevelFlag(int flagnum) {
+bool aMissionGetLevelFlag([[maybe_unused]] int flagnum) {
   //!!Add code here
 
   return 0;

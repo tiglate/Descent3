@@ -904,7 +904,8 @@ bool CreateBackgroundEffect(TCBKGDESC* desc, int monitor, int screen, int id) {
   return false;
 }
 
-bool CreatePolyModelEffect(TCPOLYDESC* desc, int monitor, int screen, int id) {
+bool CreatePolyModelEffect(TCPOLYDESC *desc, [[maybe_unused]] int monitor, [[maybe_unused]] int screen,
+                           [[maybe_unused]] int id) {
   ASSERT(desc);
   switch (desc->type) {
   case TC_POLY_STATIC:
@@ -1260,7 +1261,7 @@ bool CreateMovie(tceffect *tce, const char *filename) {
   return true;
 }
 
-bool CreateBackground(tceffect *tce) { return true; }
+bool CreateBackground([[maybe_unused]] tceffect *tce) { return true; }
 
 bool CreateSound(tceffect *tce, const char *filename) {
   tce->soundinfo.handle = FindSoundName(IGNORE_TABLE(filename));
@@ -1273,7 +1274,8 @@ bool CreateSound(tceffect *tce, const char *filename) {
 void BltBmpToScreen(int dx, int dy, chunked_bitmap *src_bmp) {
   BltBmpToScreen(dx, dy, src_bmp, 0, 0, src_bmp->pw, src_bmp->ph);
 }
-void BltBmpToScreen(int dx, int dy, chunked_bitmap *src_bmp, int sx, int sy, int sw, int sh) {
+void BltBmpToScreen(int dx, int dy, chunked_bitmap *src_bmp, [[maybe_unused]] int sx, [[maybe_unused]] int sy,
+                    [[maybe_unused]] int sw, [[maybe_unused]] int sh) {
   rend_DrawChunkedBitmap(src_bmp, dx, dy, 255);
 }
 // forces a chunk bitmap to be uploaded

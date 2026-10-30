@@ -500,7 +500,7 @@ int GetGameByLBNo(int selno) {
   return -1;
 }
 
-void FormatServerLine(char *fmt, int servernum, int pxonum) {
+void FormatServerLine(char *fmt, int servernum, [[maybe_unused]] int pxonum) {
   int k = servernum;
   char server_mode[20];
   char server_type[200];

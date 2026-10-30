@@ -1046,7 +1046,8 @@ void DoWallEffects(object *weapon, int surface_tmap) {
 extern void DeformTerrain(vector *pos, int depth, scalar size);
 
 // Check for lava, volatile, or water surface.  If contact, make special sound & kill the weapon
-void check_for_special_surface(object *weapon, int surface_tmap, vector *surface_normal, float hit_dot) {
+void check_for_special_surface(object *weapon, int surface_tmap, vector *surface_normal,
+                               [[maybe_unused]] float hit_dot) {
   bool f_volatile, f_lava, f_water;
 
   f_volatile = (GameTextures[surface_tmap].flags & TF_VOLATILE) != 0;
@@ -1083,8 +1084,8 @@ void check_for_special_surface(object *weapon, int surface_tmap, vector *surface
 
 // Process a collision between a weapon and a wall
 // Returns true if the weapon hits the wall, and false if should keep going though the wall (for breakable glass)
-bool collide_weapon_and_wall(object *weapon, fix hitspeed, int hitseg, int hitwall, vector *hitpnt, vector *wall_normal,
-                             float hit_dot) {
+bool collide_weapon_and_wall(object *weapon, [[maybe_unused]] fix hitspeed, int hitseg, int hitwall, vector *hitpnt,
+                             vector *wall_normal, float hit_dot) {
   bool f_forcefield;
   bool f_volatile, f_lava, f_water;
   // mprintf(0, "Weapon hit wall, how nice.\n");
@@ -1260,8 +1261,9 @@ bool collide_weapon_and_wall(object *weapon, fix hitspeed, int hitseg, int hitwa
 }
 
 // Prints out a marker hud message if needed
-void collide_player_and_marker(object *playerobj, object *marker_obj, vector *collision_point, vector *collision_normal,
-                               bool f_reverse_normal, fvi_info *hit_info) {
+void collide_player_and_marker(object *playerobj, object *marker_obj, [[maybe_unused]] vector *collision_point,
+                               [[maybe_unused]] vector *collision_normal, [[maybe_unused]] bool f_reverse_normal,
+                               [[maybe_unused]] fvi_info *hit_info) {
   if (playerobj->id == Player_num) {
     char str[100];
     snprintf(str, sizeof(str), "Marker: %s", MarkerMessages[marker_obj->id]);
@@ -1278,8 +1280,8 @@ void collide_player_and_marker(object *playerobj, object *marker_obj, vector *co
 
 #define VOLATILE_DAMAGE 7.0f // damage per hit
 
-void collide_player_and_wall(object *playerobj, float hitspeed, int hitseg, int hitwall, vector *hitpt,
-                             vector *wall_normal, float hit_dot) {
+void collide_player_and_wall(object *playerobj, float hitspeed, int hitseg, int hitwall, [[maybe_unused]] vector *hitpt,
+                             vector *wall_normal, [[maybe_unused]] float hit_dot) {
   float volume = MAX_GAME_VOLUME;
   bool f_volatile, f_lava;
   bool f_forcefield;
@@ -1395,8 +1397,9 @@ void collide_player_and_wall(object *playerobj, float hitspeed, int hitseg, int 
   return;
 }
 
-void collide_generic_and_wall(object *genericobj, float hitspeed, int hitseg, int hitwall, vector *hitpt,
-                              vector *wall_normal, float hit_dot) {
+void collide_generic_and_wall(object *genericobj, float hitspeed, int hitseg, int hitwall,
+                              [[maybe_unused]] vector *hitpt, [[maybe_unused]] vector *wall_normal,
+                              [[maybe_unused]] float hit_dot) {
   bool f_volatile, f_lava;
   bool f_forcefield;
   float volume = MAX_GAME_VOLUME;
@@ -1704,7 +1707,7 @@ void bump_obj_against_fixed(object *obj, vector *collision_point, vector *collis
 }
 
 void bump_two_objects(object *object0, object *object1, vector *collision_point, vector *collision_normal,
-                      int damage_flag) {
+                      [[maybe_unused]] int damage_flag) {
   object *t = nullptr;
 
   // Determine if a moving object hits a non-moving object
@@ -2027,7 +2030,7 @@ void bump_two_objects(object *object0, object *object1, vector *collision_point,
 }
 
 void collide_player_and_player(object *p1, object *p2, vector *collision_point, vector *collision_normal,
-                               bool f_reverse_normal, fvi_info *hit_info) {
+                               bool f_reverse_normal, [[maybe_unused]] fvi_info *hit_info) {
   if (f_reverse_normal)
     *collision_normal *= -1.0f;
 

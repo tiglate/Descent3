@@ -64,7 +64,7 @@ public:
 
   //	you can also create a reference to a current database.  this is good if
   //	you have a hierachical database.
-  oeAppDatabase(oeAppDatabase *parent){};
+  oeAppDatabase([[maybe_unused]] oeAppDatabase *parent){};
   virtual ~oeAppDatabase() = default;
 
   //	creates an empty classification or structure where you can store information

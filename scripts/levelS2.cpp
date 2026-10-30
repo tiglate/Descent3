@@ -1954,7 +1954,7 @@ void STDCALL ShutdownDLL(void) { ClearMessageList(); }
 // ===============
 // GetGOScriptID()
 // ===============
-int STDCALL GetGOScriptID(const char *name, uint8_t isdoor) { return -1; }
+int STDCALL GetGOScriptID([[maybe_unused]] const char *name, [[maybe_unused]] uint8_t isdoor) { return -1; }
 
 // ================
 // CreateInstance()
@@ -2934,7 +2934,7 @@ int16_t STDCALL CallInstanceEvent(int id, void *ptr, int event, tOSIRISEventInfo
 // ==================
 // SaveRestoreState()
 // ==================
-int STDCALL SaveRestoreState(void *file_ptr, uint8_t saving_state) { return 0; }
+int STDCALL SaveRestoreState([[maybe_unused]] void *file_ptr, [[maybe_unused]] uint8_t saving_state) { return 0; }
 
 // ====================
 // GetTriggerScriptID()
@@ -3230,7 +3230,7 @@ int STDCALL GetCOScriptList(int **list, int **id_list) {
 // Script Implementation
 //=======================
 
-int16_t BaseScript::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t BaseScript::CallEvent([[maybe_unused]] int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   mprintf(0, "BaseScript::CallEvent()\n");
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
@@ -3542,7 +3542,7 @@ int16_t CustomObjectScript_0815::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_0816::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_0816::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 101: MiniReactorBlue TimerChain
@@ -3624,7 +3624,7 @@ int16_t CustomObjectScript_0819::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_0817::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_0817::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 100: MiniReactorWhite TimerChain
@@ -3754,7 +3754,7 @@ int16_t CustomObjectScript_0827::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_086A::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_086A::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 103: MiniReactorRed-2 Timer Chain
@@ -3781,7 +3781,7 @@ int16_t CustomObjectScript_086A::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_086B::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_086B::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 102: MiniReactorRed-1 Timer Chain
@@ -3808,7 +3808,7 @@ int16_t CustomObjectScript_086B::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_0829::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_0829::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 073: MiniReactorRed Timer
@@ -3958,7 +3958,7 @@ int16_t CustomObjectScript_10CE::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_0809::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_0809::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 083: CycleFlames-5
@@ -3994,7 +3994,7 @@ int16_t CustomObjectScript_0809::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_0808::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_0808::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 082: CycleFlames-4
@@ -4030,7 +4030,7 @@ int16_t CustomObjectScript_0808::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_1007::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_1007::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 081: CycleFlames-3
@@ -4066,7 +4066,7 @@ int16_t CustomObjectScript_1007::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_1006::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_1006::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 080: CycleFlames-2
@@ -4102,7 +4102,7 @@ int16_t CustomObjectScript_1006::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_0805::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_0805::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 079: CycleFlames-1
@@ -6062,7 +6062,7 @@ int16_t TriggerScript_0002::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_0040::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_0040::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 077: End Level Camera

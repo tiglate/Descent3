@@ -566,7 +566,7 @@ void CloseHUD() {
 tHUDItem *GetHUDItem(int id) { return &HUD_array[id]; }
 
 //	initializes hud.
-void InitShipHUD(int ship) {
+void InitShipHUD([[maybe_unused]] int ship) {
   int i;
 
   //	load static hud image resources to be used by HudDisplay.cpp
@@ -1814,7 +1814,7 @@ static uint16_t Ret_prim_mask = 0;
 static uint16_t Ret_sec_mask = 0;
 
 //	Initializes Reticle on Hud.  Usually called when weapon changes.
-void InitReticle(int primary_slots, int secondary_slots) {
+void InitReticle(int primary_slots, [[maybe_unused]] int secondary_slots) {
   int i;
 
   for (i = 0; i < MAX_RETICLE_ELEMS; i++) {

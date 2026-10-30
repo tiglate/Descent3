@@ -479,7 +479,7 @@ static inline void PlaceProcPoint(int x, int y, uint8_t color) {
   ProcDestData[y * PROC_SIZE + x] = color;
 }
 // Adds a sphere lightning bolt
-void AddProcSphereLightning(int handle, static_proc_element *proc) {
+void AddProcSphereLightning([[maybe_unused]] int handle, static_proc_element *proc) {
   if (Detail_settings.Procedurals_enabled) {
     if (proc->frequency != 0 && ((FrameCount) % proc->frequency) != 0)
       return;

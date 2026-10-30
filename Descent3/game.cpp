@@ -1216,7 +1216,8 @@ void StartFrame(int x, int y, int x2, int y2, bool clear, bool push_on_stack) {
 }
 
 // retrives the settings of the last call to StartFrame
-bool GetFrameParameters(int *x1, int *y1, int *x2, int *y2) {
+bool GetFrameParameters([[maybe_unused]] int *x1, [[maybe_unused]] int *y1, [[maybe_unused]] int *x2,
+                        [[maybe_unused]] int *y2) {
   return false;
   /*
   if(!Frame_inside)

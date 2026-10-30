@@ -173,7 +173,7 @@ void sound_render_room_geometry(int iroom, int slot) {
 //		next portal
 //	end routine
 //
-int16_t *sound_render_audible_rooms(pos_state *listener_pos, float max_radius) {
+int16_t *sound_render_audible_rooms(pos_state *listener_pos, [[maybe_unused]] float max_radius) {
   int iroom = 0;
 
   sound_render_room_geometry(listener_pos->roomnum, iroom);

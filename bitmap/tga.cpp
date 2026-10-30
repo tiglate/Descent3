@@ -220,7 +220,7 @@ uint16_t bm_tga_translate_pixel(int pixel, int format) {
   return newpix;
 }
 
-int bm_tga_read_outrage_compressed16(CFILE *infile, int n, int num_mips, int type) {
+int bm_tga_read_outrage_compressed16([[maybe_unused]] CFILE *infile, int n, int num_mips, int type) {
   uint16_t *dest_data;
   uint16_t pixel;
   int width, height;

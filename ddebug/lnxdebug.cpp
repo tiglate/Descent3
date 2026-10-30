@@ -48,7 +48,7 @@
 // Does a messagebox with a stack dump
 // Messagebox shows topstring, then stack dump, then bottomstring
 // Return types are the same as the Windows return values
-int Debug_ErrorBox(int type, const char *topstring, const char *title, const char *bottomstring) {
+int Debug_ErrorBox([[maybe_unused]] int type, const char *topstring, const char *title, const char *bottomstring) {
   int answer = 0;
 
   fprintf(stderr, "\n%s (%s)\n\n%s\n\n%s\n", topstring, title, "System Error", bottomstring);
@@ -60,7 +60,7 @@ int Debug_ErrorBox(int type, const char *topstring, const char *title, const cha
 
 // displays a message box
 // Returns the same values as the Win32 MessageBox() function
-int Debug_MessageBox(int type, const char *title, const char *str) {
+int Debug_MessageBox(int type, [[maybe_unused]] const char *title, const char *str) {
   return Debug_ErrorBox(type, str, "Descent 3 Message", "");
 }
 

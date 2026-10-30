@@ -708,7 +708,7 @@ uint32_t Secret_net_id = 0;
 // Stars a multiplayer server.  If playing is non-zero, then the server is a player in the
 // game
 // Server only
-void MultiStartServer(int playing, char *scriptname, int dedicated_server_num_teams) {
+void MultiStartServer([[maybe_unused]] int playing, char *scriptname, int dedicated_server_num_teams) {
   // Clear out some stuff
   for (int i = 0; i < MAX_NET_PLAYERS; i++) {
     memset(&NetPlayers[i], 0, sizeof(netplayer));

@@ -285,7 +285,7 @@ void rtp_Close() {
 void rtp_EnableFlags
         This function enables the performance profiling of whatever flags you pass in
 */
-void rtp_EnableFlags(INT64 flags) {
+void rtp_EnableFlags([[maybe_unused]] INT64 flags) {
 #ifdef USE_RTP
   Runtime_performance_flags |= flags;
 #endif
@@ -295,7 +295,7 @@ void rtp_EnableFlags(INT64 flags) {
 void rtp_DisableFlags
         This function disables the performance profiling of whatever flags you pass in
 */
-void rtp_DisableFlags(INT64 flags) {
+void rtp_DisableFlags([[maybe_unused]] INT64 flags) {
 #ifdef USE_RTP
   Runtime_performance_flags &= ~flags;
 #endif

@@ -1279,7 +1279,7 @@ void bm_GenerateMipMaps(int handle) {
 }
 // Gets bits per pixel for a particular bitmap
 // As of 12/30/96 always returns 16
-int bm_bpp(int handle) { return BPP_16; }
+int bm_bpp([[maybe_unused]] int handle) { return BPP_16; }
 // Given two bitmaps, scales the data from src to the size of dest
 // Not a particularly fast implementation
 void bm_ScaleBitmapToBitmap(int dest, int src) {

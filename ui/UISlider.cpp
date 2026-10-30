@@ -173,7 +173,7 @@ void UISlider::OnKeyDown(int key) {
 }
 
 // behavior when key is released.
-void UISlider::OnKeyUp(int key) {}
+void UISlider::OnKeyUp([[maybe_unused]] int key) {}
 
 // behavior when mouse button is pressed.
 void UISlider::OnMouseBtnDown(int btn) {

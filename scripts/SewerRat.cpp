@@ -435,7 +435,7 @@ void STDCALL ShutdownDLL(void) { ClearMessageList(); }
 // ===============
 // GetGOScriptID()
 // ===============
-int STDCALL GetGOScriptID(const char *name, uint8_t isdoor) { return -1; }
+int STDCALL GetGOScriptID([[maybe_unused]] const char *name, [[maybe_unused]] uint8_t isdoor) { return -1; }
 
 // ================
 // CreateInstance()
@@ -484,12 +484,12 @@ int16_t STDCALL CallInstanceEvent(int id, void *ptr, int event, tOSIRISEventInfo
 // ==================
 // SaveRestoreState()
 // ==================
-int STDCALL SaveRestoreState(void *file_ptr, uint8_t saving_state) { return 0; }
+int STDCALL SaveRestoreState([[maybe_unused]] void *file_ptr, [[maybe_unused]] uint8_t saving_state) { return 0; }
 
 // ====================
 // GetTriggerScriptID()
 // ====================
-int STDCALL GetTriggerScriptID(int trigger_room, int trigger_face) { return -1; }
+int STDCALL GetTriggerScriptID([[maybe_unused]] int trigger_room, [[maybe_unused]] int trigger_face) { return -1; }
 
 // =================
 // GetCOScriptList()
@@ -508,7 +508,7 @@ int STDCALL GetCOScriptList(int **list, int **id_list) {
 // Script Implementation
 //=======================
 
-int16_t BaseScript::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t BaseScript::CallEvent([[maybe_unused]] int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   mprintf(0, "BaseScript::CallEvent()\n");
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }

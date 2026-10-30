@@ -103,7 +103,7 @@ static char Str_buf[STR_BUF_SIZE];      // String buffer for variable arguments
 
 void grViewport::set_font(const char *fontname) { text_Font.init(fontname); }
 
-void grViewport::get_font(char *fontname, int size) {
+void grViewport::get_font(char *fontname, [[maybe_unused]] int size) {
   ASSERT(size > (int)strlen(text_Font.get_name()));
   strcpy(fontname, text_Font.get_name());
 }

@@ -325,8 +325,9 @@ bool BOA_LockedDoor(object *obj, int roomnum) {
 //	return true;
 //}
 
-int BOA_DetermineStartRoomPortal(int start_room, vector *start_pos, int end_room, vector *end_pos, bool f_for_sound,
-                                 bool f_making_robot_path_invalid_list, int *blocked_portal) {
+int BOA_DetermineStartRoomPortal(int start_room, [[maybe_unused]] vector *start_pos, int end_room,
+                                 [[maybe_unused]] vector *end_pos, bool f_for_sound,
+                                 bool f_making_robot_path_invalid_list, [[maybe_unused]] int *blocked_portal) {
   int i;
 
   if (start_room == -1 || end_room == -1)

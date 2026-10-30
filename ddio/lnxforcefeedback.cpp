@@ -286,12 +286,16 @@ bool ddio_ffjoy_SupportAutoCenter(tDevice) { return false; }
 //	for it.  It returns a handle to that resource.
 //	If it returns NULL, then it couldn't load the project.
 //	Make sure device is aquired before calling.
-FORCEPROJECT ddio_ForceLoadProject(std::filesystem::path &filename, tDevice dev) { return NULL; }
+FORCEPROJECT ddio_ForceLoadProject([[maybe_unused]] std::filesystem::path &filename, [[maybe_unused]] tDevice dev) {
+  return NULL;
+}
 
 //	Unloads a FORCEPROJECT file
-void ddio_ForceUnloadProject(FORCEPROJECT prj) {}
+void ddio_ForceUnloadProject([[maybe_unused]] FORCEPROJECT prj) {}
 
 //	Given a handle to a resource, and the name of the effect to load
 //	it will load that effect.  Returns the effect ID, or -1 if it couldn't
 //	be created
-int ddio_CreateForceFromProject(FORCEPROJECT project, const char *forcename) { return -1; }
+int ddio_CreateForceFromProject([[maybe_unused]] FORCEPROJECT project, [[maybe_unused]] const char *forcename) {
+  return -1;
+}

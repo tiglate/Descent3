@@ -492,7 +492,7 @@ extern int Tracing_drops, Drop_seg;
     level = stack_level[si];                                                                                           \
   }
 
-int SearchQuadTree(int x1, int y1, int x2, int y2, int dir, int *ccount) {
+int SearchQuadTree(int x1, int y1, int x2, int y2, [[maybe_unused]] int dir, int *ccount) {
   int n[4], x[4], z[4];
   int i, first;
   int anded;

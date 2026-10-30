@@ -183,7 +183,7 @@ bool sdlMouseButtonDownFilter(const SDL_Event *event);
 bool sdlMouseWheelFilter(const SDL_Event *event);
 bool sdlMouseMotionFilter(const SDL_Event *event);
 
-bool SDLCALL d3SDLEventFilter(void *userdata, SDL_Event *event) {
+bool SDLCALL d3SDLEventFilter([[maybe_unused]] void *userdata, SDL_Event *event) {
   switch (event->type) {
   case SDL_EVENT_KEY_UP:
   case SDL_EVENT_KEY_DOWN:
@@ -219,7 +219,7 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR szCmdLine, int nC
   GatherArgs(szCmdLine);
   bool enable_winconsole = FindArg("-winconsole");
 #else
-int main(int argc, char *argv[]) {
+int main([[maybe_unused]] int argc, char *argv[]) {
   GatherArgs(argv);
   bool enable_winconsole = true;
 #endif

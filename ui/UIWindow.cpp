@@ -290,7 +290,7 @@ void UIWindow::LockFocusOnGadget(UIGadget *gadget) { m_LockedGadget = gadget; }
 void UIWindow::UnlockFocusOnGadget() { m_LockedGadget = NULL; }
 
 // forces all keyinput onto one gadget.
-void UIWindow::LockKeyFocusOnGadget(UIGadget *gadget) {}
+void UIWindow::LockKeyFocusOnGadget([[maybe_unused]] UIGadget *gadget) {}
 
 //	Process
 //		run this to handle user input inside an interface
@@ -549,7 +549,7 @@ void UIWindow::OnKeyDown(int key) {
 }
 
 // behavior when key is released.
-void UIWindow::OnKeyUp(int key) {}
+void UIWindow::OnKeyUp([[maybe_unused]] int key) {}
 
 //	redraw all gadgets
 void UIWindow::Render() {
@@ -658,7 +658,7 @@ void UIWindow::UntrapKey(int key) {
   }
 }
 
-void UIWindow::SetFocusOnGadget(UIGadget *gadget, bool key) {
+void UIWindow::SetFocusOnGadget(UIGadget *gadget, [[maybe_unused]] bool key) {
   if (m_GadgetCur) {
     m_GadgetCur->LostFocus();
   }

@@ -383,7 +383,7 @@ void DMFCBase::OnClientPlayerKilled(object *killer_obj, int victim_pnum) {
 //
 //  Event handler for when a player explodes.  Gets called after a EVT_GAMEPLAYERKILLED event.
 //  player_num = player number of the player exploding
-void DMFCBase::OnClientPlayerExploded(int player_num) {}
+void DMFCBase::OnClientPlayerExploded([[maybe_unused]] int player_num) {}
 
 // DMFCBase::OnClientCollide (Only called if server tells client to execute)
 //
@@ -394,8 +394,9 @@ void DMFCBase::OnClientPlayerExploded(int player_num) {}
 //	 the server must pass true to the parameter to send arguments in CallClientEvent().
 //   me_obj = object pointer to the me object
 //   it_obj = object pointer to the it object
-void DMFCBase::OnClientCollide(object *me_obj, object *it_obj) {}
-void DMFCBase::OnClientCollide(object *me_obj, object *it_obj, vector *point, vector *normal) {}
+void DMFCBase::OnClientCollide([[maybe_unused]] object *me_obj, [[maybe_unused]] object *it_obj) {}
+void DMFCBase::OnClientCollide([[maybe_unused]] object *me_obj, [[maybe_unused]] object *it_obj,
+                               [[maybe_unused]] vector *point, [[maybe_unused]] vector *normal) {}
 
 // DMFCBase::OnClientPlayerChangeSegment (Only called if server tells client to execute)
 //
@@ -404,7 +405,8 @@ void DMFCBase::OnClientCollide(object *me_obj, object *it_obj, vector *point, ve
 //   player_num = player number of the player who just changed the room/segment
 //   newseg = New room/cell location
 //	 oldseg = Old room/cell location
-void DMFCBase::OnClientPlayerChangeSegment(int player_num, int newseg, int oldseg) {}
+void DMFCBase::OnClientPlayerChangeSegment([[maybe_unused]] int player_num, [[maybe_unused]] int newseg,
+                                           [[maybe_unused]] int oldseg) {}
 
 // DMFCBase::OnClientObjectChangeSegment (Only called if server tells client to execute)
 //
@@ -413,7 +415,8 @@ void DMFCBase::OnClientPlayerChangeSegment(int player_num, int newseg, int oldse
 //   obj = Object pointer of the object who just changed the room/segment
 //   newseg = New room/cell location
 //	 oldseg = Old room/cell location
-void DMFCBase::OnClientObjectChangeSegment(object *obj, int newseg, int oldseg) {}
+void DMFCBase::OnClientObjectChangeSegment([[maybe_unused]] object *obj, [[maybe_unused]] int newseg,
+                                           [[maybe_unused]] int oldseg) {}
 
 // DMFCBase::OnClientPlayerEntersGame (Only called if server tells client to execute)
 //
@@ -615,7 +618,7 @@ void DMFCBase::OnClientLevelEnd(void) {
 //
 //	Event handler when a player becomes an observer mode
 //	If they are piggybacking another player than piggy is the object pointer, else it's NULL
-void DMFCBase::OnPlayerEntersObserver(int pnum, object *piggy) {
+void DMFCBase::OnPlayerEntersObserver(int pnum, [[maybe_unused]] object *piggy) {
   mprintf(0, "Player %d entering observermode %s\n", pnum, (piggy) ? "Piggyback" : "Roam");
   player_record *pr = PRec_GetPRecordByPnum(pnum);
   if (pr && pr->state == STATE_INGAME) {
@@ -646,7 +649,7 @@ void DMFCBase::OnPlayerExitsObserver(int pnum) {
 //
 //    Called to determine if a player can change teams, you can override this so the server won't
 //    let a player change teams if it is not desired (for that player)
-bool DMFCBase::OnCanChangeTeam(int pnum, int newteam) {
+bool DMFCBase::OnCanChangeTeam(int pnum, [[maybe_unused]] int newteam) {
   if (Players[pnum].team == -1)
     return false; // no team switching for dedicated server
 
@@ -884,12 +887,12 @@ void DMFCBase::OnPlayerChangeTeam(int player_num, int newteam, bool announce, bo
 // DMFCBase::OnClientObjectShieldsChanged
 //
 //	Event handler for when an objects shield's change
-void DMFCBase::OnClientObjectShieldsChanged(object *obj, float amount) {}
+void DMFCBase::OnClientObjectShieldsChanged([[maybe_unused]] object *obj, [[maybe_unused]] float amount) {}
 
 // DMFCBase::OnWeaponFired
 //
 //	Event handler for when an object fires a weapon
-void DMFCBase::OnWeaponFired(object *weapon_obj, object *shooter) {}
+void DMFCBase::OnWeaponFired([[maybe_unused]] object *weapon_obj, [[maybe_unused]] object *shooter) {}
 
 // DMFCBase::OnPlayerReconnect
 //
@@ -981,7 +984,7 @@ void DMFCBase::OnControlMessage(uint8_t msg, int from_pnum) {
 //
 //
 //	returns true if the requested change for observer mode should go through
-bool DMFCBase::OnAllowObserverChange(bool turnonobserver) { return true; }
+bool DMFCBase::OnAllowObserverChange([[maybe_unused]] bool turnonobserver) { return true; }
 
 // DMFCBase::OnClientShowUI
 //
@@ -1012,7 +1015,7 @@ void DMFCBase::OnClientShowUI(int id, void *user_data) {
 //	level:	-1	Requesting all the available scores
 //			n	Print only the top n scores
 //	Override this to how you see fit, but it should conform to the above.
-void DMFCBase::OnPrintScores(int level) {}
+void DMFCBase::OnPrintScores([[maybe_unused]] int level) {}
 
 // DMFCBase::OnGetHudCallSignColor
 //
@@ -1032,7 +1035,8 @@ ddgr_color DMFCBase::OnGetHudCallSignColor(int playernum) {
 // DMFCBase::OnTeamChangeName
 //
 //	This event occurs on the client when a team's name has just changed
-void DMFCBase::OnTeamChangeName(int team, char *oldname, char *newname) {
+void DMFCBase::OnTeamChangeName([[maybe_unused]] int team, [[maybe_unused]] char *oldname,
+                                [[maybe_unused]] char *newname) {
   char names[DLLMAX_TEAMS][MAX_TEAMNAME_LEN];
   strcpy(names[RED_TEAM], GetTeamString(RED_TEAM));
   strcpy(names[BLUE_TEAM], GetTeamString(BLUE_TEAM));
@@ -1065,21 +1069,23 @@ void DMFCBase::OnDoControls(game_controls *controls) {
 // DMFCBase::OnClientWallCollide
 //
 //	Called by the game when their is a collision between an object and a wall
-void DMFCBase::OnClientWallCollide(object *obj, float hitspeed, int hitseg, int hitwall, vector *hitpt,
-                                   vector *wall_normal, float hit_dot) {}
+void DMFCBase::OnClientWallCollide([[maybe_unused]] object *obj, [[maybe_unused]] float hitspeed,
+                                   [[maybe_unused]] int hitseg, [[maybe_unused]] int hitwall,
+                                   [[maybe_unused]] vector *hitpt, [[maybe_unused]] vector *wall_normal,
+                                   [[maybe_unused]] float hit_dot) {}
 
 //	DMFCBase::OnClientObjectKilled
 //
 //	Called when an object is being killed
 //	Not automatically sent to clients (OnClientObjectKilled)
 //	killer might not be valid (NULL)
-void DMFCBase::OnClientObjectKilled(object *obj, object *killer) {}
+void DMFCBase::OnClientObjectKilled([[maybe_unused]] object *obj, [[maybe_unused]] object *killer) {}
 
 //	DMFCBase::OnClientObjectDestroyed
 //
 //	Called when an object is about to be deleted
 //	Not automatically sent to clients
-void DMFCBase::OnClientObjectDestroyed(object *obj) {}
+void DMFCBase::OnClientObjectDestroyed([[maybe_unused]] object *obj) {}
 
 // DMFCBase::OnPlayAudioTaunt
 //

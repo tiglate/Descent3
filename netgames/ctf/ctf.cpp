@@ -251,7 +251,7 @@ void DLLFUNCCALL DLLGetGameInfo(tDLLOptions *options) {
   strcpy(options->requirements, "MINGOALS2,GOALPERTEAM");
 }
 
-void DetermineScore(int precord_num, int column_num, char *buffer, int buffer_size) {
+void DetermineScore(int precord_num, [[maybe_unused]] int column_num, char *buffer, int buffer_size) {
   player_record *pr = DMFCBase->GetPlayerRecord(precord_num);
   if (!pr || pr->state == STATE_EMPTY) {
     buffer[0] = '\0';
@@ -268,7 +268,8 @@ void TeamScoreCallback(int team, char *buffer, int buffer_size) {
   snprintf(buffer, buffer_size, " %d", TeamScores[team]);
 }
 
-void ShowStatBitmap(int precord_num, int column_num, int x, int y, int w, int h, uint8_t alpha_to_use) {
+void ShowStatBitmap(int precord_num, [[maybe_unused]] int column_num, int x, int y, int w, [[maybe_unused]] int h,
+                    uint8_t alpha_to_use) {
   player_record *pr = DMFCBase->GetPlayerRecord(precord_num);
   int flagcount, flagmask;
 
@@ -1770,7 +1771,7 @@ void HandlePlayerSpew(int pnum) {
 
 /////////////////////////////////////////////////////////////
 // CTF Functions
-void DisplayHUDScores(struct tHUDItem *hitem) {
+void DisplayHUDScores([[maybe_unused]] struct tHUDItem *hitem) {
   if (display_my_welcome) {
     // announce our arrival to ourselves (as server)
     DisplayWelcomeMessage(DMFCBase->GetPlayerNum());

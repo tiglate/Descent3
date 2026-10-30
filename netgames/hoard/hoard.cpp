@@ -174,7 +174,8 @@ void DetermineScore(int precord_num, int column_num, char *buffer, int buffer_si
   }
 }
 
-void ShowStatBitmap(int precord_num, int column_num, int x, int y, int w, int h, uint8_t alpha_to_use) {
+void ShowStatBitmap(int precord_num, [[maybe_unused]] int column_num, int x, int y, [[maybe_unused]] int w,
+                    [[maybe_unused]] int h, uint8_t alpha_to_use) {
   player_record *pr = DMFCBase->GetPlayerRecord(precord_num);
   float ratio = DEFAULT_HUD_WIDTH / ((float)DMFCBase->GetGameWindowW());
 
@@ -264,7 +265,7 @@ void DMFCInputCommand_MinCount(const char *input_string) {
 }
 
 // Initializes the game function pointers
-void DLLFUNCCALL DLLGameInit(int *api_func, uint8_t *all_ok, int num_teams_to_use) {
+void DLLFUNCCALL DLLGameInit(int *api_func, uint8_t *all_ok, [[maybe_unused]] int num_teams_to_use) {
   *all_ok = 1;
   DMFCBase = CreateDMFC();
   if (!DMFCBase) {
@@ -1258,7 +1259,7 @@ void SendHoardInv(int playernum) {
   SendGameConfig(playernum);
 }
 
-void DisplayHUDScores(struct tHUDItem *hitem) {
+void DisplayHUDScores([[maybe_unused]] struct tHUDItem *hitem) {
   if (display_my_welcome) {
     DisplayWelcomeMessage(DMFCBase->GetPlayerNum());
     display_my_welcome = false;
@@ -1498,7 +1499,7 @@ void ReceiveGameConfig(uint8_t *data) {
   config.min_hoard = MultiGetByte(data, &count);
 }
 
-void ShowGameConfigDialog(int i) {
+void ShowGameConfigDialog([[maybe_unused]] int i) {
   DMFCBase->EnableOnScreenMenu(false);
   DMFCBase->StartUIWindow(HOARD_CONFIG_DLG, &config);
 }

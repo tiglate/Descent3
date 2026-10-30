@@ -99,7 +99,7 @@ int gspy_queryid = 0;
 char gspy_validate[MAX_GAMESPY_BUFFER] = "";
 uint16_t gspy_listenport;
 
-void gspy_StartGame(char *name) {
+void gspy_StartGame([[maybe_unused]] char *name) {
   gspy_last_heartbeat = timer_GetTime() - GSPY_HEARBEAT_INTERVAL;
   gspy_game_running = true;
 }

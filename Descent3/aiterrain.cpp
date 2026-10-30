@@ -161,7 +161,7 @@ static void ai_check_terrain_node(int cur_node, int f_check_local_nodes) {
 }
 
 // Returns true if the new point is on the terrain and false if the path results in leaving the terrain
-bool ait_GetGroundInfo(ground_information *ground_info, vector *p0, vector *p1, float rad, angle fov) {
+bool ait_GetGroundInfo(ground_information *ground_info, vector *p0, vector *p1, float rad, [[maybe_unused]] angle fov) {
   int start_node, end_node;
   int x1, x2, y1, y2, x, y, delta_y, delta_x, change_x, change_y, length, cur_node, error_term, i;
 

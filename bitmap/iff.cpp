@@ -207,7 +207,7 @@ int bm_iff_parse_bmhd(CFILE *ifile, uint32_t len, iff_bitmap_header *bmheader) {
 }
 
 //  the buffer pointed to by raw_data is stuffed with a pointer to decompressed pixel data
-int bm_iff_parse_body(CFILE *ifile, int len, iff_bitmap_header *bmheader) {
+int bm_iff_parse_body(CFILE *ifile, [[maybe_unused]] int len, iff_bitmap_header *bmheader) {
   uint8_t *p = bmheader->raw_data;
   int width = 0, depth = 0, done = 0;
 

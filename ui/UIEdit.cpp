@@ -421,7 +421,7 @@ void UIEdit::OnKeyDown(int key) {
 }
 
 // behavior when key is released.
-void UIEdit::OnKeyUp(int key) {}
+void UIEdit::OnKeyUp([[maybe_unused]] int key) {}
 
 // behavior when mouse button is pressed.
 void UIEdit::OnMouseBtnDown(int btn) {
@@ -436,7 +436,7 @@ void UIEdit::OnMouseBtnDown(int btn) {
 }
 
 // behavior when mouse button is released.
-void UIEdit::OnMouseBtnUp(int btn) {}
+void UIEdit::OnMouseBtnUp([[maybe_unused]] int btn) {}
 
 void UIEdit::OnSelect() {
   // except do this to release key focus on this edit box.

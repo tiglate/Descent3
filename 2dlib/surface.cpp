@@ -257,7 +257,7 @@ void grSurface::load(int handle, char *pal) {
 }
 
 //	loads 8bit palettized data onto this surface.
-void grSurface::load(char *data, int w, int h, char *pal) {
+void grSurface::load(char *data, int w, int h, [[maybe_unused]] char *pal) {
   int rowsize;
   ASSERT(m_SurfInit);
 

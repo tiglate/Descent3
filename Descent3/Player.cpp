@@ -2038,7 +2038,7 @@ struct tDeathSeq {
 
 static tDeathSeq Death[MAX_NET_PLAYERS];
 
-void debug_deathtype(int slot, int damage) {
+void debug_deathtype(int slot, [[maybe_unused]] int damage) {
   if (Death[slot].fate == DEATH_INSTANT)
     LOG_DEBUG << "INSTANT DEATH ";
   else if (Death[slot].fate == DEATH_FALL)
@@ -2408,7 +2408,7 @@ void DoNewPlayerDeathFrame(int slot) {
 #define FOV_CHANGE_TIME .7f
 
 // Alters the field of view over a period of time
-void DoFOVEvent(int eventnum, void *data) {
+void DoFOVEvent([[maybe_unused]] int eventnum, void *data) {
   float *val = (float *)data;
   float new_time = *val;
   float norm = new_time / FOV_CHANGE_TIME;
@@ -2725,7 +2725,7 @@ void DeadPlayerShipHit(object *obj, int hit_room, vector *hitpt, float magnitude
 }
 
 // Spews a guidebot
-void PlayerSpewGuidebot(object *parent, int type, int id) {
+void PlayerSpewGuidebot(object *parent, [[maybe_unused]] int type, [[maybe_unused]] int id) {
   int objnum;
   object *obj;
   int model_num = Object_info[ROBOT_GUIDEBOT].render_handle;
@@ -2812,7 +2812,7 @@ void PlayerSpewObject(object *objp, int timed, int room, vector *pos, matrix *or
 
 // Spews an object in a random direction
 // Returns the new object
-int PlayerSpewObject(object *parent, int type, int id, int timed, void *sinfo) {
+int PlayerSpewObject(object *parent, int type, int id, int timed, [[maybe_unused]] void *sinfo) {
   if (id < 0) // Don't spew non-existant stuff
     return -1;
 

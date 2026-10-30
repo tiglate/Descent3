@@ -165,7 +165,7 @@ void Error(const char *fmt, ...) {
 }
 
 // Brings up an error message for an int3
-void Int3MessageBox(const char *file, int line) {
+void Int3MessageBox([[maybe_unused]] const char *file, [[maybe_unused]] int line) {
 #ifndef RELEASE
   char title[128], message[500];
   int answer;
@@ -189,7 +189,8 @@ void Int3MessageBox(const char *file, int line) {
 }
 
 //	prints out an assertion error
-void AssertionFailed(const char *expstr, const char *file, int line) {
+void AssertionFailed([[maybe_unused]] const char *expstr, [[maybe_unused]] const char *file,
+                     [[maybe_unused]] int line) {
 #ifndef RELEASE
   char title[128], message[500];
   int answer;

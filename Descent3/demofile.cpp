@@ -676,7 +676,7 @@ void DemoRead2DSound(void) {
   Sound_system.Play2dSound(soundidx, volume);
 }
 
-void DemoWrite3DSound(int16_t soundidx, uint16_t objnum, int priority, float volume) {
+void DemoWrite3DSound(int16_t soundidx, uint16_t objnum, [[maybe_unused]] int priority, float volume) {
   cf_WriteByte(Demo_cfp, DT_3D_SOUND);
   cf_WriteShort(Demo_cfp, objnum);
   cf_WriteShort(Demo_cfp, soundidx);
@@ -1347,7 +1347,7 @@ extern void collide_generic_and_weapon(object *robotobj, object *weapon, vector 
                                        vector *collision_normal, bool f_reverse_normal, fvi_info *hit_info);
 
 void DemoWriteCollidePlayerWeapon(object *playerobj, object *weapon, vector *collision_point, vector *collision_normal,
-                                  bool f_reverse_normal, void *hit_info) {
+                                  bool f_reverse_normal, [[maybe_unused]] void *hit_info) {
   cf_WriteByte(Demo_cfp, DT_COLLIDE_PLR);
   cf_WriteShort(Demo_cfp, OBJNUM(playerobj));
   cf_WriteShort(Demo_cfp, OBJNUM(weapon));
@@ -1378,7 +1378,7 @@ void DemoReadCollidePlayerWeapon(void) {
 }
 
 void DemoWriteCollideGenericWeapon(object *robotobj, object *weapon, vector *collision_point, vector *collision_normal,
-                                   bool f_reverse_normal, void *hit_info) {
+                                   bool f_reverse_normal, [[maybe_unused]] void *hit_info) {
   cf_WriteByte(Demo_cfp, DT_COLLIDE_GEN);
   cf_WriteShort(Demo_cfp, OBJNUM(robotobj));
   cf_WriteShort(Demo_cfp, OBJNUM(weapon));

@@ -759,7 +759,7 @@ struct pilot_select_menu {
   void finish() { sheet = nullptr; };
 
   // process
-  void process(int res) {};
+  void process([[maybe_unused]] int res) {};
 };
 
 struct pilot_edit_menu {
@@ -813,7 +813,7 @@ struct pilot_edit_menu {
   void finish() { sheet = nullptr; };
 
   // process
-  void process(int res) {};
+  void process([[maybe_unused]] int res) {};
 };
 
 struct {
@@ -3256,7 +3256,7 @@ clean_up:
 void dCurrentPilotName(char *buffer) { Current_pilot.get_name(buffer); }
 
 /////////////////////////////////////////////////////////////////////
-void _ReadOldPilotFile(pilot *Pilot, bool keyconfig, bool missiondata) {
+void _ReadOldPilotFile(pilot *Pilot, bool keyconfig, [[maybe_unused]] bool missiondata) {
   char buffer[256];
   uint8_t temp_b;
   uint16_t temp_s;

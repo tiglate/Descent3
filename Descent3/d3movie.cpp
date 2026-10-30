@@ -69,7 +69,9 @@ void mve_SetCallback(MovieFrameCallback_fp callBack) {
 }
 
 // used to tell movie library how to render movies.
-void mve_SetRenderProperties(int16_t x, int16_t y, int16_t w, int16_t h, renderer_type type, bool hicolor) {}
+void mve_SetRenderProperties([[maybe_unused]] int16_t x, [[maybe_unused]] int16_t y, [[maybe_unused]] int16_t w,
+                             [[maybe_unused]] int16_t h, [[maybe_unused]] renderer_type type,
+                             [[maybe_unused]] bool hicolor) {}
 
 // plays a movie using the current screen.
 int mve_PlayMovie(const std::filesystem::path &pMovieName, oeApplication *pApp) {
@@ -243,8 +245,9 @@ void BlitToMovieBitmap(uint8_t *buf, uint32_t bufw, uint32_t bufh, uint32_t hico
   }
 }
 
-void CallbackShowFrame(uint8_t *buf, uint32_t bufw, uint32_t bufh, uint32_t sx, uint32_t sy,
-                       uint32_t w, uint32_t h, uint32_t dstx, uint32_t dsty, uint32_t hicolor) {
+void CallbackShowFrame(uint8_t *buf, uint32_t bufw, uint32_t bufh, [[maybe_unused]] uint32_t sx,
+                       [[maybe_unused]] uint32_t sy, [[maybe_unused]] uint32_t w, [[maybe_unused]] uint32_t h,
+                       uint32_t dstx, uint32_t dsty, uint32_t hicolor) {
   // prepare our bitmap
   int texW, texH;
   BlitToMovieBitmap(buf, bufw, bufh, hicolor, true, texW, texH);
@@ -282,8 +285,10 @@ void CallbackShowFrame(uint8_t *buf, uint32_t bufw, uint32_t bufh, uint32_t sx, 
 }
 
 // This callback is same as CallbackShowFrame() but don't flip renderer at end, so there no flickering
-void CallbackShowFrameNoFlip(unsigned char *buf, unsigned int bufw, unsigned int bufh, unsigned int sx, unsigned int sy,
-                       unsigned int w, unsigned int h, unsigned int dstx, unsigned int dsty, unsigned int hicolor) {
+void CallbackShowFrameNoFlip(unsigned char *buf, unsigned int bufw, unsigned int bufh, [[maybe_unused]] unsigned int sx,
+                             [[maybe_unused]] unsigned int sy, [[maybe_unused]] unsigned int w,
+                             [[maybe_unused]] unsigned int h, unsigned int dstx, unsigned int dsty,
+                             unsigned int hicolor) {
   // prepare our bitmap
   int texW, texH;
   BlitToMovieBitmap(buf, bufw, bufh, hicolor, true, texW, texH);
@@ -319,7 +324,7 @@ void CallbackShowFrameNoFlip(unsigned char *buf, unsigned int bufw, unsigned int
 }
 #endif
 
-intptr_t mve_SequenceStart(const char *mvename, void *fhandle, oeApplication *app, bool looping) {
+intptr_t mve_SequenceStart(const char *mvename, void *fhandle, [[maybe_unused]] oeApplication *app, bool looping) {
 #ifndef NO_MOVIES
   // first, find that movie..
   std::filesystem::path real_name = cf_LocatePath(std::filesystem::path("movies") / mvename);
@@ -355,7 +360,8 @@ intptr_t mve_SequenceStart(const char *mvename, void *fhandle, oeApplication *ap
 #endif
 }
 
-intptr_t mve_SequenceFrame(intptr_t handle, void *fhandle, [[maybe_unused]] bool sequence, int *bm_handle) {
+intptr_t mve_SequenceFrame(intptr_t handle, [[maybe_unused]] void *fhandle, [[maybe_unused]] bool sequence,
+                           int *bm_handle) {
 #ifndef NO_MOVIES
   if (bm_handle) {
     *bm_handle = -1;
@@ -397,7 +403,7 @@ reread_frame:
 #endif
 }
 
-bool mve_SequenceClose(intptr_t hMovie, void *hFile) {
+bool mve_SequenceClose(intptr_t hMovie, [[maybe_unused]] void *hFile) {
 #ifndef NO_MOVIES
   if (hMovie == -1)
     return false;
@@ -419,7 +425,7 @@ bool mve_SequenceClose(intptr_t hMovie, void *hFile) {
 #endif
 }
 
-void mve_Puts(int16_t x, int16_t y, ddgr_color col, const char *txt) {
+void mve_Puts([[maybe_unused]] int16_t x, int16_t y, ddgr_color col, const char *txt) {
   grtext_SetFont(BRIEFING_FONT);
   grtext_SetColor(col);
   grtext_SetAlpha(255);
@@ -428,7 +434,8 @@ void mve_Puts(int16_t x, int16_t y, ddgr_color col, const char *txt) {
   grtext_Flush();
 }
 
-void mve_ClearRect(int16_t x1, int16_t y1, int16_t x2, int16_t y2) {
+void mve_ClearRect([[maybe_unused]] int16_t x1, [[maybe_unused]] int16_t y1, [[maybe_unused]] int16_t x2,
+                   [[maybe_unused]] int16_t y2) {
   // Note: I can not figure out how to clear, and then write over it with text. It always covers my text!
   // rend_FillRect( GR_BLACK, x1, y1, x2, y2 );
 }

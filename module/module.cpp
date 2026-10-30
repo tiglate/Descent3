@@ -232,7 +232,7 @@ bool mod_FreeModule(module *handle) {
 // Returns a pointer to a function within a loaded module.  If it returns NULL there was an error.  Check
 // mod_GetLastError to see if there was an error symstr is the name of the function you want to get the symbol for (Do
 // NOT give any pre/suffix to this name) parmbytes is the size (in bytes) of the parameter list the function should have
-MODPROCADDRESS mod_GetSymbol(module *handle, const char *symstr, uint8_t parmbytes) {
+MODPROCADDRESS mod_GetSymbol(module *handle, const char *symstr, [[maybe_unused]] uint8_t parmbytes) {
   MODPROCADDRESS sym;
   if (!handle) {
     ModLastError = MODERR_INVALIDHANDLE;

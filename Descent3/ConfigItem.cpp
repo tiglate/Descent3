@@ -384,7 +384,7 @@ bool ConfigItem::SetCurrentValue(int currvalue, bool call_back) {
   return true;
 }
 
-bool ConfigItem::SetCurrentValue(bool currvalue, bool call_back) {
+bool ConfigItem::SetCurrentValue(bool currvalue, [[maybe_unused]] bool call_back) {
   if (!m_bAlive)
     return false;
   if (m_iValueType != CIV_BOOL)
@@ -1073,7 +1073,7 @@ int GetUniqueID(void) {
   return count;
 }
 
-void CIListBoxCallback(int ID, void *ptr) {}
+void CIListBoxCallback([[maybe_unused]] int ID, [[maybe_unused]] void *ptr) {}
 
 void CISliderCallback(int ID, void *ptr) {
   ConfigItem *ci = (ConfigItem *)ptr;

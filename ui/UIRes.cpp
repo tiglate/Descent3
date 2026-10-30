@@ -282,7 +282,7 @@ const UISnazzyTextItem &UISnazzyTextItem::operator=(const UISnazzyTextItem &item
 //		text.  allows for alpha, color and different fonts.
 
 //	Inheritable functions
-bool UIBitmapItem::draw(int x, int y, tUIDrawClass draw_class) {
+bool UIBitmapItem::draw(int x, int y, [[maybe_unused]] tUIDrawClass draw_class) {
   ui_DrawBitmap(this, x, y, m_Alpha);
   return true;
 }

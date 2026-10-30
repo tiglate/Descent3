@@ -129,7 +129,7 @@ void DMFCBase::OnServerPlayerKilled(object *killer_obj, int victim_pnum) {
 //
 //  Event handler for when a player explodes.  Gets called after a EVT_GAMEPLAYERKILLED event.
 //  player_num = player number of the player exploding
-void DMFCBase::OnServerPlayerExploded(int player_num) {}
+void DMFCBase::OnServerPlayerExploded([[maybe_unused]] int player_num) {}
 
 // DMFCBase::OnServerCollide
 //
@@ -138,8 +138,9 @@ void DMFCBase::OnServerPlayerExploded(int player_num) {}
 //   it objects will be flipped.
 //   me_obj = object pointer to the me object
 //   it_obj = object pointer to the it object
-void DMFCBase::OnServerCollide(object *me_obj, object *it_obj) {}
-void DMFCBase::OnServerCollide(object *me_obj, object *it_obj, vector *point, vector *normal) {}
+void DMFCBase::OnServerCollide([[maybe_unused]] object *me_obj, [[maybe_unused]] object *it_obj) {}
+void DMFCBase::OnServerCollide([[maybe_unused]] object *me_obj, [[maybe_unused]] object *it_obj,
+                               [[maybe_unused]] vector *point, [[maybe_unused]] vector *normal) {}
 
 // DMFCBase::OnServerPlayerChangeSegment
 //
@@ -147,7 +148,8 @@ void DMFCBase::OnServerCollide(object *me_obj, object *it_obj, vector *point, ve
 //   (8x8 Terrain block).
 //   player_num = player number of the player who just changed the room/segment
 //   newseg = New room/cell location
-void DMFCBase::OnServerPlayerChangeSegment(int player_num, int newseg, int oldseg) {}
+void DMFCBase::OnServerPlayerChangeSegment([[maybe_unused]] int player_num, [[maybe_unused]] int newseg,
+                                           [[maybe_unused]] int oldseg) {}
 
 // DMFCBase::OnServerObjectChangeSegment (Only called if server tells client to execute)
 //
@@ -156,7 +158,8 @@ void DMFCBase::OnServerPlayerChangeSegment(int player_num, int newseg, int oldse
 //   obj = Object pointer of the object who just changed the room/segment
 //   newseg = New room/cell location
 //	 oldseg = Old room/cell location
-void DMFCBase::OnServerObjectChangeSegment(object *obj, int newseg, int oldseg) {}
+void DMFCBase::OnServerObjectChangeSegment([[maybe_unused]] object *obj, [[maybe_unused]] int newseg,
+                                           [[maybe_unused]] int oldseg) {}
 
 // DMFCBase::OnServerPlayerEntersGame
 //
@@ -255,7 +258,7 @@ void DMFCBase::OnServerLevelEnd(void) {
 // DMFCBase::OnServerObjectShieldsChanged
 //
 //	Event handler for when an objects shield's change
-void DMFCBase::OnServerObjectShieldsChanged(object *obj, float amount) {}
+void DMFCBase::OnServerObjectShieldsChanged([[maybe_unused]] object *obj, [[maybe_unused]] float amount) {}
 
 // DMFCBase::OnServerIsAddressBanned
 //
@@ -267,18 +270,20 @@ bool DMFCBase::OnServerIsAddressBanned(network_address *addr, const char *tracke
 // DMFCBase::OnServerWallCollide
 //
 //	Called by the game when their is a collision between an object and a wall
-void DMFCBase::OnServerWallCollide(object *obj, float hitspeed, int hitseg, int hitwall, vector *hitpt,
-                                   vector *wall_normal, float hit_dot) {}
+void DMFCBase::OnServerWallCollide([[maybe_unused]] object *obj, [[maybe_unused]] float hitspeed,
+                                   [[maybe_unused]] int hitseg, [[maybe_unused]] int hitwall,
+                                   [[maybe_unused]] vector *hitpt, [[maybe_unused]] vector *wall_normal,
+                                   [[maybe_unused]] float hit_dot) {}
 
 //	DMFCBase::OnServerObjectKilled
 //
 //	Called when an object is being killed
 //	Not automatically sent to clients (OnClientObjectKilled)
 //	killer might not be valid (NULL)
-void DMFCBase::OnServerObjectKilled(object *obj, object *killer) {}
+void DMFCBase::OnServerObjectKilled([[maybe_unused]] object *obj, [[maybe_unused]] object *killer) {}
 
 //	DMFCBase::OnServerObjectDestroyed
 //
 //	Called when an object is about to be deleted
 //	Not automatically sent to clients
-void DMFCBase::OnServerObjectDestroyed(object *obj) {}
+void DMFCBase::OnServerObjectDestroyed([[maybe_unused]] object *obj) {}

@@ -1768,7 +1768,8 @@ bool IsNodeValid(int cell, float min_vert_dot) {
     return false;
 }
 
-bool PhysValidateGroundPath(object *obj, vector *s, int sroom, vector *e, int eroom, float rad, float min_vert_dot) {
+bool PhysValidateGroundPath([[maybe_unused]] object *obj, [[maybe_unused]] vector *s, int sroom,
+                            [[maybe_unused]] vector *e, int eroom, float rad, float min_vert_dot) {
   if (ROOMNUM_OUTSIDE(sroom)) {
     int x1, x2, y1, y2, x, y, delta_y, delta_x, change_x, change_y, length, cur_node, error_term, i;
 
@@ -2580,4 +2581,4 @@ void phys_apply_force(object *obj, vector *force_vec, int16_t weapon_index) {
   obj->mtype.phys_info.velocity += (*force_vec / obj->mtype.phys_info.mass);
 }
 
-void phys_apply_rot(object *obj, vector *force_vec) {}
+void phys_apply_rot([[maybe_unused]] object *obj, [[maybe_unused]] vector *force_vec) {}

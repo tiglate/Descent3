@@ -3070,7 +3070,7 @@ void STDCALL ShutdownDLL(void) { ClearMessageList(); }
 // ===============
 // GetGOScriptID()
 // ===============
-int STDCALL GetGOScriptID(const char *name, uint8_t isdoor) { return -1; }
+int STDCALL GetGOScriptID([[maybe_unused]] const char *name, [[maybe_unused]] uint8_t isdoor) { return -1; }
 
 // ================
 // CreateInstance()
@@ -3910,7 +3910,7 @@ int16_t STDCALL CallInstanceEvent(int id, void *ptr, int event, tOSIRISEventInfo
 // ==================
 // SaveRestoreState()
 // ==================
-int STDCALL SaveRestoreState(void *file_ptr, uint8_t saving_state) { return 0; }
+int STDCALL SaveRestoreState([[maybe_unused]] void *file_ptr, [[maybe_unused]] uint8_t saving_state) { return 0; }
 
 // ====================
 // GetTriggerScriptID()
@@ -4132,7 +4132,7 @@ int STDCALL GetCOScriptList(int **list, int **id_list) {
 // Script Implementation
 //=======================
 
-int16_t BaseScript::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t BaseScript::CallEvent([[maybe_unused]] int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   mprintf(0, "BaseScript::CallEvent()\n");
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
@@ -5933,7 +5933,7 @@ int16_t LevelScript_0000::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_0B83::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_0B83::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_AIN_MOVIE_END: {
     // Script 133: Level START (Intro Cinematic Cut 2)
@@ -5957,7 +5957,7 @@ int16_t CustomObjectScript_0B83::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_0B85::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_0B85::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_AIN_MOVIE_END: {
     // Script 134: Level START (Intro Cinematic Cut 3)
@@ -6823,7 +6823,7 @@ int16_t CustomObjectScript_50FF::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_0987::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_0987::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_AIN_MOVIE_END: {
     // Script 033: Hazardous Waste: Guard Movie Cut 3
@@ -6852,7 +6852,7 @@ int16_t CustomObjectScript_0987::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_0989::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_0989::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_AIN_MOVIE_END: {
     // Script 034: Hazardous Waste: Guard Movie Cut 4
@@ -7501,7 +7501,7 @@ int16_t CustomObjectScript_0983::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_1BB9::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_1BB9::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 182: New Captain: Ghost
@@ -7522,7 +7522,7 @@ int16_t CustomObjectScript_1BB9::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_13AD::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_13AD::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 183: New Captain: Move to New Spot And Spark
@@ -7587,7 +7587,7 @@ int16_t CustomObjectScript_13AD::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_13AC::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_13AC::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 184: New Captain: UnCloak/UnGhost
@@ -7607,7 +7607,7 @@ int16_t CustomObjectScript_13AC::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_13AB::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_13AB::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 185: New Captain: FireWeapon
@@ -7630,7 +7630,7 @@ int16_t CustomObjectScript_13AB::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_13AA::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_13AA::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 186: New Captain: Cloak
@@ -7648,7 +7648,7 @@ int16_t CustomObjectScript_13AA::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_0A2E::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_0A2E::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_AIN_MOVIE_END: {
     // Script 097: Captain Gadget:  Intro Cinematic Cut 3
@@ -7674,7 +7674,7 @@ int16_t CustomObjectScript_0A2E::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_0A30::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_0A30::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_AIN_MOVIE_END: {
     // Script 098: Captain Gadget: Intro Cinematic Cut 4
@@ -7819,7 +7819,7 @@ int16_t CustomObjectScript_0982::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_12DF::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_12DF::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 187: First Mate: Entered Room
@@ -7847,7 +7847,7 @@ int16_t CustomObjectScript_12DF::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_12E1::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_12E1::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 202: First Mate: Ghost (one time)
@@ -7888,7 +7888,7 @@ int16_t CustomObjectScript_12E1::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_12DE::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_12DE::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 190: First Mate: ChooseUnWiggle
@@ -8201,7 +8201,7 @@ int16_t CustomObjectScript_083D::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_0B86::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_0B86::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_AIN_MOVIE_END: {
     // Script 130: Captain and Trooper Cinematic
@@ -8225,7 +8225,7 @@ int16_t CustomObjectScript_0B86::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_0B80::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_0B80::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_AIN_MOVIE_END: {
     // Script 131: Captain and Trooper Cinematic Cut 2
@@ -8248,7 +8248,7 @@ int16_t CustomObjectScript_0B80::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_0B82::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_0B82::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_AIN_MOVIE_END: {
     // Script 148: Captain and Trooper Cinematic Done
@@ -8289,7 +8289,7 @@ int16_t CustomObjectScript_109F::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_1153::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_1153::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_AIN_MOVIE_END: {
     // Script 155: Escape Chute: Junction End Cinematic
@@ -8513,7 +8513,7 @@ int16_t TriggerScript_0010::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_0002::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_0002::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 030: Hazardous Waste: Guard Movie
@@ -8634,7 +8634,7 @@ int16_t TriggerScript_0006::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_0007::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_0007::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 072: Shark Security 0: Activate Guard AI
@@ -8657,7 +8657,7 @@ int16_t TriggerScript_0007::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_0008::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_0008::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 051: Level Sequencing: Lower Station Lockdown
@@ -8754,7 +8754,7 @@ int16_t TriggerScript_0024::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_000C::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_000C::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 094: Captain Gadget: Intro Cinematic Cut 1 - Old
@@ -8832,7 +8832,7 @@ int16_t TriggerScript_001D::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_000D::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_000D::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 180: First Mate: INTRO
@@ -8851,7 +8851,7 @@ int16_t TriggerScript_000D::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_000E::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_000E::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 129: Captain and Trooper Init Cinematic
@@ -8930,7 +8930,7 @@ int16_t TriggerScript_000F::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_0014::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_0014::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 152: Exit

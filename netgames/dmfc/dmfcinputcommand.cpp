@@ -264,7 +264,7 @@ void DMFCInputCommand_PlayerInfo(const char *input_string) {
 
 //	handle the server requesting an autobalance of teams
 //	Usage: "$balance"
-void DMFCInputCommand_Balance(const char *input_string) {
+void DMFCInputCommand_Balance([[maybe_unused]] const char *input_string) {
   if (basethis->GetLocalRole() != LR_SERVER)
     return;
   BalanceTeams(0);
@@ -382,7 +382,7 @@ void DMFCInputCommand_Ban(const char *input_string) {
 
 //	handles ending the level
 //	Usage: "$endlevel"
-void DMFCInputCommand_EndLevel(const char *input_string) {
+void DMFCInputCommand_EndLevel([[maybe_unused]] const char *input_string) {
   if (basethis->GetLocalRole() != LR_SERVER)
     return;
   EndMultiLevel(0);
@@ -391,7 +391,7 @@ void DMFCInputCommand_EndLevel(const char *input_string) {
 
 //	handles the request to see all the players in the game
 //	Usage: "$players"
-void DMFCInputCommand_Players(const char *input_string) {
+void DMFCInputCommand_Players([[maybe_unused]] const char *input_string) {
   // Dedicated server print out of all the players and their player nums
   DPrintf(DTXT_PLAYERLISTHEADER);
   for (int i = 0; i < DLLMAX_PLAYERS; i++) {
@@ -480,7 +480,7 @@ void DMFCInputCommand_ServerHudCallsigns(const char *input_string) {
 
 //	handles a request to save the game stats to file
 //	Usage: "$savestats"
-void DMFCInputCommand_SaveStats(const char *input_string) { SaveStatsToFile(0); }
+void DMFCInputCommand_SaveStats([[maybe_unused]] const char *input_string) { SaveStatsToFile(0); }
 
 //	handles a request to enable/disable statistical messages
 //	Usage: "$statmsgs on/off"
@@ -699,7 +699,7 @@ void DMFCInputCommand_SetRespawnTime(const char *input_string) {
 
 //	handle the client requesting netgame info
 //	Usage: "$netgameinfo"
-void DMFCInputCommand_NetGameInfo(const char *input_string) {
+void DMFCInputCommand_NetGameInfo([[maybe_unused]] const char *input_string) {
   bool display = !basethis->IsDisplayingNetGameInfo();
   basethis->SwitchNetGameInfoDisplay((display) ? 1 : 0);
 
@@ -740,7 +740,7 @@ void DMFCInputCommand_SetPPS(const char *input_string) {
 
 //	handles listing the ban list on a dedicated server (so if you want to remove a player from it)
 //	Usage: "$banlist"
-void DMFCInputCommand_BanList(const char *input_string) {
+void DMFCInputCommand_BanList([[maybe_unused]] const char *input_string) {
   if (basethis->GetLocalRole() != LR_SERVER)
     return;
 
@@ -866,7 +866,7 @@ void DMFCInputCommand_Help(const char *input_string) {
 
 //	handles a request to rehash the hosts.allow/deny
 //	Usage: "$rehash"
-void DMFCInputCommand_Rehash(const char *input_string) {
+void DMFCInputCommand_Rehash([[maybe_unused]] const char *input_string) {
   if (basethis->GetLocalRole() != LR_SERVER)
     return;
 

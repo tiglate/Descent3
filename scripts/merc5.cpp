@@ -978,10 +978,10 @@ void cExecTimerEvent(int timerid) {
 #define ENABLE_CUSTOM_SAVE_AND_RESTORE
 
 // Save custom data for this script
-void dsCustomSave(void *fileptr) {}
+void dsCustomSave([[maybe_unused]] void *fileptr) {}
 
 // Restore custom data for this script
-void dsCustomRestore(void *fileptr) {}
+void dsCustomRestore([[maybe_unused]] void *fileptr) {}
 
 /**{CUSTOM_SCRIPT_BLOCK_END}**** DO NOT EDIT! **/
 // ============================================================
@@ -1512,7 +1512,7 @@ void STDCALL ShutdownDLL(void) { ClearMessageList(); }
 // ===============
 // GetGOScriptID()
 // ===============
-int STDCALL GetGOScriptID(const char *name, uint8_t isdoor) { return -1; }
+int STDCALL GetGOScriptID([[maybe_unused]] const char *name, [[maybe_unused]] uint8_t isdoor) { return -1; }
 
 // ================
 // CreateInstance()
@@ -1883,7 +1883,7 @@ int16_t STDCALL CallInstanceEvent(int id, void *ptr, int event, tOSIRISEventInfo
 // ==================
 // SaveRestoreState()
 // ==================
-int STDCALL SaveRestoreState(void *file_ptr, uint8_t saving_state) { return 0; }
+int STDCALL SaveRestoreState([[maybe_unused]] void *file_ptr, [[maybe_unused]] uint8_t saving_state) { return 0; }
 
 // ====================
 // GetTriggerScriptID()
@@ -1988,7 +1988,7 @@ int STDCALL GetCOScriptList(int **list, int **id_list) {
 // Script Implementation
 //=======================
 
-int16_t BaseScript::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t BaseScript::CallEvent([[maybe_unused]] int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   mprintf(0, "BaseScript::CallEvent()\n");
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
@@ -2444,7 +2444,7 @@ int16_t LevelScript_0000::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_11C4::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_11C4::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_AIN_MOVIE_END: {
     // Script 073: IntroCam-2
@@ -2468,7 +2468,7 @@ int16_t CustomObjectScript_11C4::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_1088::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_1088::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 077: Intro2 Spark
@@ -2488,7 +2488,7 @@ int16_t CustomObjectScript_1088::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_09C6::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_09C6::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_AIN_MOVIE_END: {
     // Script 074: IntroCam-3
@@ -2504,7 +2504,7 @@ int16_t CustomObjectScript_09C6::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_11C5::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_11C5::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_AIN_MOVIE_END: {
     // Script 075: IntroCam-4
@@ -2524,7 +2524,7 @@ int16_t CustomObjectScript_11C5::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_09C7::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_09C7::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_AIN_MOVIE_END: {
     // Script 076: IntroCam-POST
@@ -2689,7 +2689,7 @@ int16_t CustomObjectScript_1A02::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_1033::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_1033::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 058: Crystal Complete8
@@ -2725,7 +2725,7 @@ int16_t CustomObjectScript_1033::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_1200::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_1200::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 057: Crystal Complete7
@@ -3522,7 +3522,7 @@ int16_t CustomObjectScript_19A0::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_09C9::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_09C9::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 025: EndMovie-1
@@ -3547,7 +3547,7 @@ int16_t CustomObjectScript_09C9::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_1007::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_1007::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 027: EndMovie-1 Door Open

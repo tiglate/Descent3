@@ -844,7 +844,7 @@ bool cfg_element::Configure(ct_type *new_elem_type, uint8_t *controller, uint8_t
 }
 
 //////////////////////////////////////////////////////////////////////////////
-bool key_cfg_element(uint8_t *element, uint8_t *flags) {
+bool key_cfg_element([[maybe_unused]] uint8_t *element, [[maybe_unused]] uint8_t *flags) {
   //	put up configuration dialog
 
   return true;

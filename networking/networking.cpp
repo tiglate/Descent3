@@ -907,7 +907,7 @@ uint16_t nw_CalculateChecksum(void *vptr, int len) {
 }
 
 // Sends data on an unreliable socket
-int nw_Send(network_address *who_to, void *data, int len, int flags) {
+int nw_Send(network_address *who_to, void *data, int len, [[maybe_unused]] int flags) {
   if (len == 0) {
     LOG_DEBUG << "Attempting to send 0 byte network packet in nw_Send()";
     Int3();
@@ -965,7 +965,7 @@ int ExtraBufferTempHack = 0;
 // 0 No packet ready to receive
 // >0 Buffer filled with the number of bytes recieved
 
-int nw_ReceiveReliable(SOCKET socketid, uint8_t *buffer, int max_len) {
+int nw_ReceiveReliable(SOCKET socketid, uint8_t *buffer, [[maybe_unused]] int max_len) {
 
   int i;
   if (Use_DirectPlay) {

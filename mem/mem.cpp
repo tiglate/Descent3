@@ -307,8 +307,7 @@ int mem_size_sub(void *memblock) {
 #endif
 }
 
-bool mem_dumpmallocstofile(char *filename) { return false; }
-
+bool mem_dumpmallocstofile([[maybe_unused]] char *filename) { return false; }
 
 #else // defined(POSIX)
 // Windows memory management

@@ -528,7 +528,7 @@ bsppolygon *SelectPlane(listnode **polylist) {
 }
 
 // This is the routine that recursively builds the bsptree
-int BuildBSPNode(bspnode *tree, listnode **polylist, int numpolys) {
+int BuildBSPNode(bspnode *tree, listnode **polylist, [[maybe_unused]] int numpolys) {
   bsppolygon *partition_poly;
   listnode *lnode = *polylist;
   listnode *next;

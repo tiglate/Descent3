@@ -1142,7 +1142,7 @@ void pilot::write_guidebot_name(CFILE *file) {
   }
 }
 
-void pilot::read_guidebot_name(CFILE *file, bool skip) {
+void pilot::read_guidebot_name(CFILE *file, [[maybe_unused]] bool skip) {
   if (guidebot_name) {
     mem_free(guidebot_name);
     guidebot_name = NULL;

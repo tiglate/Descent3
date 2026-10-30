@@ -1754,7 +1754,7 @@ void RenderObject_DrawPolymodel(object *obj, float *normalized_times) {
 // The light source vector should be in the models coordinate space
 void RenderObject_SetLightDirection(vector *dir) { RenderObject_LightDirection = *dir; }
 // draw an object that has one bitmap & doesn't rotate
-void obj_draw_blob(object *obj, int bmnum) {
+void obj_draw_blob([[maybe_unused]] object *obj, [[maybe_unused]] int bmnum) {
   //	int	orientation=0;
   //	grs_bitmap * bm = &GameBitmaps[bmnum];
   //

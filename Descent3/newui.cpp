@@ -627,7 +627,8 @@ void DoWaitPopup(bool enable, const char *message) {
 }
 
 //	puts up a message box with a title and message.
-int DoMessageBox(const char *title, const char *msg, int type, ddgr_color title_color, ddgr_color text_color) {
+int DoMessageBox(const char *title, const char *msg, int type, [[maybe_unused]] ddgr_color title_color,
+                 [[maybe_unused]] ddgr_color text_color) {
   newuiMessageBox mbox;
   newuiSheet *sheet;
 

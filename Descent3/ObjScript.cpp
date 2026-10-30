@@ -235,7 +235,7 @@ void FreeObjectScripts(object *objp, bool level_end) {
 }
 
 // allocates and initializes the script for a trigger
-void InitTriggerScript(trigger *tp) {}
+void InitTriggerScript([[maybe_unused]] trigger *tp) {}
 
 // frees the script for a trigger
-void FreeTriggerScript(trigger *tp, bool level_end) {}
+void FreeTriggerScript([[maybe_unused]] trigger *tp, [[maybe_unused]] bool level_end) {}

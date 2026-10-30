@@ -900,7 +900,8 @@ void CloseSplashScreen(void) {
   } else
     return;
 }
-UIObject *UIConsoleGadgetCreate(UIWindow *parentid, int id, int x, int y, int font, int cols, int rows, int flags) {
+UIObject *UIConsoleGadgetCreate(UIWindow *parentid, int id, int x, int y, [[maybe_unused]] int font, int cols, int rows,
+                                int flags) {
   UIConsoleGadget *newconsole;
   newconsole = new UIConsoleGadget;
   newconsole->Create(parentid, id, x, y, BRIEFING_FONT, cols, rows, flags);
@@ -921,7 +922,7 @@ void UIConsoleGadgetputs(UIConsoleGadget *item, const char *str) {
   }
   item->puts(GR_RGB(r, g, b), str);
 }
-void NewUIWindowSetFocusOnEditGadget(UIEdit *item, UIWindow *parent) { item->Activate(); }
+void NewUIWindowSetFocusOnEditGadget(UIEdit *item, [[maybe_unused]] UIWindow *parent) { item->Activate(); }
 UIObject *OldListCreate(UIWindow *parentitem, int id, int x, int y, int w, int h, int flags) {
   UIListBox *newoldlist;
   newoldlist = new UIListBox;

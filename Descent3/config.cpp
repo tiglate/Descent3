@@ -600,7 +600,7 @@ void ConfigSetDetailLevel(int level) {
 #define IDV_CHANGE_RES_WINDOW 10
 #define UID_RESOLUTION 110
 
-static void gamma_callback(newuiTiledWindow *wnd, void *data) {
+static void gamma_callback([[maybe_unused]] newuiTiledWindow *wnd, void *data) {
   int bm_handle = *((int *)data);
 
   g3Point pnts[4], *pntlist[4];
@@ -1087,7 +1087,7 @@ struct sound_menu {
   };
 
   // process output and do stuff accordintly
-  void process(int res) {
+  void process([[maybe_unused]] int res) {
     if (sheet->HasChanged(fxvolume)) {
       Sound_system.SetMasterVolume((*fxvolume) / 10.0f);
       Sound_system.BeginSoundFrame(false);
@@ -1435,7 +1435,7 @@ struct details_menu {
   };
 
   // process output and do stuff accordintly
-  void process(int res) {
+  void process([[maybe_unused]] int res) {
     bool changed;
 
     // check here if the detail level currently set should be custom

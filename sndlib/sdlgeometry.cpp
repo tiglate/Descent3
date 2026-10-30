@@ -23,7 +23,7 @@
 #include "ddsndgeometry.h"
 
 // specify a sound library to associate geometry with
-bool llsGeometry::Init(llsSystem *snd_sys) { return false; }
+bool llsGeometry::Init([[maybe_unused]] llsSystem *snd_sys) { return false; }
 
 // closes low level geometry system.
 void llsGeometry::Shutdown() {}
@@ -36,28 +36,30 @@ void llsGeometry::Clear() {}
 
 // polygon lists
 // is a group cached?, check before rendering it.
-void llsGeometry::IsGroupValid(int group) {}
+void llsGeometry::IsGroupValid([[maybe_unused]] int group) {}
 
 // marks beginning of a list of polygons to render, (-1 group for non cache)
-void llsGeometry::StartPolygonGroup(int group) {}
+void llsGeometry::StartPolygonGroup([[maybe_unused]] int group) {}
 
 // ends a list of polygons to render.
-void llsGeometry::EndPolygonGroup(int group) {}
+void llsGeometry::EndPolygonGroup([[maybe_unused]] int group) {}
 
 // renders a group.
-void llsGeometry::RenderGroup(int group) {}
+void llsGeometry::RenderGroup([[maybe_unused]] int group) {}
 
 // primatives, nv = number of verts, and verts is an array of pointers to vertices.
 // you can pass a sound material value if you want special reflective properties on this polygon.
-void llsGeometry::AddPoly(int nv, vector **verts, unsigned tag, tSoundMaterial material) {}
+void llsGeometry::AddPoly([[maybe_unused]] int nv, [[maybe_unused]] vector **verts, [[maybe_unused]] unsigned tag,
+                          [[maybe_unused]] tSoundMaterial material) {}
 
 // 4 verts here.
-void llsGeometry::AddQuad(unsigned tag, vector **verts) {}
+void llsGeometry::AddQuad([[maybe_unused]] unsigned tag, [[maybe_unused]] vector **verts) {}
 
 // 3 verts here.
-void llsGeometry::AddTriangle(unsigned tag, vector **verts) {}
+void llsGeometry::AddTriangle([[maybe_unused]] unsigned tag, [[maybe_unused]] vector **verts) {}
 
-void llsGeometry::CreateMaterial(tSoundMaterial material, float transmit_gain, float transmit_highfreq,
-                                 float reflect_gain, float reflect_highfreq) {}
+void llsGeometry::CreateMaterial([[maybe_unused]] tSoundMaterial material, [[maybe_unused]] float transmit_gain,
+                                 [[maybe_unused]] float transmit_highfreq, [[maybe_unused]] float reflect_gain,
+                                 [[maybe_unused]] float reflect_highfreq) {}
 
-void llsGeometry::DestroyMaterial(tSoundMaterial material) {}
+void llsGeometry::DestroyMaterial([[maybe_unused]] tSoundMaterial material) {}

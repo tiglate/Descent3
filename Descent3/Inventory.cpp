@@ -498,7 +498,8 @@ bool Inventory::AddObject(int object_handle, int flags, const char *description)
 }
 
 // adds a new type/id item to the inventory
-bool Inventory::Add(int type, int id, object *parent, int aux_type, int aux_id, int flags, const char *description) {
+bool Inventory::Add(int type, int id, [[maybe_unused]] object *parent, int aux_type, int aux_id, int flags,
+                    const char *description) {
   // make sure we can fit another object
   if (count >= MAX_UNIQUE_INVEN_ITEMS) {
     LOG_WARNING << "Max unique count hit on add to inventory";
@@ -523,7 +524,8 @@ bool Inventory::Add(int type, int id, object *parent, int aux_type, int aux_id, 
 }
 
 // adds a special cased CounterMeasure into the inventory
-bool Inventory::AddCounterMeasure(int id, int aux_type, int aux_id, int flags, const char *description) {
+bool Inventory::AddCounterMeasure(int id, int aux_type, int aux_id, [[maybe_unused]] int flags,
+                                  const char *description) {
   // make sure we can fit another object
   if (count >= MAX_UNIQUE_INVEN_ITEMS) {
     LOG_WARNING << "Hit max unique in counter measure add";

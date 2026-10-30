@@ -179,7 +179,7 @@ static float BNode_QuickDist(vector *pos1, vector *pos2) {
 int BNode_Path[MAX_BNODES_PER_ROOM];
 int BNode_PathNumNodes;
 
-static void BNode_UpdatePathInfo(pq_item **node_list, int start, int end) {
+static void BNode_UpdatePathInfo(pq_item **node_list, [[maybe_unused]] int start, int end) {
   int cur_node = end;
   int i;
 
@@ -209,7 +209,7 @@ static void BNode_UpdatePathInfo(pq_item **node_list, int start, int end) {
 }
 
 // Ok to use Highest_room_index offset stuff
-bool BNode_FindPath(int start_room, int i, int j, float rad) {
+bool BNode_FindPath(int start_room, int i, int j, [[maybe_unused]] float rad) {
   if (start_room == -1)
     return false;
   bpq PQPath;
@@ -290,8 +290,9 @@ done:
 }
 
 // TODO: MTS: Unused?
-int BNode_GenerateBestPathThroughRoom(int sroom, int spnt, int croom, int eroom, int eportal, int max_nodes,
-                                      vector *pos_list) {
+int BNode_GenerateBestPathThroughRoom([[maybe_unused]] int sroom, [[maybe_unused]] int spnt, [[maybe_unused]] int croom,
+                                      [[maybe_unused]] int eroom, [[maybe_unused]] int eportal,
+                                      [[maybe_unused]] int max_nodes, [[maybe_unused]] vector *pos_list) {
   return -1;
 }
 
@@ -464,7 +465,7 @@ retry:
   return closest_node;
 }
 
-bn_list *BNode_GetBNListPtr(int roomnum, bool f_in_load_level) {
+bn_list *BNode_GetBNListPtr(int roomnum, [[maybe_unused]] bool f_in_load_level) {
   if (roomnum == -1) {
     return NULL;
   } else if (roomnum >= 0 && roomnum <= Highest_room_index) {
@@ -510,8 +511,10 @@ void BNode_ClearBNodeInfo(void) {
 }
 
 // Unused?
-bool BNode_MakeSubPath(int16_t sroom, int16_t spnt, int16_t eroom, int16_t epnt, int flags, float size, int16_t *roomlist,
-                       int16_t *pnts, int max_elements) {
+bool BNode_MakeSubPath([[maybe_unused]] int16_t sroom, [[maybe_unused]] int16_t spnt, [[maybe_unused]] int16_t eroom,
+                       [[maybe_unused]] int16_t epnt, [[maybe_unused]] int flags, [[maybe_unused]] float size,
+                       [[maybe_unused]] int16_t *roomlist, [[maybe_unused]] int16_t *pnts,
+                       [[maybe_unused]] int max_elements) {
   return false;
 }
 

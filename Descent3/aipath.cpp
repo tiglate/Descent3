@@ -37,7 +37,7 @@ ai_dynamic_path AIDynamicPath[MAX_DYNAMIC_PATHS];
 int AIAltPath[MAX_ROOMS];
 int AIAltPathNumNodes;
 
-static void AIUpdatePathInfo(q_item **node_list, int start, int end) {
+static void AIUpdatePathInfo(q_item **node_list, [[maybe_unused]] int start, int end) {
   int cur_room = end;
   int i;
 
@@ -745,8 +745,8 @@ done:
   return f_path_exists;
 }
 
-static void AIGenerateAltBOAPath(vector *start_pos, vector *end_pos, ai_path_info *aip, int *slot, int *cur_node,
-                                 int handle) {
+static void AIGenerateAltBOAPath([[maybe_unused]] vector *start_pos, [[maybe_unused]] vector *end_pos,
+                                 ai_path_info *aip, int *slot, int *cur_node, int handle) {
   int x;
   vector *pos = NULL;
 
@@ -919,8 +919,8 @@ done:
   return f_path_exists;
 }
 
-static bool AIGenerateBOAPath(vector *start_pos, int *start_room, vector *end_pos, int *end_room, ai_path_info *aip,
-                              int *slot, int *cur_node, int handle) {
+static bool AIGenerateBOAPath([[maybe_unused]] vector *start_pos, int *start_room, [[maybe_unused]] vector *end_pos,
+                              int *end_room, ai_path_info *aip, int *slot, int *cur_node, int handle) {
   int next_room = *start_room;
   bool f_path_exists = true;
   vector *pos;
@@ -991,7 +991,8 @@ static bool AIGenerateBOAPath(vector *start_pos, int *start_room, vector *end_po
 }
 
 bool AIPathAllocPath(object *obj, ai_frame *ai_info, void *goal_ptr, int *start_room, vector *start_pos, int *end_room,
-                     vector *end_pos, float rad, int flags, int handle, int ignore_obj) {
+                     vector *end_pos, [[maybe_unused]] float rad, [[maybe_unused]] int flags, int handle,
+                     int ignore_obj) {
   bool status;
   bool f_path_exists = true;
 

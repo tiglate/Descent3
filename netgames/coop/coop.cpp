@@ -159,7 +159,7 @@ static int Highlight_bmp = -1;
 static void OnPLRInterval(void);
 static void OnPLRInit(void);
 
-void DetermineScore(int precord_num, int column_num, char *buffer, int buffer_size) {
+void DetermineScore(int precord_num, [[maybe_unused]] int column_num, char *buffer, int buffer_size) {
   player_record *pr = DMFCBase->GetPlayerRecord(precord_num);
   if (!pr || pr->state == STATE_EMPTY) {
     buffer[0] = '\0';
@@ -179,7 +179,7 @@ void DLLFUNCCALL DLLGetGameInfo(tDLLOptions *options) {
 }
 
 // Initializes the game function pointers
-void DLLFUNCCALL DLLGameInit(int *api_func, uint8_t *all_ok, int num_teams_to_use) {
+void DLLFUNCCALL DLLGameInit(int *api_func, uint8_t *all_ok, [[maybe_unused]] int num_teams_to_use) {
   *all_ok = 1;
   DMFCBase = CreateDMFC();
   if (!DMFCBase) {
@@ -548,7 +548,7 @@ void OnClientObjectKilled(object *obj, object *killer) {
   DMFCBase->OnClientObjectKilled(obj, killer);
 }
 
-void DisplayHUDScores(struct tHUDItem *hitem) {
+void DisplayHUDScores([[maybe_unused]] struct tHUDItem *hitem) {
   if (!FirstFrame)
     return;
 
@@ -631,7 +631,7 @@ void DisplayHUDScores(struct tHUDItem *hitem) {
   DLLgrtext_SetFont(old_font);
 }
 
-void SaveStatsToFile(char *filename) {
+void SaveStatsToFile([[maybe_unused]] char *filename) {
   /*
   CFILE *file;
   DLLOpenCFILE(&file,filename,"wt");
@@ -727,7 +727,7 @@ void OnDisconnectSaveStatsToFile(void) {
   SaveStatsToFile(filename);
 }
 
-void OnPrintScores(int level) {
+void OnPrintScores([[maybe_unused]] int level) {
   /*
   char buffer[256];
   char name[50];

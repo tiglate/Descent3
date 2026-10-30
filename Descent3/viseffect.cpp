@@ -566,7 +566,7 @@ int VisEffectInitType(vis_effect *vis) {
 
 // initialize a new viseffect.  adds to the list for the given room
 // returns the vis number
-int VisEffectCreate(uint8_t type, uint8_t id, int roomnum, vector *pos) {
+int VisEffectCreate([[maybe_unused]] uint8_t type, uint8_t id, int roomnum, vector *pos) {
   int visnum;
   vis_effect *vis;
 

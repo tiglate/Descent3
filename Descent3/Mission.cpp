@@ -1619,7 +1619,7 @@ void ShowProgressScreen(const char *str, const char *str2, bool flip) {
         first displays mission goals and some warnings or advice.
         may allow for selection of player ships
 */
-bool DoMissionBriefing(int level) {
+bool DoMissionBriefing([[maybe_unused]] int level) {
   tLevelNode *lvl = Current_level;
   bool ret = true;
   int num_ships = 0;

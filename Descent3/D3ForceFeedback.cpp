@@ -428,7 +428,7 @@ void ForceEffectsPlay(int id, float *scale, vector *direction) {
   ddio_ffb_effectPlay(low_id);
 }
 
-void DoForceForWeapon(object *me_obj, object *it_obj, vector *force_vec) {
+void DoForceForWeapon(object *me_obj, object *it_obj, [[maybe_unused]] vector *force_vec) {
   if (it_obj->id >= MAX_WEAPONS)
     return;
 
@@ -450,7 +450,8 @@ void DoForceForWeapon(object *me_obj, object *it_obj, vector *force_vec) {
   }
 }
 
-void DoForceForWall(object *playerobj, float hitspeed, int hitseg, int hitwall, vector *wall_normal) {
+void DoForceForWall(object *playerobj, float hitspeed, [[maybe_unused]] int hitseg, [[maybe_unused]] int hitwall,
+                    vector *wall_normal) {
   vector local_norm;
   float scale = 1.00f;
 

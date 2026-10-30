@@ -399,7 +399,7 @@ void DMFCBase::DoRandomDeathMessage(int killernum, int victimnum, uint32_t hash)
 //	DMFCBase::GetStatisticalSuicideMessage
 //
 //	Generates a statistical suicide message about the suicide
-char *DMFCBase::GetStatisticalSuicideMessage(int pnum) {
+char *DMFCBase::GetStatisticalSuicideMessage([[maybe_unused]] int pnum) {
   static char buffer[150];
   strcpy(buffer, DTXT_SIMPLESUICIDEMSG);
   return buffer;

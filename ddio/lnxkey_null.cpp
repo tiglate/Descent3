@@ -52,7 +52,7 @@ extern volatile struct tLnxKeys {
   bool status;
 } LKeys[DDIO_MAX_KEYS];
 
-bool ddio_null_InternalKeyInit(ddio_init_info *init_info) {
+bool ddio_null_InternalKeyInit([[maybe_unused]] ddio_init_info *init_info) {
   // reset key list
   for (int i = 0; i < DDIO_MAX_KEYS; i++) {
     LKeys[i].down_ticks = 0;

@@ -2689,7 +2689,8 @@ void DisplayTerrainList(int cellcount, bool from_automap) {
 static g3Point base[256];
 static g3Point *slist[256];
 // Draws the 2 triangles of the Terrainlist[index] (software)
-int DrawTerrainTrianglesSoftware(int index, int bm_handle, int upper_left, int lower_right) {
+int DrawTerrainTrianglesSoftware([[maybe_unused]] int index, [[maybe_unused]] int bm_handle,
+                                 [[maybe_unused]] int upper_left, [[maybe_unused]] int lower_right) {
   /*
   #if !defined(POSIX)
           int i,tlist[4],close=0,lit=0;
@@ -3570,7 +3571,7 @@ draw_lower_right:
 // Adds object obj to terrain segment n.
 // This object will be rendered immediately following the rendering of this
 // terrain segment
-int AddRenderObjectToTerrainSeg(int n, int objnum) {
+int AddRenderObjectToTerrainSeg([[maybe_unused]] int n, [[maybe_unused]] int objnum) {
 // Uses a linked list to keep track of what objects are in this segment
 #if (!defined(RELEASE) || defined(NEWEDITOR))
   if (Terrain_seg_render_objs[n] == objnum)

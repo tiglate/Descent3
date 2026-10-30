@@ -962,7 +962,8 @@ void TelCom_BltToScreen(int dx, int dy, chunked_bitmap *src_bmp) {
   TelCom_BltToScreen(dx, dy, src_bmp, 0, 0, src_bmp->pw, src_bmp->ph);
 }
 
-void TelCom_BltToScreen(int dx, int dy, chunked_bitmap *src_bmp, int sx, int sy, int sw, int sh) {
+void TelCom_BltToScreen(int dx, int dy, chunked_bitmap *src_bmp, [[maybe_unused]] int sx, [[maybe_unused]] int sy,
+                        int sw, int sh) {
   rend_DrawScaledChunkedBitmap(src_bmp, dx, dy, sw, sh, 255);
 }
 

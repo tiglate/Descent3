@@ -257,10 +257,10 @@ void UIButton::OnDraw() {
 }
 
 // behavior when key is pressed.
-void UIButton::OnKeyDown(int key) {}
+void UIButton::OnKeyDown([[maybe_unused]] int key) {}
 
 // behavior when key is released.
-void UIButton::OnKeyUp(int key) {}
+void UIButton::OnKeyUp([[maybe_unused]] int key) {}
 
 // behavior when mouse button is pressed.
 void UIButton::OnMouseBtnDown(int btn) {
@@ -416,7 +416,7 @@ void UIRadioButton::OnKeyDown(int key) {
 }
 
 // behavior when key is released.
-void UIRadioButton::OnKeyUp(int key) {}
+void UIRadioButton::OnKeyUp([[maybe_unused]] int key) {}
 
 // behavior when mouse button is pressed.
 void UIRadioButton::OnMouseBtnDown(int btn) {
@@ -544,7 +544,7 @@ void UICheckBox::OnKeyDown(int key) {
 }
 
 // behavior when key is released.
-void UICheckBox::OnKeyUp(int key) {}
+void UICheckBox::OnKeyUp([[maybe_unused]] int key) {}
 
 // behavior when mouse button is pressed.
 void UICheckBox::OnMouseBtnDown(int btn) {

@@ -3050,7 +3050,7 @@ void ClearSecretFlags(room *rp) {
 }
 // Prints out a message when you've found a secret
 #define SECRET_COLOR GR_RGB(0, 128, 255)
-void DoSecretForPlayer(room *rp, object *objp) {
+void DoSecretForPlayer(room *rp, [[maybe_unused]] object *objp) {
   int y = Game_window_h / 4;
   AddPersistentHUDMessage(SECRET_COLOR, HUD_MSG_PERSISTENT_CENTER, y, 5, HPF_FADEOUT + HPF_FREESPACE_DRAW,
                           SOUND_GAME_MESSAGE, TXT_FOUND_SECRET);
@@ -3139,7 +3139,8 @@ void ObjSetOrient(object *obj, const matrix *orient) {
 }
 
 // sets the position of an object.  This should be called to move an object
-void ObjSetPos(object *obj, vector *pos, int roomnum, matrix *orient, bool f_update_attached_children) {
+void ObjSetPos(object *obj, vector *pos, int roomnum, matrix *orient,
+               [[maybe_unused]] bool f_update_attached_children) {
   int oldroomnum = obj->roomnum;
   vector old_pos = obj->pos;
 
@@ -3202,7 +3203,7 @@ void ObjSetPos(object *obj, vector *pos, int roomnum, matrix *orient, bool f_upd
 
 // Delete objects, such as weapons & explosions, that shouldn't stay between levels
 // if clear_all is set, clear even proximity bombs
-void ClearTransientObjects(int clear_all) {
+void ClearTransientObjects([[maybe_unused]] int clear_all) {
   int objnum;
   object *objp;
 

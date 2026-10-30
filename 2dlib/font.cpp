@@ -696,7 +696,7 @@ int grFont::get_char_info(int ch, int *width) {
   return 0;
 }
 
-uint8_t *grFont::get_kern_info(uint8_t c1, uint8_t c2) {
+uint8_t *grFont::get_kern_info([[maybe_unused]] uint8_t c1, [[maybe_unused]] uint8_t c2) {
   //	gr_font_file_record *ft;
   //	uint8_t *p;
 

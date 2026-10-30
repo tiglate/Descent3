@@ -283,7 +283,7 @@ public:
 // able to be used.  IT IS VERY IMPORTANT WHEN SAVING THE STATE TO RETURN THE NUMBER OF _BYTES_ WROTE
 // TO THE FILE.  When restoring the data, the return value is ignored.  saving_state is 1 when you should
 // write data to the file_ptr, 0 when you should read in the data.
-int STDCALL SaveRestoreState(void *file_ptr, uint8_t saving_state) { return 0; }
+int STDCALL SaveRestoreState([[maybe_unused]] void *file_ptr, [[maybe_unused]] uint8_t saving_state) { return 0; }
 
 char STDCALL InitializeDLL(tOSIRISModuleInit *func_list) {
   osicommon_Initialize((tOSIRISModuleInit *)func_list);
@@ -301,7 +301,7 @@ char STDCALL InitializeDLL(tOSIRISModuleInit *func_list) {
 
 void STDCALL ShutdownDLL(void) {}
 
-int STDCALL GetGOScriptID(const char *name, uint8_t isdoor) {
+int STDCALL GetGOScriptID(const char *name, [[maybe_unused]] uint8_t isdoor) {
   for (int i = 0; i < NUM_IDS; i++) {
     if (!stricmp(name, ScriptInfo[i].name)) {
       return ScriptInfo[i].id;
@@ -363,7 +363,7 @@ void STDCALL DestroyInstance(int id, void *ptr) {
   }
 }
 
-int16_t STDCALL CallInstanceEvent(int id, void *ptr, int event, tOSIRISEventInfo *data) {
+int16_t STDCALL CallInstanceEvent([[maybe_unused]] int id, void *ptr, int event, tOSIRISEventInfo *data) {
   return ((BaseObjScript *)ptr)->CallEvent(event, data);
 }
 
@@ -387,7 +387,9 @@ static inline bool IsGoalFinishedNotify(int index) {
 //============================================
 // Script Implementation
 //============================================
-int16_t BaseObjScript::CallEvent(int event, tOSIRISEventInfo *data) { return CONTINUE_CHAIN | CONTINUE_DEFAULT; }
+int16_t BaseObjScript::CallEvent([[maybe_unused]] int event, [[maybe_unused]] tOSIRISEventInfo *data) {
+  return CONTINUE_CHAIN | CONTINUE_DEFAULT;
+}
 
 //------------------
 // MercEndBoss class
@@ -1140,8 +1142,8 @@ int16_t Gun::CallEvent(int event, tOSIRISEventInfo *data) {
     if (data->evt_ai_notify.notify_type == AIN_FIRED_WEAPON) {
       memory->f_fire = !memory->f_fire;
 
-      if (memory->f_fire)
-        ;
+      if (memory->f_fire) {
+      }
       {
         int room;
         vector pos;

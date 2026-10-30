@@ -89,7 +89,7 @@ void InvReset(int playernum, bool reset_all) {
 }
 
 // mprintf
-void MonoPrintf(int n, char *format, ...) {}
+void MonoPrintf([[maybe_unused]] int n, [[maybe_unused]] char *format, ...) {}
 
 // wrapper for cfopen
 void OpenCFILE(CFILE **handle, const std::filesystem::path &filename, const char *mode) {
@@ -103,7 +103,8 @@ void SetObjectDeadFlagDLL(object *obj, bool tell_clients_to_remove, bool tell_cl
   SetObjectDeadFlag(obj, tell_clients_to_remove, tell_clients_to_play_sound);
 }
 
-void assertdll(int x, const char *expression, const char *file, int line) {
+void assertdll([[maybe_unused]] int x, [[maybe_unused]] const char *expression, [[maybe_unused]] const char *file,
+               [[maybe_unused]] int line) {
 #ifndef RELEASE
   if (!(unsigned)(x)) {
     LOG_ERROR.printf("Assertion failed (%s) in %s:%d.", expression, file, line);

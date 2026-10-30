@@ -95,7 +95,7 @@ void ddio_InternalClose() {
   LOG_DEBUG << "DDIO: ddio_InternalClose() returning.";
 }
 
-void ddio_DebugMessage(unsigned err, char *fmt, ...) {
+void ddio_DebugMessage([[maybe_unused]] unsigned err, char *fmt, ...) {
   char buf[128];
   va_list arglist;
 

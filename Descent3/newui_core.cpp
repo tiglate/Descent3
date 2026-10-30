@@ -949,7 +949,7 @@ void newuiMenu::SetOnOptionSwitchCB(void (*fn)(newuiMenu *, int16_t, int16_t, vo
 }
 
 // equivalent of SetUICallback, called before gadgets are drawn
-void newuiMenu::SetOnUIFrameCB(void (*fn)()) {
+void newuiMenu::SetOnUIFrameCB([[maybe_unused]] void (*fn)()) {
   //	m_uiframe_cb = GetUICallback();
   //	SetUICallback(fn);
 }
@@ -2157,7 +2157,7 @@ void newuiButton::OnFormat() {
   UIGadget::OnFormat();
 }
 
-void newuiButton::InitStates(const char *name, bool is_long, int16_t flags) {
+void newuiButton::InitStates(const char *name, bool is_long, [[maybe_unused]] int16_t flags) {
   if (!m_bkg) {
     m_bkg = Newui_resources.Load(is_long ? NEWUI_LBTN_FILE : NEWUI_BTN_FILE);
   }
@@ -2290,7 +2290,7 @@ void newuiMenuOptionButton::OnKeyDown(int key) {
   }
 }
 
-void newuiMenuOptionButton::OnKeyUp(int key) {}
+void newuiMenuOptionButton::OnKeyUp([[maybe_unused]] int key) {}
 
 //////////////////////////////////////////////////////////////////////////////
 //	CLASS creates an arrow button that is sensitive to touch (when down, always select)
@@ -2536,7 +2536,7 @@ void newuiSlider::OnKeyDown(int key) {
 }
 
 // override: behavior when key released.
-void newuiSlider::OnKeyUp(int key) {}
+void newuiSlider::OnKeyUp([[maybe_unused]] int key) {}
 
 void newuiSlider::OnDraw() {
   int ox = 0, oy = 0;
@@ -3018,7 +3018,7 @@ void newuiListBox::SetCurrentIndex(int index) {
   }
 }
 
-void newuiListBox::SetInternalCurrentIndex(int index) {}
+void newuiListBox::SetInternalCurrentIndex([[maybe_unused]] int index) {}
 
 bool newuiListBox::GetCurrentItem(char *buffer, int buflen) {
   return newuiListBox::GetItem(m_Real2Virt[m_SelectedIndex], buffer, buflen);
@@ -3236,7 +3236,7 @@ void newuiListBox::OnKeyDown(int key) {
 }
 
 // behavior when key is released.
-void newuiListBox::OnKeyUp(int key) {}
+void newuiListBox::OnKeyUp([[maybe_unused]] int key) {}
 
 // behavior when mouse button is pressed.
 void newuiListBox::OnMouseBtnDown(int btn) {
@@ -3901,7 +3901,8 @@ void newuiComboBox::OnDetachFromWindow() {
 
 newuiEditBox::newuiEditBox() { m_title = NULL; }
 
-void newuiEditBox::Create(UIWindow *wnd, int16_t id, const char *name, int16_t x, int16_t y, int16_t w, int16_t flags) {
+void newuiEditBox::Create(UIWindow *wnd, int16_t id, [[maybe_unused]] const char *name, int16_t x, int16_t y, int16_t w,
+                          int16_t flags) {
   //	if (name) {
   //		m_title = new UISnazzyTextItem(0, MONITOR9_NEWUI_FONT, name, NEWUI_MONITORFONT_COLOR);
   //	}

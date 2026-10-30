@@ -2519,7 +2519,7 @@ void STDCALL ShutdownDLL(void) { ClearMessageList(); }
 // ===============
 // GetGOScriptID()
 // ===============
-int STDCALL GetGOScriptID(const char *name, uint8_t isdoor) { return -1; }
+int STDCALL GetGOScriptID([[maybe_unused]] const char *name, [[maybe_unused]] uint8_t isdoor) { return -1; }
 
 // ================
 // CreateInstance()
@@ -3149,7 +3149,7 @@ int16_t STDCALL CallInstanceEvent(int id, void *ptr, int event, tOSIRISEventInfo
 // ==================
 // SaveRestoreState()
 // ==================
-int STDCALL SaveRestoreState(void *file_ptr, uint8_t saving_state) { return 0; }
+int STDCALL SaveRestoreState([[maybe_unused]] void *file_ptr, [[maybe_unused]] uint8_t saving_state) { return 0; }
 
 // ====================
 // GetTriggerScriptID()
@@ -3306,7 +3306,7 @@ int STDCALL GetCOScriptList(int **list, int **id_list) {
 // Script Implementation
 //=======================
 
-int16_t BaseScript::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t BaseScript::CallEvent([[maybe_unused]] int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   mprintf(0, "BaseScript::CallEvent()\n");
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
@@ -3875,7 +3875,7 @@ int16_t LevelScript_0000::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_0885::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_0885::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_AIN_MOVIE_END: {
     // Script 088: IntroCam-2
@@ -4161,7 +4161,7 @@ int16_t CustomObjectScript_1031::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_0833::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_0833::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 018: ElevDroids MakeNew
@@ -4256,7 +4256,7 @@ int16_t CustomObjectScript_0953::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_0954::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_0954::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 015: ElevLoPart5
@@ -4347,7 +4347,7 @@ int16_t CustomObjectScript_0961::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_0962::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_0962::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 063: ElevHiUpPart5
@@ -4364,7 +4364,7 @@ int16_t CustomObjectScript_0962::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_0869::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_0869::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 067: ElevDroids Make AnotherTower
@@ -4455,7 +4455,7 @@ int16_t CustomObjectScript_0965::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_0966::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_0966::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 104: ElevHiDnPart5
@@ -4678,7 +4678,7 @@ int16_t CustomObjectScript_0841::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_097A::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_097A::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 112: FireOut!
@@ -5025,7 +5025,7 @@ int16_t CustomObjectScript_1834::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_1877::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_1877::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_AIN_MOVIE_END: {
     // Script 046: Suzuki Cam 3
@@ -5042,7 +5042,7 @@ int16_t CustomObjectScript_1877::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_1078::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_1078::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_AIN_MOVIE_END: {
     // Script 049: Suzuki Cam 2
@@ -5061,7 +5061,7 @@ int16_t CustomObjectScript_1078::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_1070::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_1070::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_AIN_MOVIE_END: {
     // Script 048: Suzuki Cam 4
@@ -5113,7 +5113,7 @@ int16_t CustomObjectScript_2075::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_2076::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_2076::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_TIMER: {
     // Script 057: Suzuki Cam 4 Part4
@@ -5206,7 +5206,7 @@ int16_t CustomObjectScript_206D::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_1079::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_1079::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_AIN_MOVIE_END: {
     // Script 047: Suzuki Cam 5
@@ -5306,7 +5306,7 @@ int16_t CustomObjectScript_09BC::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_1071::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_1071::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_AIN_MOVIE_END: {
     // Script 051: Suzuki Cam 6
@@ -5534,7 +5534,7 @@ int16_t CustomObjectScript_09C2::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t CustomObjectScript_286E::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t CustomObjectScript_286E::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_AIN_MOVIE_END: {
     // Script 073: Suzuki Post Production
@@ -5555,7 +5555,7 @@ int16_t CustomObjectScript_286E::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_0005::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_0005::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 001: BST Patrols (Mnt)
@@ -5598,7 +5598,7 @@ int16_t TriggerScript_0005::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_0000::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_0000::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 005: ElevDroids PlayerIsHere
@@ -5615,7 +5615,7 @@ int16_t TriggerScript_0000::CallEvent(int event, tOSIRISEventInfo *data) {
   return CONTINUE_CHAIN | CONTINUE_DEFAULT;
 }
 
-int16_t TriggerScript_0006::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t TriggerScript_0006::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_COLLIDE: {
     // Script 064: ElevDroids PlayerInTower

@@ -145,7 +145,7 @@ bool TCCPlayerHasWeapon(int weapon_index) {
   return false;
 }
 
-int TCCargoCreateLine(int id, int y, const char *title, int type) {
+int TCCargoCreateLine(int id, int y, const char *title, [[maybe_unused]] int type) {
   // char buffer[100];
   int small_height = grfont_GetHeight(SM_FONT);
 
@@ -225,7 +225,7 @@ int TCCargoCreateLine(int id, int y, const char *title, int type) {
   return y;
 }
 
-void TCCargoButtonCallback(int efxnum) {
+void TCCargoButtonCallback([[maybe_unused]] int efxnum) {
   // tccargo_button_pressed = efxnum;
 }
 

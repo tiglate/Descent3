@@ -74,7 +74,8 @@ static int get_int(const unsigned char *data) {
 
 static unsigned int unhandled_chunks[32 * 256];
 
-static int default_seg_handler(unsigned char major, unsigned char minor, unsigned char *data, int len, void *context) {
+static int default_seg_handler(unsigned char major, unsigned char minor, [[maybe_unused]] unsigned char *data,
+                               [[maybe_unused]] int len, [[maybe_unused]] void *context) {
   unhandled_chunks[major << 8 | minor]++;
   return 1;
 }
@@ -82,7 +83,9 @@ static int default_seg_handler(unsigned char major, unsigned char minor, unsigne
 /*************************
  * general handlers
  *************************/
-static int end_movie_handler(unsigned char major, unsigned char minor, unsigned char *data, int len, void *context) {
+static int end_movie_handler([[maybe_unused]] unsigned char major, [[maybe_unused]] unsigned char minor,
+                             [[maybe_unused]] unsigned char *data, [[maybe_unused]] int len,
+                             [[maybe_unused]] void *context) {
   return 0;
 }
 
@@ -106,7 +109,8 @@ void timer_sleepmicroseconds(unsigned long int usec) {
   std::this_thread::sleep_for(std::chrono::microseconds(usec));
 }
 
-static int create_timer_handler(unsigned char major, unsigned char minor, unsigned char *data, int len, void *context) {
+static int create_timer_handler([[maybe_unused]] unsigned char major, [[maybe_unused]] unsigned char minor,
+                                unsigned char *data, [[maybe_unused]] int len, [[maybe_unused]] void *context) {
   long temp;
 
   if (timer_created)
@@ -166,8 +170,8 @@ end:
  * audio handlers
  *************************/
 
-static int create_audiobuf_handler(unsigned char major, unsigned char minor, unsigned char *data, int len,
-                                   void *context) {
+static int create_audiobuf_handler([[maybe_unused]] unsigned char major, unsigned char minor, unsigned char *data,
+                                   [[maybe_unused]] int len, [[maybe_unused]] void *context) {
 #ifdef AUDIO
   if (!mve_audio_enabled)
     return 1;
@@ -190,7 +194,9 @@ static int create_audiobuf_handler(unsigned char major, unsigned char minor, uns
   return 1;
 }
 
-static int play_audio_handler(unsigned char major, unsigned char minor, unsigned char *data, int len, void *context) {
+static int play_audio_handler([[maybe_unused]] unsigned char major, [[maybe_unused]] unsigned char minor,
+                              [[maybe_unused]] unsigned char *data, [[maybe_unused]] int len,
+                              [[maybe_unused]] void *context) {
 #ifdef AUDIO
   if (snd_ds && snd_ds->IsInitialized()) {
     snd_ds->Play();
@@ -199,7 +205,8 @@ static int play_audio_handler(unsigned char major, unsigned char minor, unsigned
   return 1;
 }
 
-static int audio_data_handler(unsigned char major, unsigned char minor, unsigned char *data, int len, void *context) {
+static int audio_data_handler(unsigned char major, [[maybe_unused]] unsigned char minor, unsigned char *data,
+                              [[maybe_unused]] int len, [[maybe_unused]] void *context) {
 #ifdef AUDIO
   static const int selected_chan = 1;
   if (snd_ds && snd_ds->IsInitialized()) {
@@ -237,8 +244,8 @@ static unsigned char *g_pCurMap = nullptr;
 static int g_nMapLength = 0;
 static int g_truecolor;
 
-static int create_videobuf_handler(unsigned char major, unsigned char minor, unsigned char *data, int len,
-                                   void *context) {
+static int create_videobuf_handler([[maybe_unused]] unsigned char major, unsigned char minor, unsigned char *data,
+                                   [[maybe_unused]] int len, [[maybe_unused]] void *context) {
   short w, h;
   short truecolor;
 
@@ -276,8 +283,9 @@ static int create_videobuf_handler(unsigned char major, unsigned char minor, uns
   return 1;
 }
 
-static int display_video_handler(unsigned char major, unsigned char minor, unsigned char *data, int len,
-                                 void *context) {
+static int display_video_handler([[maybe_unused]] unsigned char major, [[maybe_unused]] unsigned char minor,
+                                 [[maybe_unused]] unsigned char *data, [[maybe_unused]] int len,
+                                 [[maybe_unused]] void *context) {
   if (g_destX == -1) // center it
     g_destX = (g_screenWidth - g_width) >> 1;
   if (g_destY == -1) // center it
@@ -291,7 +299,8 @@ static int display_video_handler(unsigned char major, unsigned char minor, unsig
   return 1;
 }
 
-static int init_video_handler(unsigned char major, unsigned char minor, unsigned char *data, int len, void *context) {
+static int init_video_handler([[maybe_unused]] unsigned char major, [[maybe_unused]] unsigned char minor,
+                              unsigned char *data, [[maybe_unused]] int len, [[maybe_unused]] void *context) {
   short width, height;
 
   if (video_initialized)
@@ -307,8 +316,8 @@ static int init_video_handler(unsigned char major, unsigned char minor, unsigned
   return 1;
 }
 
-static int video_palette_handler(unsigned char major, unsigned char minor, unsigned char *data, int len,
-                                 void *context) {
+static int video_palette_handler([[maybe_unused]] unsigned char major, [[maybe_unused]] unsigned char minor,
+                                 unsigned char *data, [[maybe_unused]] int len, [[maybe_unused]] void *context) {
   short start, count;
   unsigned char *p;
 
@@ -322,14 +331,15 @@ static int video_palette_handler(unsigned char major, unsigned char minor, unsig
   return 1;
 }
 
-static int video_codemap_handler(unsigned char major, unsigned char minor, unsigned char *data, int len,
-                                 void *context) {
+static int video_codemap_handler([[maybe_unused]] unsigned char major, [[maybe_unused]] unsigned char minor,
+                                 unsigned char *data, int len, [[maybe_unused]] void *context) {
   g_pCurMap = data;
   g_nMapLength = len;
   return 1;
 }
 
-static int video_data_handler(unsigned char major, unsigned char minor, unsigned char *data, int len, void *context) {
+static int video_data_handler([[maybe_unused]] unsigned char major, [[maybe_unused]] unsigned char minor,
+                              unsigned char *data, int len, [[maybe_unused]] void *context) {
   unsigned char *temp;
 
   // short nFrameHot = get_short(data);
@@ -356,7 +366,9 @@ static int video_data_handler(unsigned char major, unsigned char minor, unsigned
   return 1;
 }
 
-static int end_chunk_handler(unsigned char major, unsigned char minor, unsigned char *data, int len, void *context) {
+static int end_chunk_handler([[maybe_unused]] unsigned char major, [[maybe_unused]] unsigned char minor,
+                             [[maybe_unused]] unsigned char *data, [[maybe_unused]] int len,
+                             [[maybe_unused]] void *context) {
   g_pCurMap = nullptr;
   return 1;
 }
@@ -372,7 +384,7 @@ void MVE_sfCallbacks(mve_cb_ShowFrame showframe) { mve_showframe = showframe; }
 
 void MVE_palCallbacks(mve_cb_SetPalette setpalette) { mve_setpalette = setpalette; }
 
-MVESTREAM* MVE_rmPrepMovie(void *src, int x, int y, int track) {
+MVESTREAM *MVE_rmPrepMovie(void *src, int x, int y, [[maybe_unused]] int track) {
   MVESTREAM *mve;
   mve = mve_open(src);
 

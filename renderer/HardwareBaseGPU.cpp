@@ -122,7 +122,8 @@ void rend_SetCharacterParameters(ddgr_color color1, ddgr_color color2, ddgr_colo
 }
 
 // Sets where the software renderer should write to
-void rend_SetSoftwareParameters(float aspect, int width, int height, int pitch, uint8_t *framebuffer) {}
+void rend_SetSoftwareParameters([[maybe_unused]] float aspect, [[maybe_unused]] int width, [[maybe_unused]] int height,
+                                [[maybe_unused]] int pitch, [[maybe_unused]] uint8_t *framebuffer) {}
 
 // Sets the state of bilinear filtering for our textures
 void rend_SetFiltering(int8_t state) { gpu_state.cur_bilinear_state = state; }
@@ -133,9 +134,10 @@ void rend_SetOverlayMap(int handle) { gpu_Overlay_map = handle; }
 
 void rend_SetOverlayType(uint8_t type) { gpu_Overlay_type = type; }
 
-void rend_FillCircle(ddgr_color col, int x, int y, int rad) {}
+void rend_FillCircle([[maybe_unused]] ddgr_color col, [[maybe_unused]] int x, [[maybe_unused]] int y,
+                     [[maybe_unused]] int rad) {}
 
-void rend_DrawCircle(int x, int y, int rad) {}
+void rend_DrawCircle([[maybe_unused]] int x, [[maybe_unused]] int y, [[maybe_unused]] int rad) {}
 
 // Sets up a font character to draw.  We draw our fonts as pieces of textures
 void rend_DrawFontCharacter(int bm_handle, int x1, int y1, int x2, int y2, float u, float v, float w, float h) {
@@ -193,10 +195,10 @@ void rend_SetAlphaFactor(float val) { gpu_Alpha_factor = std::clamp(val, 0.0f, 1
 float rend_GetAlphaFactor() { return gpu_Alpha_factor; }
 
 // Gets a pointer to a linear frame buffer
-void rend_GetLFBLock(renderer_lfb *lfb) {}
+void rend_GetLFBLock([[maybe_unused]] renderer_lfb *lfb) {}
 
 // Releases an lfb lock
-void rend_ReleaseLFBLock(renderer_lfb *lfb) {}
+void rend_ReleaseLFBLock([[maybe_unused]] renderer_lfb *lfb) {}
 
 // Returns the aspect ratio of the physical screen
 void rend_GetProjectionParameters(int *width, int *height) {
@@ -218,7 +220,9 @@ float rend_GetAspectRatio() {
 }
 
 // Given a source x,y and width,height, draws any sized bitmap into the renderer lfb
-void rend_DrawLFBBitmap(int sx, int sy, int w, int h, int dx, int dy, uint16_t *data, int rowsize) {}
+void rend_DrawLFBBitmap([[maybe_unused]] int sx, [[maybe_unused]] int sy, [[maybe_unused]] int w,
+                        [[maybe_unused]] int h, [[maybe_unused]] int dx, [[maybe_unused]] int dy,
+                        [[maybe_unused]] uint16_t *data, [[maybe_unused]] int rowsize) {}
 
 // draws a scaled 2d bitmap to our buffer
 void rend_DrawScaledBitmap(int x1, int y1, int x2, int y2, int bm, float u0, float v0, float u1, float v1, int color,
@@ -272,7 +276,7 @@ void rend_DrawScaledBitmap(int x1, int y1, int x2, int y2, int bm, float u0, flo
 }
 
 //	given a chunked bitmap, renders it.
-void rend_DrawChunkedBitmap(chunked_bitmap *chunk, int x, int y, uint8_t alpha) {
+void rend_DrawChunkedBitmap(chunked_bitmap *chunk, int x, int y, [[maybe_unused]] uint8_t alpha) {
   int *bm_array = chunk->bm_array;
   int w = chunk->w;
   int h = chunk->h;
@@ -382,10 +386,10 @@ void rend_DrawSimpleBitmap(int bm_handle, int x, int y) {
 void rend_GetRenderState(rendering_state *rstate) { memcpy(rstate, &gpu_state, sizeof(rendering_state)); }
 
 // Preuploads a texture to the video card
-void rend_PreUploadTextureToCard(int handle, int map_type) {}
+void rend_PreUploadTextureToCard([[maybe_unused]] int handle, [[maybe_unused]] int map_type) {}
 
 // Frees an uploaded texture from the video card
-void rend_FreePreUploadedTexture(int handle, int map_type) {}
+void rend_FreePreUploadedTexture([[maybe_unused]] int handle, [[maybe_unused]] int map_type) {}
 
 // Returns 1 if there is mid video memory, 2 if there is low vid memory, or 0 if there is large vid memory
 int rend_LowVidMem() { return 0; }
@@ -394,7 +398,7 @@ int rend_LowVidMem() { return 0; }
 int rend_SupportsBumpmapping() { return 0; }
 
 // Sets a bumpmap to be rendered, or turns off bumpmapping altogether
-void rend_SetBumpmapReadyState(int state, int map) {}
+void rend_SetBumpmapReadyState([[maybe_unused]] int state, [[maybe_unused]] int map) {}
 
 // returns rendering statistics for the frame
 void rend_GetStatistics(tRendererStats *stats) {

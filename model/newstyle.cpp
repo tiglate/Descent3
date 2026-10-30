@@ -498,7 +498,7 @@ inline void RenderSubmodelLightmapFace(poly_model *pm, bsp_info *sm, int facenum
     g3_SetTriangulationTest(0);
 }
 
-inline void RenderSubmodelFaceFogged(poly_model *pm, bsp_info *sm, int facenum) {
+inline void RenderSubmodelFaceFogged([[maybe_unused]] poly_model *pm, bsp_info *sm, int facenum) {
   g3Point *pointlist[100];
   polyface *fp = &sm->faces[facenum];
   int t;
@@ -548,7 +548,7 @@ inline void RenderSubmodelFaceFogged(poly_model *pm, bsp_info *sm, int facenum) 
     g3_SetTriangulationTest(0);
 }
 
-inline void RenderSubmodelFaceSpecular(poly_model *pm, bsp_info *sm, int facenum) {
+inline void RenderSubmodelFaceSpecular([[maybe_unused]] poly_model *pm, bsp_info *sm, int facenum) {
   g3Point *pointlist[100];
   polyface *fp = &sm->faces[facenum];
   int t;
@@ -662,7 +662,7 @@ void DrawThrusterEffect(vector *pos, float r, float g, float b, vector *norm, fl
 }
 
 // Draws a glowing cone of light
-void DrawGlowEffect(vector *pos, float r, float g, float b, vector *norm, float size) {
+void DrawGlowEffect(vector *pos, float r, float g, float b, [[maybe_unused]] vector *norm, float size) {
   if (!UseHardware)
     return; // No software stuff here!
 
@@ -861,7 +861,7 @@ void RenderSubmodelFacesUnsorted(poly_model *pm, bsp_info *sm) {
 }
 
 // Rotates all of the points of a submodel, plus supplies color info
-void RotateModelPoints(poly_model *pm, bsp_info *sm) {
+void RotateModelPoints([[maybe_unused]] poly_model *pm, bsp_info *sm) {
 
   // Figure out lighting
   if (Polymodel_light_type == POLYMODEL_LIGHTING_STATIC) {

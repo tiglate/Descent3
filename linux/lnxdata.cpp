@@ -195,7 +195,7 @@ bool oeLnxAppDatabase::read(const char *label, bool *entry) {
 }
 
 // write either an integer or string to a record.
-bool oeLnxAppDatabase::write(const char *label, const char *entry, int entrylen) {
+bool oeLnxAppDatabase::write(const char *label, const char *entry, [[maybe_unused]] int entrylen) {
   ASSERT(label);
   ASSERT(entry);
   if (!database) {

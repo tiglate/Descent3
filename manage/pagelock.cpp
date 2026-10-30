@@ -839,7 +839,7 @@ int mng_GetListOfLocks(mngs_Pagelock *pl, int max, char *who) {
 }
 
 // Takes a pagelock and sets its holder name to UNLOCKED
-void mng_OverrideToUnlocked(mngs_Pagelock *temp_pl) {
+void mng_OverrideToUnlocked([[maybe_unused]] mngs_Pagelock *temp_pl) {
 #ifndef RELEASE
   int r = mng_CheckIfPageOwned(temp_pl, TableUser);
 

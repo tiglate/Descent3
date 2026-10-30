@@ -168,4 +168,6 @@ void EndMovie(tCinematic *mve) {
   delete mve;
 }
 
-void CinematicCallback(int mveX, int mveY, int frameNum) { SubtDrawSubtitles(frameNum); }
+void CinematicCallback([[maybe_unused]] int mveX, [[maybe_unused]] int mveY, int frameNum) {
+  SubtDrawSubtitles(frameNum);
+}

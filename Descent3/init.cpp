@@ -1592,7 +1592,7 @@ void InitStringTable() {
     LOG_INFO.printf("%d strings loaded from the string tables", string_count);
 }
 
-void InitGraphics(bool editor) {
+void InitGraphics([[maybe_unused]] bool editor) {
   // Init our bitmaps, must be called before InitTextures
   bm_InitBitmaps();
 

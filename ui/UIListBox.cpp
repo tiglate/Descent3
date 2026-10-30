@@ -729,7 +729,7 @@ void UIListBox::OnKeyDown(int key) {
 }
 
 // behavior when key is released.
-void UIListBox::OnKeyUp(int key) {}
+void UIListBox::OnKeyUp([[maybe_unused]] int key) {}
 
 // behavior when mouse button is pressed.
 void UIListBox::OnMouseBtnDown(int btn) {

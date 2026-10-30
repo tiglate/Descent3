@@ -2563,7 +2563,7 @@ void osipf_SetControls(int fn, bool enabled) {
 }
 
 //	display messages using a primative dialog
-void osipf_OpenMessageWindow(const char *title, ...) {
+void osipf_OpenMessageWindow([[maybe_unused]] const char *title, ...) {
   Int3(); // ummm, this is a blank function, should we ever be calling it?
 }
 
@@ -2903,7 +2903,7 @@ int osipf_CFtell(CFILE *file) { return cftell(file); }
 
 uint8_t osipf_CFeof(CFILE *file) { return (cfeof(file) != 0) ? 1 : 0; }
 
-void osipf_SoundStop(int s_handle, bool f_immediately) {
+void osipf_SoundStop([[maybe_unused]] int s_handle, [[maybe_unused]] bool f_immediately) {
   // JEFF - sorry, this can't be  made multiplayer friendly
   /*
   if(f_immediately)
@@ -2934,7 +2934,7 @@ int osipf_SoundPlay2d(int obj_handle, int s_id, float volume) {
   */
 }
 
-int osipf_SoundPlay3d(int obj_handle, int s_id, float volume) {
+int osipf_SoundPlay3d(int obj_handle, int s_id, [[maybe_unused]] float volume) {
   msafe_struct mstruct;
   mstruct.objhandle = obj_handle;
   mstruct.index = s_id;

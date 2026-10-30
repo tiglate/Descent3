@@ -492,7 +492,7 @@ static inline int get_weapon_hud_image(int player, int type) {
   return (wpn ? wpn->hud_image_handle : BAD_BITMAP_HANDLE);
 }
 
-void RenderPrimaryMonitor(tGauge *gauge, bool modified) {
+void RenderPrimaryMonitor(tGauge *gauge, [[maybe_unused]] bool modified) {
   if (Disable_primary_monitor)
     return;
 
@@ -550,7 +550,7 @@ void RenderPrimaryMonitor(tGauge *gauge, bool modified) {
 }
 
 //	renders the secondary monitor gauge
-void RenderSecondaryMonitor(tGauge *gauge, bool modified) {
+void RenderSecondaryMonitor(tGauge *gauge, [[maybe_unused]] bool modified) {
   if (Disable_secondary_monitor)
     return;
 
@@ -601,7 +601,7 @@ void RenderSecondaryMonitor(tGauge *gauge, bool modified) {
 }
 
 //	renders the shield gauge monitor
-void RenderShieldMonitor(tGauge *gauge, bool modified) {
+void RenderShieldMonitor(tGauge *gauge, [[maybe_unused]] bool modified) {
   float alpha_mod = (Objects[Players[Player_num].objnum].shields) / (float)INITIAL_SHIELDS;
 
   if (alpha_mod > 1.0f)
@@ -619,7 +619,7 @@ void RenderShieldMonitor(tGauge *gauge, bool modified) {
 }
 
 //	renders the ship gauge monitor
-void RenderEnergyMonitor(tGauge *gauge, int orient, bool modified) {
+void RenderEnergyMonitor(tGauge *gauge, int orient, [[maybe_unused]] bool modified) {
   if (gauge->functional) {
     float img_h = bm_h(HUD_resources.energy_bmp, 0);
     float normalized_energy = (float)Players[Player_num].energy / (float)INITIAL_ENERGY;
@@ -667,7 +667,7 @@ void RenderEnergyMonitor(tGauge *gauge, int orient, bool modified) {
 }
 
 //	renders the ship gauge monitor
-void RenderAfterburnMonitor(tGauge *gauge, bool modified) {
+void RenderAfterburnMonitor(tGauge *gauge, [[maybe_unused]] bool modified) {
   g3Point used_pts[4], left_pts[4];
 
   if (gauge->functional) {
@@ -706,7 +706,7 @@ void RenderAfterburnMonitor(tGauge *gauge, bool modified) {
 
 //	renders the ship gauge monitor
 #define GAUGE_INVSHIPRING_DELTA 0.06f
-void RenderShipMonitor(tGauge *gauge, bool modified) {
+void RenderShipMonitor(tGauge *gauge, [[maybe_unused]] bool modified) {
   if (!gauge->functional)
     return;
 

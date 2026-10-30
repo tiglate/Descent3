@@ -625,7 +625,7 @@ int GetWeaponFireImage(int handle, int frame) {
 
 // Given a filename, loads either the bitmap or model found in that file.  If type
 // is not NULL, sets it to 1 if file is model, otherwise sets it to zero
-int LoadWeaponFireImage(char *filename, int *type, int *anim, int pageable) {
+int LoadWeaponFireImage(char *filename, int *type, int *anim, [[maybe_unused]] int pageable) {
   int model = 0, bm_handle;
   int is_vclip = 0;
   char extension[10];

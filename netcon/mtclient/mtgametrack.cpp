@@ -290,7 +290,7 @@ static void SendClientHolePunch(SOCKADDR_IN *addr) {
   DLLnw_SendWithID(PXO_NETID_GAME_TRACKER, (uint8_t *)&HolePunchAck, INTEL_INT(HolePunchAck.len), &send_address);
 }
 
-void HandleGamePacket(uint8_t *data, int len, network_address *from) {
+void HandleGamePacket(uint8_t *data, int len, [[maybe_unused]] network_address *from) {
 
   if (len < 0 || static_cast<size_t>(len) < GAME_HEADER_ONLY_SIZE || static_cast<size_t>(len) > sizeof(inpacket))
     return;

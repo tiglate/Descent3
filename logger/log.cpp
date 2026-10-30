@@ -30,7 +30,7 @@
 
 #include "log.h"
 
-void InitLog(plog::Severity log_level, bool enable_filelog, bool enable_win_console) {
+void InitLog(plog::Severity log_level, bool enable_filelog, [[maybe_unused]] bool enable_win_console) {
   std::filesystem::path log_file = "Descent3.log";
   static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
   static plog::RollingFileAppender<plog::TxtFormatter> fileAppender(PATH_TO_CSTR(log_file));

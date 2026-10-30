@@ -607,7 +607,7 @@ int LGSRooms(CFILE *fp) {
 
 // TODO: MTS: unused?
 //	loads in and sets these events
-int LGSEvents(CFILE *fp) {
+int LGSEvents([[maybe_unused]] CFILE *fp) {
   int retval = LGS_OK;
 
   // clear events
@@ -1543,7 +1543,7 @@ int LGSObjWB(CFILE *fp, object *op) {
 }
 
 // loads special object info
-int LGSObjSpecial(CFILE *fp, object *op) {
+int LGSObjSpecial([[maybe_unused]] CFILE *fp, [[maybe_unused]] object *op) {
   int retval = LGS_OK;
 
   return retval;

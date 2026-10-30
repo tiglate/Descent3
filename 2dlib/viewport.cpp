@@ -176,7 +176,8 @@ grViewport::~grViewport() {
   //	text_Font.free();
 }
 
-void grViewport::set_clipping_rect(int left, int top, int right, int bottom) {
+void grViewport::set_clipping_rect([[maybe_unused]] int left, [[maybe_unused]] int top, [[maybe_unused]] int right,
+                                   [[maybe_unused]] int bottom) {
   ASSERT(!vp_Locked); // YOU CANT DO THIS WHILE LOCKED!
 
   //	these are local to the viewport.

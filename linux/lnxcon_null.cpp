@@ -53,7 +53,7 @@
 // put some data up on the screen
 void con_null_Puts(int window, const char *str);
 
-bool con_null_Input(char *buf, int buflen) {
+bool con_null_Input(char *buf, [[maybe_unused]] int buflen) {
   *buf = '\0';
   return false;
 }
@@ -70,4 +70,4 @@ bool con_null_Create() {
 void con_null_Destroy() {}
 
 // put some data up on the screen
-void con_null_Puts(int window, const char *str) { mprintf(0, str); }
+void con_null_Puts([[maybe_unused]] int window, [[maybe_unused]] const char *str) { mprintf(0, str); }

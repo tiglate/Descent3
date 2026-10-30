@@ -459,7 +459,7 @@ void PollPTrackNet() {
 
 int Motd_version = 0;
 
-void HandlePilotData(uint8_t *data, int len, network_address *from) {
+void HandlePilotData(uint8_t *data, int len, [[maybe_unused]] network_address *from) {
   udp_packet_header inpacket;
   vmt_descent3_struct *d3_pilot;
   memcpy(&inpacket, data, sizeof(inpacket));

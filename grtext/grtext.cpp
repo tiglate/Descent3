@@ -327,7 +327,8 @@ void grtext_SetFontScale(float scale) {
 }
 
 //	sets fancy color for text
-void grtext_SetFancyColor(ddgr_color col1, ddgr_color col2, ddgr_color col3, ddgr_color col4) {
+void grtext_SetFancyColor(ddgr_color col1, [[maybe_unused]] ddgr_color col2, [[maybe_unused]] ddgr_color col3,
+                          [[maybe_unused]] ddgr_color col4) {
   struct {
     char op;
     ddgr_color col;

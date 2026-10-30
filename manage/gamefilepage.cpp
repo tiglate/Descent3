@@ -132,7 +132,7 @@ int mng_ReadGamefilePage(CFILE *infile, mngs_gamefile_page *gamefilepage) {
 
 // Reads in the gamefile named "name" into gamefilepage struct
 // Returns 0 on error or couldn't find, else 1 if all is good
-int mng_FindSpecificGamefilePage(char *name, mngs_gamefile_page *gamefilepage, int offset) {
+int mng_FindSpecificGamefilePage(char *name, mngs_gamefile_page *gamefilepage, [[maybe_unused]] int offset) {
   CFILE *infile;
   uint8_t pagetype;
   int done = 0, found = 0;

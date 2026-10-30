@@ -945,7 +945,7 @@ void SGSRooms(CFILE *fp) {
 }
 
 //	saves out events
-void SGSEvents(CFILE *fp) {}
+void SGSEvents([[maybe_unused]] CFILE *fp) {}
 
 //	saves out triggers
 void SGSTriggers(CFILE *fp) {
@@ -1290,7 +1290,7 @@ void SGSObjWB(CFILE *fp, object *op, int num_wbs) {
 }
 
 // saves special object info
-void SGSObjSpecial(CFILE *fp, const object *op) {}
+void SGSObjSpecial([[maybe_unused]] CFILE *fp, [[maybe_unused]] const object *op) {}
 
 // load spew
 void SGSSpew(CFILE *fp) {

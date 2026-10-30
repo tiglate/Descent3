@@ -520,7 +520,7 @@ float TraverseShotPath(tShotData *shot_data) {
 }
 
 // Analyzes data to determine if shot is clear
-int ShotIsClear(float risk_factor) {
+int ShotIsClear([[maybe_unused]] float risk_factor) {
   int j;
 
   if (num_shot_path_positions == 0)
@@ -1498,7 +1498,7 @@ void STDCALL ShutdownDLL(void) {}
 //	or OBJ_ROBOT), therefore, a 1 is passed in for isdoor if the given object name refers to a
 //	door, else it is a 0.  The return value is the unique identifier, else -1 if the script
 //	does not exist in the DLL.
-int STDCALL GetGOScriptID(const char *name, uint8_t isdoor) {
+int STDCALL GetGOScriptID(const char *name, [[maybe_unused]] uint8_t isdoor) {
   for (int i = 0; i < NUM_IDS; i++) {
     if (!stricmp(name, ScriptInfo[i].name)) {
       return ScriptInfo[i].id;
@@ -1583,7 +1583,7 @@ void STDCALL DestroyInstance(int id, void *ptr) {
 //	the game for that event.  This only pertains to certain events.  If the chain continues
 //	after this script, than the CONTINUE_DEFAULT setting will be overridden by lower priority
 //	scripts return value.
-int16_t STDCALL CallInstanceEvent(int id, void *ptr, int event, tOSIRISEventInfo *data) {
+int16_t STDCALL CallInstanceEvent([[maybe_unused]] int id, void *ptr, int event, tOSIRISEventInfo *data) {
   return ((BaseObjScript *)ptr)->CallEvent(event, data);
 }
 
@@ -1597,12 +1597,14 @@ int16_t STDCALL CallInstanceEvent(int id, void *ptr, int event, tOSIRISEventInfo
 //	able to be used.  IT IS VERY IMPORTANT WHEN SAVING THE STATE TO RETURN THE NUMBER OF _BYTES_ WROTE
 //	TO THE FILE.  When restoring the data, the return value is ignored.  saving_state is 1 when you should
 //	write data to the file_ptr, 0 when you should read in the data.
-int STDCALL SaveRestoreState(void *file_ptr, uint8_t saving_state) { return 0; }
+int STDCALL SaveRestoreState([[maybe_unused]] void *file_ptr, [[maybe_unused]] uint8_t saving_state) { return 0; }
 
 //============================================
 // Script Implementation
 //============================================
-int16_t BaseObjScript::CallEvent(int event, tOSIRISEventInfo *data) { return CONTINUE_CHAIN | CONTINUE_DEFAULT; }
+int16_t BaseObjScript::CallEvent([[maybe_unused]] int event, [[maybe_unused]] tOSIRISEventInfo *data) {
+  return CONTINUE_CHAIN | CONTINUE_DEFAULT;
+}
 
 //---------------------
 // AlienOrganism class
@@ -1953,7 +1955,7 @@ bool AlienOrganism::Flee(int me, bool force_flee /*=false*/) {
 }
 
 // Attempts to make an alien attack (and his squad if leading one)
-bool AlienOrganism::MeleeAttack(int me, bool force_attack /*=false*/) {
+bool AlienOrganism::MeleeAttack(int me, [[maybe_unused]] bool force_attack /*=false*/) {
   // If leading squad, tell squad to switch to melee mode
   if (memory->squad_flags & ALIEN_LEADER) {
     int mode = ALIEN_ATTACKING_MELEE;
@@ -2049,7 +2051,7 @@ bool AlienOrganism::Withdraw(int me) {
 }
 
 // Checks to see if we can join the leader
-bool AlienOrganism::WillJoinLeader(int me, int leader_handle, int priority) {
+bool AlienOrganism::WillJoinLeader(int me, int leader_handle, [[maybe_unused]] int priority) {
   // Get the recruiter's current mode
   int recruiter_mode;
   SendCommand(me, leader_handle, ALIEN_COM_GET_MODE, &recruiter_mode);
@@ -2217,7 +2219,7 @@ void AlienOrganism::RemoveTeammate(int tm_id) {
 }
 
 // Called by a leader to update his squad list (removes any that have died)
-void AlienOrganism::UpdateSquadList(int me) {
+void AlienOrganism::UpdateSquadList([[maybe_unused]] int me) {
   if (!(memory->squad_flags & ALIEN_LEADER))
     return;
 
@@ -2344,7 +2346,7 @@ void AlienOrganism::UpdateSquadVisibility(int me) {
 }
 
 // Checks to see if any fire blobs are nearby
-bool AlienOrganism::IsNearFire(int me) { return false; }
+bool AlienOrganism::IsNearFire([[maybe_unused]] int me) { return false; }
 
 // Checks to see if alien is currently on fire
 bool AlienOrganism::IsOnFire(int me) { return (Obj_IsEffect(me, EF_NAPALMED)); }
@@ -4009,7 +4011,7 @@ void AlienOrganism::DoDamage(int me, tOSIRISEVTDAMAGED *damage_data) {
 }
 
 // Handles attacks on aliens
-void AlienOrganism::DoCollide(int me, tOSIRISEVTCOLLIDE *collide_data) {
+void AlienOrganism::DoCollide([[maybe_unused]] int me, tOSIRISEVTCOLLIDE *collide_data) {
   // See if it's a player or player weapon that hit us
   if (qObjIsPlayerOrPlayerWeapon(collide_data->it_handle)) {
     // mprintf(0,"Hit by player!\n");
@@ -4597,10 +4599,10 @@ void HeavyTrooper::DoFrame(int me) {
 }
 
 // Process all AI Notify events
-bool HeavyTrooper::DoNotify(int me, tOSIRISEventInfo *data) { return true; }
+bool HeavyTrooper::DoNotify([[maybe_unused]] int me, [[maybe_unused]] tOSIRISEventInfo *data) { return true; }
 
 // Processes incoming damage reports
-void HeavyTrooper::DoDamage(int me, tOSIRISEVTDAMAGED *damage_data) {
+void HeavyTrooper::DoDamage([[maybe_unused]] int me, tOSIRISEVTDAMAGED *damage_data) {
   // If trooper is currently in armored mode, reduce damage significantly
   if (memory->mode == HT_ARMORED_ATTACK || memory->mode == HT_ARMORED_CIRCLE_BACK) {
     damage_data->damage *= HT_ARMOR_DAMAGED_MOD;
@@ -4825,7 +4827,7 @@ void Lifter::MoveTargetProp(int target_handle) {
 }
 
 // Creates the beam between me and the target
-void Lifter::UpdateTractorBeam(int me) {
+void Lifter::UpdateTractorBeam([[maybe_unused]] int me) {
   float next_duration = LIFTER_PULL_VALIDATE_INTERVAL;
   aLightningCreate(memory->pull_source_prop, memory->pull_target_prop, next_duration, 1.0f, 4, tractor_beam_effect_id,
                    next_duration, 1, 255, 255, 255, false);
@@ -4865,7 +4867,7 @@ void Lifter::ConfineTarget(int me) {
 }
 
 // Restores the target's movement
-void Lifter::ReleaseTarget(int me) {
+void Lifter::ReleaseTarget([[maybe_unused]] int me) {
   // Make sure we still have a target
   if (memory->pull_target != OBJECT_HANDLE_NONE && qObjExists(memory->pull_target)) {
     // Check the type
@@ -5236,7 +5238,7 @@ void Lifter::UpdateLiftBeam(int me) {
 }
 
 // Processes incoming damage reports
-void Lifter::DoDamage(int me, tOSIRISEVTDAMAGED *damage_data) {
+void Lifter::DoDamage(int me, [[maybe_unused]] tOSIRISEVTDAMAGED *damage_data) {
   memory->last_damaged_time = Game_GetTime();
 
   if (memory->mode == LIFTER_PASSIVE) {
@@ -5275,7 +5277,7 @@ void Lifter::DoDamage(int me, tOSIRISEVTDAMAGED *damage_data) {
 }
 
 // Something collided with lifter
-void Lifter::DoCollide(int me, tOSIRISEVTCOLLIDE *collide_data) {}
+void Lifter::DoCollide([[maybe_unused]] int me, [[maybe_unused]] tOSIRISEVTCOLLIDE *collide_data) {}
 
 // Does any final cleanup when object is destroyed
 void Lifter::DoCleanUp(int me) {
@@ -5348,7 +5350,7 @@ bool AlienBoss::SendCommand(int me, int it, char command, void *ptr) {
 }
 
 // Processes a command from another alien
-bool AlienBoss::ReceiveCommand(int me, int it, char command, void *ptr) {
+bool AlienBoss::ReceiveCommand(int me, [[maybe_unused]] int it, char command, void *ptr) {
   switch (command) {
   case AB_COM_THRUSTER_IS_FIRING: {
     if (memory->mode == AB_HEALING) {
@@ -5584,7 +5586,7 @@ void AlienBoss::AbortCurrentMode(int me) {
 }
 
 // Handles the healing effects
-void AlienBoss::UpdateHealingEnergyBeams(int me) {
+void AlienBoss::UpdateHealingEnergyBeams([[maybe_unused]] int me) {
   // See if it's time to create the next energy effect
   if (memory->next_update_beam_time <= Game_GetTime()) {
     float next_duration = AB_BEAM_UPDATE_TIME;
@@ -5627,7 +5629,7 @@ void AlienBoss::UpdateDamageEffect(int me) {
 }
 
 // Start healing fog protection
-void AlienBoss::StartHealing(int me) {
+void AlienBoss::StartHealing([[maybe_unused]] int me) {
   // Set the green healing fog
   aRoomChangeFog(memory->wander_rooms[0], 0.0f, 1.0f, 0.0f, 800.0f, 2.0f);
 
@@ -5636,7 +5638,7 @@ void AlienBoss::StartHealing(int me) {
 }
 
 // End healing fog protection
-void AlienBoss::StopHealing(int me) {
+void AlienBoss::StopHealing([[maybe_unused]] int me) {
   // Set the green healing fog
   aRoomChangeFog(memory->wander_rooms[0], 0.0f, 1.0f, 0.0f, 9000.0f, 4.0f);
 
@@ -6843,7 +6845,7 @@ void AlienBoss::DoDamage(int me, tOSIRISEVTDAMAGED *damage_data) {
 }
 
 // Handles attacks on aliens
-void AlienBoss::DoCollide(int me, tOSIRISEVTCOLLIDE *collide_data) {
+void AlienBoss::DoCollide([[maybe_unused]] int me, tOSIRISEVTCOLLIDE *collide_data) {
   // See if it's a player or player weapon that hit us
   if (qObjIsPlayerOrPlayerWeapon(collide_data->it_handle)) {
     // mprintf(0,"Hit by player!\n");
@@ -6852,7 +6854,7 @@ void AlienBoss::DoCollide(int me, tOSIRISEVTCOLLIDE *collide_data) {
 }
 
 // Does any final cleanup when object is destroyed
-void AlienBoss::DoCleanUp(int me) {
+void AlienBoss::DoCleanUp([[maybe_unused]] int me) {
   // remove the powerup props
   msafe_struct mo;
   mo.objhandle = memory->tail_pos_handle;
@@ -6921,7 +6923,7 @@ bool SecurityCamera::SendCommand(int me, int it, char command, void *ptr) {
 }
 
 // Processes a command from another alien
-bool SecurityCamera::ReceiveCommand(int me, int it, char command, void *ptr) {
+bool SecurityCamera::ReceiveCommand([[maybe_unused]] int me, [[maybe_unused]] int it, char command, void *ptr) {
   switch (command) {
   // Alien is asked to return current mode
   case SC_COM_GET_ALERT_STATUS:
@@ -7190,7 +7192,7 @@ bool CrowdControl::SendCommand(int me, int it, char command, void *ptr) {
 }
 
 // Processes a command from another alien
-bool CrowdControl::ReceiveCommand(int me, int it, char command, void *ptr) {
+bool CrowdControl::ReceiveCommand([[maybe_unused]] int me, [[maybe_unused]] int it, char command, void *ptr) {
   switch (command) {
   // Alien is asked to return current mode
   case CC_COM_SET_DATA: {

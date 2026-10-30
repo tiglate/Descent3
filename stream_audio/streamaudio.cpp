@@ -915,7 +915,7 @@ int ADecodeFileRead(void *data, void *buf, uint32_t qty) {
 
 //	Router for stream callbacks.
 //		Invoked by sound system
-void *AudioStreamCB(void *user_data, int handle, int *size) {
+void *AudioStreamCB(void *user_data, [[maybe_unused]] int handle, int *size) {
   AudioStream *stream = (AudioStream *)user_data;
   ASSERT(stream);
   ASSERT(stream->m_streamindex == handle);

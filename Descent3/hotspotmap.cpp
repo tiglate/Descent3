@@ -912,7 +912,7 @@ bool menutga_ConvertTGAtoHSM(const char *fpath) {
 
 // TODO: MTS: Unused?
 // Given a hotspotmap structure, it draws the pretty hotspot map to the screen (blue areas are the hotspots)
-void DisplayHotSpots(hotspotmap_t *hsmap, windowmap_t *wndmap) {
+void DisplayHotSpots([[maybe_unused]] hotspotmap_t *hsmap, [[maybe_unused]] windowmap_t *wndmap) {
   //@@	grSurface *cursurf;
   //@@	int count,curr_y,scanline_count;
   //@@	hotspot *curr_hotspot;

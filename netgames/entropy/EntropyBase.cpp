@@ -229,7 +229,7 @@ void DLLFUNCCALL DLLGetGameInfo(tDLLOptions *options) {
   strcpy(options->requirements, "ENTROPY");
 }
 
-void DetermineScore(int precord_num, int column_num, char *buffer, int buffer_size) {
+void DetermineScore(int precord_num, [[maybe_unused]] int column_num, char *buffer, int buffer_size) {
   player_record *pr = DMFCBase->GetPlayerRecord(precord_num);
   if (!pr || pr->state == STATE_EMPTY) {
     buffer[0] = '\0';
@@ -248,7 +248,7 @@ void TeamScoreCallback(int team, char *buffer, int buffer_size) {
 }
 
 // Initializes the game function pointers
-void DLLFUNCCALL DLLGameInit(int *api_func, uint8_t *all_ok, int num_teams_to_use) {
+void DLLFUNCCALL DLLGameInit(int *api_func, uint8_t *all_ok, [[maybe_unused]] int num_teams_to_use) {
   *all_ok = 1;
   DMFCBase = CreateDMFC();
   if (!DMFCBase) {
@@ -985,7 +985,7 @@ void TakeOverRoom(int newteam, int oldteam, int roomnum, int victor) {
   }
 }
 
-void DoPlayerInLab(int pnum, float time) {
+void DoPlayerInLab([[maybe_unused]] int pnum, [[maybe_unused]] float time) {
   // nothing to do in here
 }
 
@@ -1611,7 +1611,7 @@ void OnDisconnectSaveStatsToFile(void) {
   SaveStatsToFile(filename);
 }
 
-void DisplayHUDScores(struct tHUDItem *hitem) {
+void DisplayHUDScores([[maybe_unused]] struct tHUDItem *hitem) {
   if (display_my_welcome) {
     DisplayWelcomeMessage(DMFCBase->GetPlayerNum());
     display_my_welcome = false;

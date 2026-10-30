@@ -61,7 +61,8 @@ lnxsound::~lnxsound() {
 }
 
 // Starts the sound library, maybe have it send back some information -- 3d support?
-int lnxsound::InitSoundLib(char mixer_type, oeApplication *sos, uint8_t max_sounds_played) {
+int lnxsound::InitSoundLib([[maybe_unused]] char mixer_type, [[maybe_unused]] oeApplication *sos,
+                           [[maybe_unused]] uint8_t max_sounds_played) {
   SDL_AudioSpec spec;
 
   // setup mixer
@@ -139,9 +140,9 @@ void lnxsound::DestroySoundLib() {
 }
 
 // Locks and unlocks sounds (used when changing play_info data)
-bool lnxsound::LockSound(int sound_uid) { return false; }
+bool lnxsound::LockSound([[maybe_unused]] int sound_uid) { return false; }
 
-bool lnxsound::UnlockSound(int sound_uid) { return false; }
+bool lnxsound::UnlockSound([[maybe_unused]] int sound_uid) { return false; }
 
 bool lnxsound::SetSoundQuality(char quality) {
   int i;
@@ -193,7 +194,7 @@ bool lnxsound::SetSoundQuality(char quality) {
 
 char lnxsound::GetSoundQuality() { return m_sound_quality; }
 
-bool lnxsound::SetSoundMixer(char mixer_type) { return true; }
+bool lnxsound::SetSoundMixer([[maybe_unused]] char mixer_type) { return true; }
 
 char lnxsound::GetSoundMixer() { return SOUND_MIXER_SOFTWARE_16; }
 
@@ -374,7 +375,7 @@ void lnxsound::SetListener(pos_state *cur_pos) {
 }
 
 int lnxsound::PlaySound3d(play_information *play_info, int sound_index, pos_state *cur_pos, float adjusted_volume,
-                          bool f_looped, float reverb) //, uint16_t frequency
+                          bool f_looped, [[maybe_unused]] float reverb) //, uint16_t frequency
 {
   float volume = adjusted_volume; // Adjust base volume by sent volume, let 3d stuff do the rest
 
@@ -416,7 +417,7 @@ int lnxsound::PlaySound3d(play_information *play_info, int sound_index, pos_stat
   return PlaySound2d(play_info, sound_index, volume, pan, f_looped);
 }
 
-void lnxsound::AdjustSound(int sound_uid, float f_volume, float f_pan, uint16_t frequency) {
+void lnxsound::AdjustSound(int sound_uid, float f_volume, float f_pan, [[maybe_unused]] uint16_t frequency) {
   int current_slot;
 
   if (sound_device == 0)
@@ -437,7 +438,7 @@ void lnxsound::AdjustSound(int sound_uid, float f_volume, float f_pan, uint16_t 
     play_info->left_volume -= f_volume * f_pan;
 }
 
-void lnxsound::AdjustSound(int sound_uid, pos_state *cur_pos, float adjusted_volume, float reverb) {
+void lnxsound::AdjustSound(int sound_uid, pos_state *cur_pos, float adjusted_volume, [[maybe_unused]] float reverb) {
   if (sound_device == 0)
     return;
 
@@ -717,30 +718,33 @@ const char *lnxsound::GetErrorStr() const {
   return buffer;
 }
 
-bool lnxsound::SetGlobalReverbProperties(float volume, float damping, float decay) { return false; }
+bool lnxsound::SetGlobalReverbProperties([[maybe_unused]] float volume, [[maybe_unused]] float damping,
+                                         [[maybe_unused]] float decay) {
+  return false;
+}
 
 void lnxsound::StartStreaming() {}
 
 void lnxsound::EndStreaming() {}
 
 // may be called before init (must be to be valid, the card passed here will be initialized in InitSoundLib)
-void lnxsound::SetSoundCard(const char *name) {}
+void lnxsound::SetSoundCard([[maybe_unused]] const char *name) {}
 
 // set special parameters for the 3d environment.
 // of strcuture passed, you must set the appropriate 'flags' value for values you wish to modify
-void lnxsound::SetEnvironmentValues(const t3dEnvironmentValues *env) {}
+void lnxsound::SetEnvironmentValues([[maybe_unused]] const t3dEnvironmentValues *env) {}
 
 // get special parameters for the 3d environment.
 // of strcuture passed, you must set the appropriate 'flags' value for values you wish to modify
-void lnxsound::GetEnvironmentValues(t3dEnvironmentValues *env) {}
+void lnxsound::GetEnvironmentValues([[maybe_unused]] t3dEnvironmentValues *env) {}
 
 // enable special parameters for the 3d environment.
 // of strcuture passed, you must set the appropriate 'flags' value for values you wish to modify
-void lnxsound::SetEnvironmentToggles(const t3dEnvironmentToggles *env) {}
+void lnxsound::SetEnvironmentToggles([[maybe_unused]] const t3dEnvironmentToggles *env) {}
 
 // get states of special parameters for the 3d environment.
 // of strcuture passed, you must set the appropriate 'flags' value for values you wish to modify
-void lnxsound::GetEnvironmentToggles(t3dEnvironmentToggles *env) {}
+void lnxsound::GetEnvironmentToggles([[maybe_unused]] t3dEnvironmentToggles *env) {}
 
 void lnxsound_SetError(int code) { ll_sound_ptr->SetError(code); }
 
@@ -755,15 +759,14 @@ void lnxsound_ErrorText(const char *fmt, ...) {
 }
 
 // A peroidic mixer that uses the primary buffer as a stream buffer
-void StreamAudio(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount)
-{
-    if (additional_amount > 0) {
-        Uint8 *data = SDL_stack_alloc(Uint8, additional_amount);
-        if (data) {
-            // StreamAudio(userdata, data, additional_amount);
-            ((software_mixer *)userdata)->StreamMixer((char *)data, additional_amount);
-            SDL_PutAudioStreamData(stream, data, additional_amount);
-            SDL_stack_free(data);
-        }
+void StreamAudio(void *userdata, SDL_AudioStream *stream, int additional_amount, [[maybe_unused]] int total_amount) {
+  if (additional_amount > 0) {
+    Uint8 *data = SDL_stack_alloc(Uint8, additional_amount);
+    if (data) {
+      // StreamAudio(userdata, data, additional_amount);
+      ((software_mixer *)userdata)->StreamMixer((char *)data, additional_amount);
+      SDL_PutAudioStreamData(stream, data, additional_amount);
+      SDL_stack_free(data);
     }
+  }
 }

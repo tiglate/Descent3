@@ -386,7 +386,7 @@ bool sdlKeyFilter(const SDL_Event *event) {
   return false;
 } // sdlKeyFilter
 
-bool ddio_sdl_InternalKeyInit(ddio_init_info *init_info) {
+bool ddio_sdl_InternalKeyInit([[maybe_unused]] ddio_init_info *init_info) {
   // reset key list
   for (int i = 0; i < DDIO_MAX_KEYS; i++) {
     LKeys[i].down_ticks = 0;

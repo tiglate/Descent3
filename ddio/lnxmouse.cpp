@@ -146,7 +146,8 @@ int ddio_MouseGetCaps(int *buttons, int *axes) {
 
 void ddio_MouseClose() { DDIO_mouse_init = false; }
 
-void ddio_MouseSetLimits(int left, int top, int right, int bottom, int zmin, int zmax) {
+void ddio_MouseSetLimits(int left, int top, int right, int bottom, [[maybe_unused]] int zmin,
+                         [[maybe_unused]] int zmax) {
   DDIO_mouse_state.l = left;
   DDIO_mouse_state.t = top;
   DDIO_mouse_state.r = right;

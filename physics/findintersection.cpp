@@ -1744,7 +1744,7 @@ bool check_line_to_line(scalar *t1, scalar *t2, vector *p1, vector *v1, vector *
 // determine if a vector intersects with an object
 // if no intersects, returns 0, else fills in intp and returns dist
 int check_vector_to_object(vector *intp, float *col_dist, vector *p0, vector *p1, float rad, object *still_obj,
-                           object *fvi_obj) {
+                           [[maybe_unused]] object *fvi_obj) {
   float still_size;
   vector still_pos = still_obj->pos;
   float total_size;
@@ -2908,7 +2908,7 @@ int obj_in_list(int objnum, int *obj_list) {
 
 // new function for Mike
 // note: n_segs_visited must be set to zero before this is called
-int sphere_intersects_wall(vector *pnt, int segnum, float rad) {
+int sphere_intersects_wall([[maybe_unused]] vector *pnt, [[maybe_unused]] int segnum, [[maybe_unused]] float rad) {
   /*
           int facemask;
           segment *seg;
@@ -3211,8 +3211,9 @@ vector PointSpeed(object *obj, vector *pos, matrix *orient, vector *rotvel, vect
 // MTS: only used in this file.
 // Hacked for some initial testing
 bool BBoxPlaneIntersection(bool fast_exit, vector *collision_point, vector *collision_normal, object *obj,
-                           vector *new_pos, int nv, vector **vertex_ptr_list, vector *face_normal, matrix *orient,
-                           vector *rotvel, vector *velocity) {
+                           vector *new_pos, [[maybe_unused]] int nv, [[maybe_unused]] vector **vertex_ptr_list,
+                           vector *face_normal, matrix *orient, [[maybe_unused]] vector *rotvel,
+                           [[maybe_unused]] vector *velocity) {
   vector plane_pnt;
   vector verts[12];
   poly_model *pm = &Poly_models[obj->rtype.pobj_info.model_num];
@@ -3312,7 +3313,7 @@ bool BBoxPlaneIntersection(bool fast_exit, vector *collision_point, vector *coll
 }
 
 // Returns true if the object is through any walls
-int object_intersects_wall(object *objp) {
+int object_intersects_wall([[maybe_unused]] object *objp) {
   //	n_segs_visited = 0;
   //
   //	return sphere_intersects_wall(&objp->pos,objp->segnum,objp->size);

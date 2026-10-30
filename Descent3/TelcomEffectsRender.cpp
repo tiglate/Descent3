@@ -789,7 +789,8 @@ void RenderMovie(tceffect *tce, float frametime, int xoff, int yoff, bool ok_to_
       tce->age += 1.0f / tce->movieinfo.fps;
   }
 }
-void RenderPolyModel(tceffect *tce, float frametime, int xoff, int yoff, bool ok_to_render) {
+void RenderPolyModel(tceffect *tce, float frametime, [[maybe_unused]] int xoff, [[maybe_unused]] int yoff,
+                     [[maybe_unused]] bool ok_to_render) {
   /*
   if(!ok_to_render)
           return;
@@ -853,7 +854,8 @@ void RenderPolyModel(tceffect *tce, float frametime, int xoff, int yoff, bool ok
   */
   tce->age += frametime;
 }
-void RenderSound(tceffect *tce, float frametime, int xoff, int yoff, bool ok_to_render) {
+void RenderSound(tceffect *tce, float frametime, [[maybe_unused]] int xoff, [[maybe_unused]] int yoff,
+                 bool ok_to_render) {
   if (!ok_to_render)
     return;
   ASSERT(tce->type == EFX_SOUND);
@@ -866,7 +868,8 @@ void RenderSound(tceffect *tce, float frametime, int xoff, int yoff, bool ok_to_
 }
 #define FLASH_SWITCH 1.0f
 extern tceffect TCEffects[MAX_TCEFFECTS];
-void RenderButton(tceffect *tce, float frametime, int xoff, int yoff, bool ok_to_render) {
+void RenderButton(tceffect *tce, float frametime, [[maybe_unused]] int xoff, [[maybe_unused]] int yoff,
+                  bool ok_to_render) {
   if (!ok_to_render)
     return;
   ASSERT(tce->type == EFX_BUTTON);

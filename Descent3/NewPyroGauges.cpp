@@ -95,7 +95,7 @@ void NewPyroInitGauges() {
 //	Energy gauges
 
 //	shield gauge handler
-void NewPyroShieldGauge(tGauge *gauge, tGaugePos *pos) {
+void NewPyroShieldGauge([[maybe_unused]] tGauge *gauge, [[maybe_unused]] tGaugePos *pos) {
   //	we need to get the rectangular position in screen coords of the submodel for this gauge.
   //	find center point of face/polygon.
   //@@	int cx, cy,x,y;
@@ -125,7 +125,7 @@ void NewPyroShieldGauge(tGauge *gauge, tGaugePos *pos) {
 float Zfactor = 2.0f;
 
 //	ship status gauge
-void NewPyroShipGauge(tGauge *gauge, tGaugePos *pos) {
+void NewPyroShipGauge([[maybe_unused]] tGauge *gauge, [[maybe_unused]] tGaugePos *pos) {
   //	we should draw at least an octogonal polygon with the shield gauge texture.
   //@@	g3Point inner_points[NUM_SHIELD_SEGMENTS];
   //@@	g3Point outer_points[NUM_SHIELD_SEGMENTS];
@@ -225,7 +225,7 @@ void NewPyroShipGauge(tGauge *gauge, tGaugePos *pos) {
 //////////////////////////////////////////////////////////////////////////////
 //	Energy gauges
 
-void NewPyroEnergyDigitalGauge(tGauge *gauge, tGaugePos *pos) {
+void NewPyroEnergyDigitalGauge([[maybe_unused]] tGauge *gauge, [[maybe_unused]] tGaugePos *pos) {
   //	we need to get the rectangular position in screen coords of the submodel for this gauge.
   //	find center point of face/polygon.
   //@@	int cx, cy,x,y;
@@ -250,12 +250,12 @@ void NewPyroEnergyDigitalGauge(tGauge *gauge, tGaugePos *pos) {
   //@@	END_TEXT_BLOCK
 }
 
-void NewPyroEnergyAnalogGauge(tGauge *gauge, tGaugePos *pos) {}
+void NewPyroEnergyAnalogGauge([[maybe_unused]] tGauge *gauge, [[maybe_unused]] tGaugePos *pos) {}
 
 //////////////////////////////////////////////////////////////////////////////
 //	Weapon gauges
 
-void NewPyroPrimaryWeaponGauge(tGauge *gauge, tGaugePos *pos) {
+void NewPyroPrimaryWeaponGauge([[maybe_unused]] tGauge *gauge, [[maybe_unused]] tGaugePos *pos) {
   //@@	static float fade_time = 0.0f;
   //@@	static int fade_state = 0;
   //@@	float gauge_alpha;
@@ -334,7 +334,7 @@ void NewPyroPrimaryWeaponGauge(tGauge *gauge, tGaugePos *pos) {
   //@@	}
 }
 
-void NewPyroSecondaryWeaponGauge(tGauge *gauge, tGaugePos *pos) {
+void NewPyroSecondaryWeaponGauge([[maybe_unused]] tGauge *gauge, [[maybe_unused]] tGaugePos *pos) {
   //@@	static float fade_time = 0.0f;
   //@@	static int fade_state = 0;
   //@@	float gauge_alpha;

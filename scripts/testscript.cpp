@@ -93,7 +93,7 @@ char STDCALL InitializeDLL(tOSIRISModuleInit *func_list) {
 
 void STDCALL ShutdownDLL(void) {}
 
-int STDCALL GetGOScriptID(const char *name, uint8_t isdoor) {
+int STDCALL GetGOScriptID(const char *name, [[maybe_unused]] uint8_t isdoor) {
   for (int i = 0; i < MAX_IDS; i++) {
     if (!stricmp(name, ScriptInfo[i].name)) {
       return ScriptInfo[i].id;
@@ -155,12 +155,12 @@ int16_t STDCALL CallInstanceEvent(int id, void *ptr, int event, tOSIRISEventInfo
 //	able to be used.  IT IS VERY IMPORTANT WHEN SAVING THE STATE TO RETURN THE NUMBER OF _BYTES_ WROTE
 //	TO THE FILE.  When restoring the data, the return value is ignored.  saving_state is 1 when you should
 //	write data to the file_ptr, 0 when you should read in the data.
-int STDCALL SaveRestoreState(void *file_ptr, uint8_t saving_state) { return 0; }
+int STDCALL SaveRestoreState([[maybe_unused]] void *file_ptr, [[maybe_unused]] uint8_t saving_state) { return 0; }
 
 //============================================
 // Script Implementation
 //============================================
-int16_t BaseObjScript::CallEvent(int event, tOSIRISEventInfo *data) {
+int16_t BaseObjScript::CallEvent(int event, [[maybe_unused]] tOSIRISEventInfo *data) {
   switch (event) {
   case EVT_INTERVAL:
     mprintf(0, ".");

@@ -2825,7 +2825,8 @@ void DoPermissableWeaponMask(int weapon_battery_index) {
 
 // Fires a weapon from our player.  Won't fire if ammo/energy requirements aren't met.
 // Parameters:	weapon_type - either PW_PRIMARY or PW_SECONDARY
-void FireWeaponFromPlayer(object *objp, int weapon_type, int down_count, bool down_state, float down_time) {
+void FireWeaponFromPlayer(object *objp, int weapon_type, int down_count, [[maybe_unused]] bool down_state,
+                          float down_time) {
   // Check parms
   ASSERT(objp->type == OBJ_PLAYER);
   //	ASSERT(objp->id == Player_num);
