@@ -513,6 +513,11 @@ CFILE *open_file_in_directory(const std::filesystem::path &filename, const char 
   tmode[0] = mode[0];
   // if mode is "w", then open in text or binary as requested.  If "r", always open in "rb"
   tmode[1] = (mode[0] == 'w') ? mode[1] : 'b';
+  // fopen() succeeds on a directory on POSIX systems, but the first read would fail with EISDIR
+  std::error_code ec;
+  if (std::filesystem::is_directory(using_filename, ec)) {
+    return nullptr;
+  }
   // try to open file
   fp = fopen(PATH_TO_CSTR(using_filename), tmode);
 

@@ -51,6 +51,12 @@ TEST(D3, CFileIO) {
   cf_CloseLibrary(lib_handle);
 }
 
+TEST(D3, CFileOpenRejectsDirectories) {
+  add_cwd_to_base_directories();
+  EXPECT_EQ(cfopen(std::filesystem::temp_directory_path(), "rb"), nullptr);
+  EXPECT_EQ(cfopen(std::filesystem::path(), "rt"), nullptr);
+}
+
 TEST(D3, CFileTextNewlines) {
   const auto path = std::filesystem::temp_directory_path() / "descent3-cfile-newline-test.txt";
   {

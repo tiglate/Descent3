@@ -155,7 +155,8 @@ int gspy_Init() {
   }
   // make the socket non-blocking
   make_nonblocking(gspy_socket);
-  CFILE *cfp = cfopen(cfgpath, "rt");
+  // cf_LocatePath() returns an empty path when there is no config file
+  CFILE *cfp = cfgpath.empty() ? nullptr : cfopen(cfgpath, "rt");
   if (cfp) {
     LOG_INFO << "Found a gamespy config file!";
     char hostn[MAX_HOSTNAMELEN];
