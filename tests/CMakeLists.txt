@@ -23,3 +23,8 @@ add_executable(game_assets_tests game_assets_tests.cpp ../Descent3/game_assets.c
 target_include_directories(game_assets_tests PRIVATE ${PROJECT_SOURCE_DIR}/Descent3)
 target_link_libraries(game_assets_tests PRIVATE GTest::gtest_main)
 gtest_discover_tests(game_assets_tests)
+
+add_executable(settings_defaults_tests settings_defaults_tests.cpp)
+target_include_directories(settings_defaults_tests PRIVATE ${PROJECT_SOURCE_DIR}/Descent3)
+target_link_libraries(settings_defaults_tests PRIVATE GTest::gtest_main)
+gtest_discover_tests(settings_defaults_tests)

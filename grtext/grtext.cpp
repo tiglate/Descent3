@@ -625,7 +625,7 @@ void grtext_Render() {
     } break;
 
     case GRTEXTOP_PUTCHAR: {
-      tCharBlt cbi;
+      tCharBlt cbi{};
       struct {
         char op;
         int16_t x, y;
@@ -638,6 +638,7 @@ void grtext_Render() {
       cbi.clipped = false; // if =1, use sx,sy,sw,sh
       cbi.x = cmd.x;
       cbi.y = cmd.y;
+      cbi.dsw = cbi.dsh = Grtext_scale;
       if (Grtext_shadow) {
         //	rend_SetCharacterParameters(0,0,0,0);
         rend_SetFlatColor(0);

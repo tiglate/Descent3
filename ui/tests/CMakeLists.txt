@@ -1,0 +1,5 @@
+set(CMAKE_FOLDER "tests")
+add_executable(ui_scale_tests window_scale_tests.cpp)
+target_include_directories(ui_scale_tests PRIVATE ${PROJECT_SOURCE_DIR}/ui ${PROJECT_SOURCE_DIR}/lib)
+target_link_libraries(ui_scale_tests PRIVATE GTest::gtest_main)
+gtest_discover_tests(ui_scale_tests)

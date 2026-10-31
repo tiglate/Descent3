@@ -308,7 +308,7 @@ public:
   float joy_sensitivity[N_JOY_AXIS]{};            // axis sensitivities
   float key_ramping = 0.35;
   char read_controller = READF_MOUSE + READF_JOY;   // do we read the controller port also (beyond keyboard/mouse)
-  bool mouselook_control = false; // mouselook control.
+  bool mouselook_control = true;                    // modern defaults for new pilots; saved pilots override this.
   bool lrearview_enabled = false;
   bool rrearview_enabled = false; // are these small views enabled?
 

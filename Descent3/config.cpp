@@ -305,6 +305,8 @@
 #include "d3music.h"
 #include "gameloop.h"
 #include "args.h"
+#include "gamefont.h"
+#include "settings_defaults.h"
 
 #include <SDL3/SDL.h>
 
@@ -355,20 +357,6 @@ void ConfigureDisplayResolutions() {
   }
 
   std::set<tVideoResolution> resolutions;
-  for (int d = 0; d < display_count; d++) {
-    SDL_DisplayID display_id = displays[d];
-
-    int modes_count = 0;
-    SDL_DisplayMode **modes = SDL_GetFullscreenDisplayModes(display_id, &modes_count);
-    if (!modes)
-      continue;
-    for (int modes_id = 0; modes_id < modes_count; modes_id++) {
-      SDL_DisplayMode *mode = modes[modes_id];
-      resolutions.emplace(tVideoResolution{static_cast<uint16_t>(mode->w), static_cast<uint16_t>(mode->h)});
-    }
-
-    SDL_free(modes);
-  }
 
   // Take width and height argument into account
   int widtharg = FindArg("-Width");
@@ -398,6 +386,13 @@ void ConfigureDisplayResolutions() {
   }
 
   Display_id = displays[display_num];
+  int modes_count = 0;
+  SDL_DisplayMode **modes = SDL_GetFullscreenDisplayModes(Display_id, &modes_count);
+  if (modes) {
+    for (int i = 0; i < modes_count; ++i)
+      resolutions.emplace(tVideoResolution{static_cast<uint16_t>(modes[i]->w), static_cast<uint16_t>(modes[i]->h)});
+    SDL_free(modes);
+  }
 
   // Use either the CLI-provided resolution or the current display resolution as default
   tVideoResolution current_resolution;
@@ -427,18 +422,16 @@ void ConfigureDisplayResolutions() {
   Video_res_list = std::move(resolutions_vec);
   SDL_free(displays);
 
-  // Find the index of the current screen resolution in the list
-  auto current_res_id = std::find(Video_res_list.begin(), Video_res_list.end(), current_resolution);
-  if (current_res_id != Video_res_list.end()) {
-    Default_resolution_id = static_cast<int>(current_res_id - Video_res_list.begin());
+  Default_resolution_id = SelectStartupResolution(Video_res_list);
+  int saved_width = 0, saved_height = 0;
+  if (widtharg && heightarg) {
+    saved_width = current_resolution.width;
+    saved_height = current_resolution.height;
   } else {
-    Default_resolution_id = Video_res_list.size() - 1; // default to the highest supported resolution
+    Database->read_int("RS_width", &saved_width);
+    Database->read_int("RS_height", &saved_height);
   }
-
-  // Start at desktop resolution (or an explicit CLI override) every launch.
-  // A saved list index is unstable when monitors or available modes change.
-  // The video settings can still select another resolution during play.
-  Current_video_resolution_id = Default_resolution_id;
+  Current_video_resolution_id = SelectStartupResolution(Video_res_list, saved_width, saved_height);
 
   LOG_DEBUG << "Resolution configured to w=" << Video_res_list[Current_video_resolution_id].width
             << "h=" << Video_res_list[Current_video_resolution_id].height << " (id " << Current_video_resolution_id
@@ -446,7 +439,7 @@ void ConfigureDisplayResolutions() {
 }
 
 tDetailSettings Detail_settings;
-int Default_detail_level = DETAIL_LEVEL_MED;
+int Default_detail_level = DETAIL_LEVEL_VERY_HIGH;
 
 tGameToggles Game_toggles = { // toggles specified in general settings.
     true, false, true};
@@ -521,21 +514,6 @@ tGameToggles Game_toggles = { // toggles specified in general settings.
 #define DL_HIGH_SPEC_MAPPING_TYPE 1
 #define DL_HIGH_OBJECT_COMPLEXITY 2
 
-#define DL_VHI_TERRAIN_DISTANCE (120.0 * TERRAIN_SIZE)
-#define DL_VHI_PIXEL_ERROR 10.0
-#define DL_VHI_SPECULAR_LIGHT true
-#define DL_VHI_DYNAMIC_LIGHTING true
-#define DL_VHI_FAST_HEADLIGHT true
-#define DL_VHI_MIRRORED_SURFACES true
-#define DL_VHI_FOG_ENABLED true
-#define DL_VHI_CORONAS_ENABLES true
-#define DL_VHI_PROCEDURALS true
-#define DL_VHI_POWERUP_HALOS true
-#define DL_VHI_SCORCH_MARKS true
-#define DL_VHI_WEAPON_CORONAS true
-#define DL_VHI_SPEC_MAPPING_TYPE 1
-#define DL_VHI_OBJECT_COMPLEXITY 2
-
 #define MINIMUM_TERRAIN_DETAIL 4
 #define MAXIMUM_TERRAIN_DETAIL 28
 #define MINIMUM_RENDER_DIST 80
@@ -586,21 +564,7 @@ static const tDetailSettings DetailPresetHigh = {DL_HIGH_TERRAIN_DISTANCE,
                                                  true,
                                                  DL_HIGH_SPEC_MAPPING_TYPE,
                                                  DL_HIGH_OBJECT_COMPLEXITY};
-static const tDetailSettings DetailPresetVHi = {DL_VHI_TERRAIN_DISTANCE,
-                                                DL_VHI_PIXEL_ERROR,
-                                                DL_VHI_SPECULAR_LIGHT,
-                                                DL_VHI_DYNAMIC_LIGHTING,
-                                                DL_VHI_FAST_HEADLIGHT,
-                                                DL_VHI_MIRRORED_SURFACES,
-                                                DL_VHI_FOG_ENABLED,
-                                                DL_VHI_CORONAS_ENABLES,
-                                                DL_VHI_PROCEDURALS,
-                                                DL_VHI_POWERUP_HALOS,
-                                                DL_VHI_SCORCH_MARKS,
-                                                DL_VHI_WEAPON_CORONAS,
-                                                true,
-                                                DL_VHI_SPEC_MAPPING_TYPE,
-                                                DL_VHI_OBJECT_COMPLEXITY};
+static const tDetailSettings DetailPresetVHi = MaximumDetailSettings(TERRAIN_SIZE);
 
 void ConfigSetDetailLevel(int level) {
   switch (level) {
@@ -816,6 +780,7 @@ struct video_menu {
   bool *fullscreen = nullptr;
   bool *mipmapping = nullptr;
   bool *vsync = nullptr;
+  bool *high_resolution_fonts = nullptr;
   char *resolution_string = nullptr;
   short *fov = nullptr;
   bool resolution_changed = false;
@@ -871,8 +836,9 @@ struct video_menu {
     sheet->NewGroup(TXT_TOGGLES, 0, 80);
     filtering = sheet->AddLongCheckBox(TXT_BILINEAR, (Render_preferred_state.filtering != 0));
     mipmapping = sheet->AddLongCheckBox(TXT_MIPMAPPING, (Render_preferred_state.mipping != 0));
+    high_resolution_fonts = sheet->AddLongCheckBox("High-res fonts", grfont_HighResolutionEnabled());
 
-    sheet->NewGroup(TXT_MONITOR, 0, 130);
+    sheet->NewGroup(TXT_MONITOR, 0, 150);
     vsync = sheet->AddLongCheckBox(TXT_CFG_VSYNCENABLED, (Render_preferred_state.vsync_on != 0));
 
     sheet->AddText("");
@@ -889,6 +855,8 @@ struct video_menu {
       Render_preferred_state.mipping = (*mipmapping) ? 1 : 0;
     if (vsync)
       Render_preferred_state.vsync_on = (*vsync) ? 1 : 0;
+    if (high_resolution_fonts)
+      grfont_SetHighResolutionEnabled(*high_resolution_fonts);
 #if !defined(POSIX)
     if (bitdepth)
       Render_preferred_bitdepth = (*bitdepth) == 1 ? 32 : 16;
@@ -917,6 +885,8 @@ struct video_menu {
 
   // process
   void process(int res) {
+    if (high_resolution_fonts && sheet->HasChanged(high_resolution_fonts))
+      grfont_SetHighResolutionEnabled(*high_resolution_fonts);
     switch (res) {
     case IDV_CHANGE_RES_WINDOW: {
       // Resolution configuration window
@@ -952,6 +922,10 @@ struct video_menu {
           Current_video_resolution_id = newindex;
           std::string res = Video_res_list[Current_video_resolution_id].getName();
           snprintf(resolution_string, res.size() + 1, "%s", res.c_str());
+        }
+        if (newindex >= 0 && static_cast<size_t>(newindex) < Video_res_list.size()) {
+          Database->write("RS_width", static_cast<int>(Video_res_list[newindex].width));
+          Database->write("RS_height", static_cast<int>(Video_res_list[newindex].height));
         }
       }
 
@@ -1426,7 +1400,7 @@ struct details_menu {
     // sliders
     tSliderSettings slider_set;
     sheet->NewGroup(TXT_GEOMETRY, 90, 0);
-    iTemp = static_cast<int>(MAXIMUM_TERRAIN_DETAIL - Detail_settings.Pixel_error - MINIMUM_TERRAIN_DETAIL);
+    iTemp = static_cast<int>(MAXIMUM_TERRAIN_DETAIL - Detail_settings.Pixel_error);
     if (iTemp < 0)
       iTemp = 0;
     slider_set.min_val.i = MINIMUM_TERRAIN_DETAIL;
@@ -1443,7 +1417,7 @@ struct details_menu {
     rend_dist = sheet->AddSlider(TXT_RENDDIST, (MAXIMUM_RENDER_DIST - MINIMUM_RENDER_DIST) / 2, iTemp / 2, &slider_set);
 
     // object complexity radio
-    sheet->NewGroup(TXT_CFG_OBJECTCOMPLEXITY, 174, 87);
+    sheet->NewGroup(TXT_CFG_OBJECTCOMPLEXITY, 160, 87);
     objcomp = sheet->AddFirstRadioButton(TXT_LOW);
     sheet->AddRadioButton(TXT_CFG_MEDIUM);
     sheet->AddRadioButton(TXT_CFG_HIGH);
@@ -1460,7 +1434,7 @@ struct details_menu {
     Detail_settings.Fog_enabled = *fog;
     Detail_settings.Mirrored_surfaces = *mirror;
     Detail_settings.Object_complexity = *objcomp;
-    Detail_settings.Pixel_error = static_cast<float>(MAXIMUM_TERRAIN_DETAIL - ((*pixel_err) + MINIMUM_TERRAIN_DETAIL));
+    Detail_settings.Pixel_error = static_cast<float>(MAXIMUM_TERRAIN_DETAIL - *pixel_err);
     Detail_settings.Powerup_halos = *powerup_halo;
     Detail_settings.Procedurals_enabled = *procedurals;
     Detail_settings.Scorches_enabled = *scorches;
@@ -1524,7 +1498,7 @@ void details_menu::set_preset_details(int setting) {
   // now go through all the config items and set to the new values
   int iTemp;
 
-  iTemp = static_cast<int>(MAXIMUM_TERRAIN_DETAIL - ds.Pixel_error - MINIMUM_TERRAIN_DETAIL);
+  iTemp = static_cast<int>(MAXIMUM_TERRAIN_DETAIL - ds.Pixel_error);
   if (iTemp < 0)
     iTemp = 0;
   *pixel_err = (int16_t)(iTemp);

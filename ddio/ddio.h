@@ -331,7 +331,7 @@ int ddio_DeleteFile(const char *name);
 void ddio_GetWorkingDir(char *path, int len);
 bool ddio_SetWorkingDir(const char *path);
 
-//  get a file length of a FILE
+// Returns a file's byte length, or -1 if unavailable or outside the int range.
 int ddio_GetFileLength(FILE *filePtr);
 
 //	check if two files are different

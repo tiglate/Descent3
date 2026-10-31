@@ -111,6 +111,7 @@
 #include <cstdint>
 
 #include "grdefs.h"
+#include "scalable_font.h"
 
 #define GRTEXT_BUFLEN 16384
 #define GRTEXT_FORMAT_CHAR 0x2
@@ -218,6 +219,13 @@ void grfont_Reset();
 
 //	returns a handle to a loaded font.
 int grfont_Load(const char *fname);
+
+// Use bundled scalable glyphs for this font, preserving its layout metrics.
+// The global setting restores legacy bitmaps, including unsupported characters.
+void grfont_EnableScalableUI(int font, bool uppercase = true, bool shadow = false,
+                             popup_font::Face face = popup_font::Face::UI);
+bool grfont_HighResolutionEnabled();
+void grfont_SetHighResolutionEnabled(bool enabled);
 
 //	frees a loaded font
 void grfont_Free(int handle);

@@ -333,6 +333,7 @@ public:
 
 // flags
 #define UIF_CENTER 0x01
+#define UIF_SCALE_TO_SCREEN 0x40000000 // window: uniformly scale its legacy layout to the screen
 #define UIF_FIT 0x02
 #define UIF_BORDER 0x04                  // for certain gadgets specifies that the border be drawn.
 #define UIF_SLAVE 0x10                   // gadget never gets focus from ui system directly (child gadgets).
@@ -1087,6 +1088,8 @@ public:
 
   //	settings
   void SetFont(int handle);        // sets window's font.
+  // Returns the scale shared by artwork, text and hit targets; default windows use 1:1.
+  float GetScale() const;
   void SetBackItem(UIItem *item) { // sets the background drawing item.
     if (m_BackItem)
       delete m_BackItem;

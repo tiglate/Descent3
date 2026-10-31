@@ -89,15 +89,16 @@ extern int Game_fonts[]; // D3 font handles
 
 // Font defines
 
-#define NUM_FONTS 6 // How many fonts we have
+#define NUM_FONTS 7 // How many fonts we have
 
 // Indices for the font handles
-#define SMALL_FONT_INDEX 0    // Basic small font, used everywhere. Originally designed for briefing
-#define BIG_FONT_INDEX 1      // Basic big Font, used for titles.
-#define HUD_FONT_INDEX 2      // Dropshadowed font so can be seen over variable background
-#define MENU_FONT_INDEX 3     // Main menu font, also used for some multiplayer messages
-#define SMALL_UI_FONT_INDEX 4 // For the new UI
-#define BIG_UI_FONT_INDEX 5   // For the new UI
+#define SMALL_FONT_INDEX 0     // Basic small font, used everywhere. Originally designed for briefing
+#define BIG_FONT_INDEX 1       // Basic big Font, used for titles.
+#define HUD_FONT_INDEX 2       // Dropshadowed font so can be seen over variable background
+#define MENU_FONT_INDEX 3      // Main menu font, also used for some multiplayer messages
+#define SMALL_UI_FONT_INDEX 4  // For the new UI
+#define BIG_UI_FONT_INDEX 5    // For the new UI
+#define MAIN_MENU_FONT_INDEX 6 // Dedicated face for main-menu items
 
 // Handles to the fonts
 #define SMALL_FONT Game_fonts[SMALL_FONT_INDEX]
@@ -106,6 +107,7 @@ extern int Game_fonts[]; // D3 font handles
 #define MENU_FONT Game_fonts[MENU_FONT_INDEX]
 #define SMALL_UI_FONT Game_fonts[SMALL_UI_FONT_INDEX]
 #define BIG_UI_FONT Game_fonts[BIG_UI_FONT_INDEX]
+#define MAIN_MENU_FONT Game_fonts[MAIN_MENU_FONT_INDEX]
 
 // These are equivalencies for the base fonts
 #define BRIEFING_FONT SMALL_FONT

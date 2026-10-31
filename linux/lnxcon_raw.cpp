@@ -44,6 +44,7 @@
 #include <cstring>
 #include <cstdio>
 #include <cctype>
+#include <memory>
 
 #include "AppConsole.h"
 #include "ddio_common.h"
@@ -58,6 +59,8 @@ static int Con_raw_cols = 0, Con_raw_rows = 0;       // The size of the main win
 void con_raw_Puts(int window, const char *str);
 
 bool con_raw_Input(char *buf, int buflen) {
+  if (!buf || buflen <= 0)
+    return false;
   if (!Con_raw_read_buf) { // there is no read buffer...yipes
     *buf = '\0';
     return false;
@@ -75,6 +78,8 @@ bool con_raw_Input(char *buf, int buflen) {
 }
 
 void con_raw_Defer() {
+  if (!Con_raw_inp_buf || !Con_raw_read_buf)
+    return;
   int keypressed = ddio_KeyInKey();
 
   while (keypressed != 0) {
@@ -140,18 +145,25 @@ void con_raw_Defer() {
 }
 
 bool con_raw_Create() {
-  Con_raw_cols = 80;
-  Con_raw_rows = 24; // one less, since the bottom window takes up one row
-
-  // allocate any memory needed for buffers
-  Con_raw_inp_buf = static_cast<char *>(malloc(Con_raw_cols + 4));
-  Con_raw_read_buf = static_cast<char *>(malloc(Con_raw_cols + 4));
-  if (!Con_raw_inp_buf || !Con_raw_read_buf) {
-    // error allocating memory
+  constexpr int columns = 80;
+  constexpr int rows = 24; // one less, since the bottom window takes up one row
+  std::unique_ptr<char, decltype(&free)> input(static_cast<char *>(malloc(columns + 4)), free);
+  if (!input)
     return false;
-  }
-  memset(Con_raw_inp_buf, 0, Con_raw_cols + 4);
-  memset(Con_raw_read_buf, 0, Con_raw_cols + 4);
+  std::unique_ptr<char, decltype(&free)> read(static_cast<char *>(malloc(columns + 4)), free);
+  if (!read)
+    return false;
+  memset(input.get(), 0, columns + 4);
+  memset(read.get(), 0, columns + 4);
+
+  // Commit only after both allocations succeed. Failed reinitialization leaves
+  // a working console (and any pending command) intact.
+  free(Con_raw_inp_buf);
+  free(Con_raw_read_buf);
+  Con_raw_inp_buf = input.release();
+  Con_raw_read_buf = read.release();
+  Con_raw_cols = columns;
+  Con_raw_rows = rows;
   Con_raw_last_command[0] = '\0';
 
   Con_raw_inp_pos = 0;
@@ -171,6 +183,8 @@ void con_raw_Destroy() {
     Con_raw_read_buf = nullptr;
   }
   Con_raw_cols = Con_raw_rows = 0;
+  Con_raw_inp_pos = 0;
+  Con_raw_last_command[0] = '\0';
 }
 
 // put some data up on the screen

@@ -111,6 +111,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cctype>
+#include <algorithm>
 
 #include "bitmap.h"
 #include "cfile.h"
@@ -120,6 +121,7 @@
 #include "mem.h"
 #include "pserror.h"
 #include "renderer.h"
+#include "scalable_font.h"
 
 const int MAX_FONTS = 16, MAX_FONT_BITMAPS = 32;
 
@@ -134,6 +136,14 @@ const int MAX_FONTS = 16, MAX_FONT_BITMAPS = 32;
 //////////////////////////////////////////////////////////////////////////////
 //	Variables
 
+struct tScalableFontCache {
+  int bitmap = -1;
+  int height = 0;
+  int side = 0;
+  uint64_t last_use = 0;
+  std::array<popup_font::Glyph, 256> glyphs{};
+};
+
 struct tFontInfo {
   char filename[32];          // filename of font
   int references;             // number of references of that font
@@ -142,11 +152,18 @@ struct tFontInfo {
   int *ch_bmp;
   float *ch_uf, *ch_vf, *ch_wf, *ch_hf;
   tFontFileInfo font;
+  bool scalable_ui = false;
+  bool scalable_uppercase = true;
+  bool scalable_shadow = false;
+  popup_font::Face scalable_face = popup_font::Face::UI;
+  std::array<tScalableFontCache, 4> scalable_cache{};
 };
 
 //	Font information stored here.
 static tFontInfo Fonts[MAX_FONTS];
 static bool Font_init = false;
+static bool HighResolutionFonts = true;
+static uint64_t ScalableFontClock = 0;
 
 #define GRFONT_SURFACE_WIDTH 128
 #define GRFONT_SURFACE_HEIGHT 128
@@ -413,6 +430,12 @@ void grfont_Free(int handle) {
 
   //	delete font surface info.
   ft = &Fonts[handle];
+  for (auto &cache : ft->scalable_cache) {
+    if (cache.bitmap != -1)
+      bm_FreeBitmap(cache.bitmap);
+    cache = {};
+  }
+  ft->scalable_ui = false;
   if (ft->ch_bmp)
     delete[] ft->ch_bmp;
   if (ft->ch_wf)
@@ -744,6 +767,101 @@ int grfont_GetTracking(int font) {
 }
 
 //	render a character
+bool grfont_HighResolutionEnabled() { return HighResolutionFonts; }
+
+void grfont_SetHighResolutionEnabled(bool enabled) {
+  HighResolutionFonts = enabled;
+  if (!enabled) {
+    for (auto &font : Fonts)
+      for (auto &cache : font.scalable_cache) {
+        if (cache.bitmap != -1)
+          bm_FreeBitmap(cache.bitmap);
+        cache = {};
+      }
+  }
+}
+
+void grfont_EnableScalableUI(int font, bool uppercase, bool shadow, popup_font::Face face) {
+  ASSERT(font >= 0 && font < MAX_FONTS);
+  // A different face/case must not reuse an atlas built for the old choice.
+  for (auto &cache : Fonts[font].scalable_cache) {
+    if (cache.bitmap != -1)
+      bm_FreeBitmap(cache.bitmap);
+    cache = {};
+  }
+  Fonts[font].scalable_ui = true;
+  Fonts[font].scalable_uppercase = uppercase;
+  Fonts[font].scalable_shadow = shadow;
+  Fonts[font].scalable_face = face;
+}
+
+// Keep a bounded set of sizes so HUD gauges at different scales do not rebuild
+// an atlas every frame. Free/Reset and the legacy-font switch release them.
+static bool grfont_DrawScalable(tFontInfo &ft, const tCharBlt &cbi, int index) {
+  if (!HighResolutionFonts || !ft.scalable_ui)
+    return false;
+  const int height = popup_font::RasterHeight(ft.font.height, cbi.dsw, cbi.dsh, rend_GetFontPixelScale());
+  if (!height)
+    return false;
+  auto entry = std::find_if(ft.scalable_cache.begin(), ft.scalable_cache.end(),
+                            [height](const auto &cache) { return cache.height == height; });
+  if (entry == ft.scalable_cache.end()) {
+    entry = std::min_element(ft.scalable_cache.begin(), ft.scalable_cache.end(),
+                             [](const auto &a, const auto &b) { return a.last_use < b.last_use; });
+    if (entry->bitmap != -1)
+      bm_FreeBitmap(entry->bitmap);
+    *entry = {};
+    entry->height = height;
+    std::array<int, 256> widths{};
+    for (int ch = ft.font.min_ascii; ch <= ft.font.max_ascii; ++ch)
+      widths[ch] = ft.font.char_widths ? ft.font.char_widths[ch - ft.font.min_ascii] : ft.font.width;
+    const auto atlas = popup_font::Rasterize(widths, ft.font.height, static_cast<float>(height) / ft.font.height,
+                                             ft.scalable_uppercase, ft.scalable_face);
+    if (atlas.side) {
+      const int bitmap = bm_AllocBitmap(atlas.side, atlas.side, 0);
+      if (bitmap != -1 && bitmap != BAD_BITMAP_HANDLE) {
+        GameBitmaps[bitmap].format = BITMAP_FORMAT_4444;
+        std::copy(atlas.pixels.begin(), atlas.pixels.end(), bm_data(bitmap, 0));
+        entry->bitmap = bitmap;
+        entry->side = atlas.side;
+        entry->glyphs = atlas.glyphs;
+      }
+    }
+  }
+  entry->last_use = ++ScalableFontClock;
+  const int ch = index + ft.font.min_ascii;
+  if (entry->bitmap == -1 || ch < 0 || ch >= 256 || !entry->glyphs[ch].present)
+    return false;
+  const auto &cell = entry->glyphs[ch];
+  const float logical_w = (ft.font.char_widths ? ft.font.char_widths[index] : ft.font.width) * cbi.dsw;
+  const float logical_h = ft.font.height * cbi.dsh;
+  const float u = static_cast<float>(cell.x) / entry->side;
+  const float v = static_cast<float>(cell.y) / entry->side;
+  const float uw = static_cast<float>(cell.width) / entry->side;
+  const float vh = static_cast<float>(cell.height) / entry->side;
+  const float sx = cbi.clipped ? cbi.sx / logical_w : 0.0f;
+  const float sy = cbi.clipped ? cbi.sy / logical_h : 0.0f;
+  const float sw = cbi.clipped ? cbi.sw / logical_w : 1.0f;
+  const float sh = cbi.clipped ? cbi.sh / logical_h : 1.0f;
+  rend_SetFiltering(1);
+  const int width = cbi.clipped ? cbi.sw : static_cast<int>(cbi.sw * cbi.dsw);
+  const int draw_height = cbi.clipped ? cbi.sh : static_cast<int>(cbi.sh * cbi.dsh);
+  if (ft.scalable_shadow) {
+    rendering_state state;
+    rend_GetRenderState(&state);
+    rend_SetFlatColor(GR_RGB(0, 0, 0));
+    const int dx = std::max(1, static_cast<int>(cbi.dsw));
+    const int dy = std::max(1, static_cast<int>(cbi.dsh));
+    rend_DrawFontCharacter(entry->bitmap, cbi.x + dx, cbi.y + dy, cbi.x + width + dx, cbi.y + draw_height + dy,
+                           u + sx * uw, v + sy * vh, sw * uw, sh * vh);
+    rend_SetFlatColor(state.cur_color);
+  }
+  rend_DrawFontCharacter(entry->bitmap, cbi.x, cbi.y, cbi.x + width, cbi.y + draw_height, u + sx * uw, v + sy * vh,
+                         sw * uw, sh * vh);
+  rend_SetFiltering(0);
+  return true;
+}
+
 int grfont_BltChar(int font, tCharBlt *cbi) {
   ASSERT(font > -1 && font < MAX_FONTS);
 
@@ -769,6 +887,8 @@ int grfont_BltChar(int font, tCharBlt *cbi) {
     cbi->sx = 0;
     cbi->sy = 0;
 
+    if (grfont_DrawScalable(*ft, *cbi, cbi->ch))
+      return cbi->x + static_cast<int>(cbi->sw * cbi->dsw);
     rend_DrawFontCharacter(ft->bmps[ft->ch_bmp[cbi->ch]], cbi->x, cbi->y, (int)(cbi->x + cbi->sw * cbi->dsw),
                            (int)(cbi->y + cbi->sh * cbi->dsh), ft->ch_uf[cbi->ch], ft->ch_vf[cbi->ch],
                            ft->ch_wf[cbi->ch], ft->ch_hf[cbi->ch]);
@@ -781,6 +901,8 @@ int grfont_BltChar(int font, tCharBlt *cbi) {
     // ft->ch_hf[cbi->ch]);
     //@@		return (cbi->x + ft->ch_w[cbi->ch] - 1);
   } else {
+    if (grfont_DrawScalable(*ft, *cbi, cbi->ch))
+      return cbi->x + cbi->sw;
     rend_DrawFontCharacter(
         ft->bmps[ft->ch_bmp[cbi->ch]], cbi->x, cbi->y,
         (int)(cbi->x + cbi->sw), // don't scale since these values are already scaled

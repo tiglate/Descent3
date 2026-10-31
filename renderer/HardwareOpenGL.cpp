@@ -22,6 +22,7 @@
 #include <cstdio>
 #include <cstring>
 #include <optional>
+#include <cmath>
 
 // TODO: Use SDL_FunctionPointer properly instead
 #define SDL_FUNCTION_POINTER_IS_VOID_POINTER
@@ -53,6 +54,7 @@
 #include "NewBitmap.h"
 #include "shaders.h"
 #include "ShaderProgram.h"
+#include "render_dimensions.h"
 
 #if defined(WIN32)
 #include "win/arb_extensions.h"
@@ -225,6 +227,23 @@ static GLuint GOpenGLRBOColor = 0;
 static GLuint GOpenGLRBODepth = 0;
 static GLuint GOpenGLFBOWidth = 0;
 static GLuint GOpenGLFBOHeight = 0;
+static bool NativeUIMode = false;
+
+static float FramebufferScaleX() {
+  return gpu_state.screen_width > 0 && GOpenGLFBOWidth ? static_cast<float>(GOpenGLFBOWidth) / gpu_state.screen_width
+                                                       : 1.0f;
+}
+static float FramebufferScaleY() {
+  return gpu_state.screen_height > 0 && GOpenGLFBOHeight
+             ? static_cast<float>(GOpenGLFBOHeight) / gpu_state.screen_height
+             : 1.0f;
+}
+
+bool rend_SetNativeUIMode(bool enabled) {
+  const bool changed = NativeUIMode != enabled;
+  NativeUIMode = enabled;
+  return changed;
+}
 
 // returns true if the passed in extension name is supported
 bool opengl_CheckExtension(std::string_view extName) {
@@ -331,7 +350,7 @@ void opengl_SetDefaults() {
   OpenGL_multitexture_state = false;
 
   dglEnable(GL_SCISSOR_TEST);
-  dglScissor(0, 0, gpu_state.screen_width, gpu_state.screen_height);
+  dglScissor(0, 0, GOpenGLFBOWidth, GOpenGLFBOHeight);
   dglDisable(GL_SCISSOR_TEST);
 
   gpu_BindTexture(BAD_BITMAP_HANDLE, MAP_TYPE_BITMAP, 0);
@@ -483,8 +502,11 @@ int opengl_Setup([[maybe_unused]] oeApplication *app, const int *width, const in
     GOpenGLFBOWidth = GOpenGLFBOHeight = GOpenGLFBO = GOpenGLRBOColor = GOpenGLRBODepth = 0;
   }
 
-  const GLsizei w = (GLsizei)*width;
-  const GLsizei h = (GLsizei)*height;
+  int drawable_w, drawable_h;
+  SDL_GetWindowSizeInPixels(GSDLWindow, &drawable_w, &drawable_h);
+  const auto buffer = render_dimensions::Buffer({*width, *height}, {drawable_w, drawable_h}, NativeUIMode);
+  const GLsizei w = buffer.width;
+  const GLsizei h = buffer.height;
 
   GOpenGLFBOWidth = w;
   GOpenGLFBOHeight = h;
@@ -524,6 +546,7 @@ int opengl_Setup([[maybe_unused]] oeApplication *app, const int *width, const in
   }
 
   gRenderer.emplace();
+  g3_ForceTransformRefresh();
 
   Already_loaded = 1;
   return 1;
@@ -969,7 +992,9 @@ int opengl_MakeBitmapCurrent(int handle, int map_type, int tn) {
   if (map_type == MAP_TYPE_LIGHTMAP) {
     if (OpenGL_lightmap_remap[handle] == 65535) {
       texnum = opengl_MakeTextureObject(tn);
-      SET_WRAP_STATE(OpenGL_lightmap_states[handle], 1);
+      // Match the GL_REPEAT state set by opengl_MakeTextureObject so the
+      // first clamped draw actually updates the texture's wrap parameters.
+      SET_WRAP_STATE(OpenGL_lightmap_states[handle], WT_WRAP);
       SET_FILTER_STATE(OpenGL_lightmap_states[handle], 0);
       OpenGL_lightmap_remap[handle] = texnum;
       opengl_TranslateBitmapToOpenGL(texnum, handle, map_type, 0, tn);
@@ -981,7 +1006,7 @@ int opengl_MakeBitmapCurrent(int handle, int map_type, int tn) {
   } else {
     if (OpenGL_bitmap_remap[handle] == 65535) {
       texnum = opengl_MakeTextureObject(tn);
-      SET_WRAP_STATE(OpenGL_bitmap_states[handle], 1);
+      SET_WRAP_STATE(OpenGL_bitmap_states[handle], WT_WRAP);
       SET_FILTER_STATE(OpenGL_bitmap_states[handle], 0);
       OpenGL_bitmap_remap[handle] = texnum;
       opengl_TranslateBitmapToOpenGL(texnum, handle, map_type, 0, tn);
@@ -1027,11 +1052,11 @@ void opengl_MakeWrapTypeCurrent(int handle, int map_type, int tn) {
 
   OpenGL_sets_this_frame[1]++;
 
-  if (gpu_state.cur_wrap_type == WT_CLAMP) {
+  if (dest_wrap == WT_CLAMP) {
     dglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     dglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-  } else if (gpu_state.cur_wrap_type == WT_WRAP_V) {
+  } else if (dest_wrap == WT_WRAP_V) {
     dglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     dglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   } else {
@@ -1465,14 +1490,9 @@ void rend_Flip() {
     int w, h;
     SDL_GetWindowSizeInPixels(GSDLWindow, &w, &h);
 
-    int scaledHeight, scaledWidth;
-    if (w < h) {
-      scaledWidth = w;
-      scaledHeight = (int)(((((double)GOpenGLFBOHeight) / ((double)GOpenGLFBOWidth))) * ((double)w));
-    } else {
-      scaledHeight = h;
-      scaledWidth = (int)(((((double)GOpenGLFBOWidth) / ((double)GOpenGLFBOHeight))) * ((double)h));
-    }
+    const auto fit =
+        render_dimensions::Fit({static_cast<int>(GOpenGLFBOWidth), static_cast<int>(GOpenGLFBOHeight)}, {w, h});
+    const int scaledWidth = fit.width, scaledHeight = fit.height;
 
     const int centeredX = (w - scaledWidth) / 2;
     const int centeredY = (h - scaledHeight) / 2;
@@ -1537,27 +1557,35 @@ void rend_ResetCache() {
   opengl_ResetCache();
 }
 
+static float Draw2DScale = 1.0f;
+
 // Fills a rectangle on the display
 void rend_FillRect(ddgr_color color, int x1, int y1, int x2, int y2) {
   int r = GR_COLOR_RED(color);
   int g = GR_COLOR_GREEN(color);
   int b = GR_COLOR_BLUE(color);
 
-  int width = x2 - x1;
-  int height = y2 - y1;
+  const auto scaled_x = [](int coordinate) {
+    return static_cast<int>(std::lround(coordinate * Draw2DScale * FramebufferScaleX()));
+  };
+  const auto scaled_y = [](int coordinate) {
+    return static_cast<int>(std::lround(coordinate * Draw2DScale * FramebufferScaleY()));
+  };
+  int width = scaled_x(x2 + gpu_state.clip_x1) - scaled_x(x1 + gpu_state.clip_x1);
+  int height = scaled_y(y2 + gpu_state.clip_y1) - scaled_y(y1 + gpu_state.clip_y1);
 
-  x1 += gpu_state.clip_x1;
-  y1 += gpu_state.clip_y1;
+  x1 = scaled_x(x1 + gpu_state.clip_x1);
+  y1 = scaled_y(y1 + gpu_state.clip_y1);
 
   dglEnable(GL_SCISSOR_TEST);
-  dglScissor(x1, gpu_state.screen_height - (height + y1), width, height);
+  dglScissor(x1, GOpenGLFBOHeight - (height + y1), width, height);
   dglClearColor((float)r / 255.0f, (float)g / 255.0f, (float)b / 255.0f, 0);
   dglClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  width = gpu_state.clip_x2 - gpu_state.clip_x1;
-  height = gpu_state.clip_y2 - gpu_state.clip_y1;
+  width = scaled_x(gpu_state.clip_x2) - scaled_x(gpu_state.clip_x1);
+  height = scaled_y(gpu_state.clip_y2) - scaled_y(gpu_state.clip_y1);
 
-  dglScissor(gpu_state.clip_x1, gpu_state.screen_height - (gpu_state.clip_y1 + height), width, height);
+  dglScissor(scaled_x(gpu_state.clip_x1), GOpenGLFBOHeight - (scaled_y(gpu_state.clip_y1) + height), width, height);
   dglDisable(GL_SCISSOR_TEST);
 }
 
@@ -1576,7 +1604,9 @@ void rend_SetPixel(ddgr_color color, int x, int y) {
 // Sets a pixel on the display
 ddgr_color rend_GetPixel(int x, int y) {
   ddgr_color color[4];
-  dglReadPixels(x, (gpu_state.screen_height - 1) - y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid *)color);
+  dglReadPixels(static_cast<int>(x * FramebufferScaleX()),
+                GOpenGLFBOHeight - 1 - static_cast<int>(y * FramebufferScaleY()), 1, 1, GL_RGBA, GL_UNSIGNED_BYTE,
+                (GLvoid *)color);
   return color[0];
 }
 
@@ -1690,15 +1720,13 @@ void rend_DrawSpecialLine(g3Point *p0, g3Point *p1) {
 
 // Takes a screenshot of the current frame and puts it into the handle passed
 std::unique_ptr<NewBitmap> rend_Screenshot() {
-  auto result =
-      std::make_unique<NewBitmap>(gpu_state.screen_width, gpu_state.screen_height, PixelDataFormat::RGBA32, true);
+  auto result = std::make_unique<NewBitmap>(GOpenGLFBOWidth, GOpenGLFBOHeight, PixelDataFormat::RGBA32, true);
 
   if (!result || result->getData() == nullptr) {
     return nullptr;
   }
 
-  dglReadPixels(0, 0, gpu_state.screen_width, gpu_state.screen_height, GL_RGBA, GL_UNSIGNED_BYTE,
-                (GLvoid *)result->getData());
+  dglReadPixels(0, 0, GOpenGLFBOWidth, GOpenGLFBOHeight, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid *)result->getData());
 
   return result;
 }
@@ -1706,25 +1734,26 @@ std::unique_ptr<NewBitmap> rend_Screenshot() {
 // Takes a screenshot of the current frame and puts it into the handle passed
 void rend_Screenshot(int bm_handle) {
   auto screenshot = rend_Screenshot();
+  if (!screenshot)
+    return;
   auto *temp_data = reinterpret_cast<uint32_t *>(screenshot->getData());
 
   uint32_t w, h;
   screenshot->getSize(w, h);
 
-  ASSERT((bm_w(bm_handle, 0)) == gpu_state.screen_width);
-  ASSERT((bm_h(bm_handle, 0)) == gpu_state.screen_height);
+  const int dest_w = bm_w(bm_handle, 0), dest_h = bm_h(bm_handle, 0);
 
   uint16_t *dest_data = bm_data(bm_handle, 0);
 
-  for (std::size_t i = 0; i < h; i++) {
-    for (std::size_t t = 0; t < w; t++) {
-      uint32_t spix = temp_data[i * w + t];
+  for (int i = 0; i < dest_h; i++) {
+    for (int t = 0; t < dest_w; t++) {
+      uint32_t spix = temp_data[(static_cast<uint64_t>(i) * h / dest_h) * w + static_cast<uint64_t>(t) * w / dest_w];
 
       int r = spix & 0xff;
       int g = (spix >> 8) & 0xff;
       int b = (spix >> 16) & 0xff;
 
-      dest_data[(((h - 1) - i) * w) + t] = GR_RGB16(r, g, b);
+      dest_data[((dest_h - 1 - i) * dest_w) + t] = GR_RGB16(r, g, b);
     }
   }
 }
@@ -1804,20 +1833,36 @@ void *rend_RetrieveDirectDrawObj(void **frontsurf, void **backsurf) {
   return nullptr;
 }
 
+float rend_Get2DScale() { return Draw2DScale; }
+float rend_GetFontPixelScale() { return Draw2DScale * std::min(FramebufferScaleX(), FramebufferScaleY()); }
+
+float rend_Set2DScale(float scale) {
+  const float previous = Draw2DScale;
+  Draw2DScale = std::isfinite(scale) && scale > 0.0f ? scale : 1.0f;
+  if (Draw2DScale != previous)
+    g3_ForceTransformRefresh();
+  return previous;
+}
+
 void rend_TransformSetToPassthru() {
   int width = gpu_state.screen_width;
   int height = gpu_state.screen_height;
 
   // TODO: Generalize
-  gRenderer->setTransform(glm::mat4x4{1}, glm::mat4x4{1}, glm::ortho<float>(0, width, height, 0, 0, 1));
+  gRenderer->setTransform(glm::mat4x4{1}, glm::mat4x4{1},
+                          glm::ortho<float>(0, width / Draw2DScale, height / Draw2DScale, 0, 0, 1));
 
   // Viewport
-  dglViewport(0, 0, width, height);
-  dglScissor(0, 0, width, height);
+  dglViewport(0, 0, GOpenGLFBOWidth, GOpenGLFBOHeight);
+  dglScissor(0, 0, GOpenGLFBOWidth, GOpenGLFBOHeight);
 }
 
 void rend_TransformSetViewport(int lx, int ty, int width, int height) {
-  dglViewport(lx, gpu_state.screen_height - (ty + height - 1), width, height);
+  const float sx = FramebufferScaleX(), sy = FramebufferScaleY();
+  const int left = static_cast<int>(std::round(lx * sx));
+  const int bottom = static_cast<int>(std::round((gpu_state.screen_height - (ty + height - 1)) * sy));
+  dglViewport(left, bottom, static_cast<int>(std::round((lx + width) * sx)) - left,
+              static_cast<int>(std::round(height * sy)));
 }
 
 void rend_TransformSetProjection(float trans[4][4]) {

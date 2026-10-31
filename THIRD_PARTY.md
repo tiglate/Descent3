@@ -97,6 +97,7 @@ SOFTWARE.
 Single-file public domain (or MIT licensed) libraries for C/C++. https://github.com/nothings/stb
 
 * third_party/stb/stb_image_write.h
+* third_party/stb/stb_truetype.h (v1.26)
 
 The stb code is licensed under MIT license.
 
@@ -118,3 +119,29 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
+
+## Arimo Bold
+
+`third_party/fonts/Arimo-Bold.ttf` is an unmodified Arimo font from Google's
+[Croscore fonts](https://github.com/notofonts/noto-fonts/tree/main/hinted/ttf/Arimo).
+It is embedded for scalable popup text, independent of installed system fonts.
+Arimo version 1.33. Copyright 2010 Google Inc. All Rights Reserved.
+
+Licensed under the SIL Open Font License 1.1. The full notice and license are
+in `third_party/fonts/OFL.txt`, installed as `popup-font-OFL.txt`.
+
+## Orbitron
+
+Main-menu items use [Orbitron](https://fonts.google.com/specimen/Orbitron),
+designed by **Matt McInerney**. The unmodified variable TrueType font is bundled
+as `third_party/fonts/Orbitron.ttf` from the
+[Google Fonts repository](https://github.com/google/fonts/tree/main/ofl/orbitron).
+It is embedded and rendered at its default Regular weight.
+
+Copyright 2018 The Orbitron Project Authors (https://github.com/theleagueof/orbitron),
+with Reserved Font Name: "Orbitron".
+
+Licensed under the SIL Open Font License 1.1. The complete upstream notice and
+license are in `third_party/fonts/Orbitron-OFL.txt`, installed as
+`orbitron-font-OFL.txt`. Author credits and font provenance are also installed
+in `bundled-fonts.md`.

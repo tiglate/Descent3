@@ -52,6 +52,7 @@
 #include <cstring>
 #include <cctype>
 #include <sstream>
+#include <memory>
 #include "log.h"
 #include "registry.h"
 
@@ -155,7 +156,7 @@ void CRegistry::Destroy(void) {
     DestroyKey(curr);
     curr = next;
   }
-  root = NULL;
+  currentkey = root = NULL;
 }
 
 void CRegistry::DestroyKey(tKey *key) {
@@ -196,7 +197,7 @@ void CRegistry::ExportKey(tKey *key, FILE *file) {
   tRecord *curr, *next;
   curr = next = key->records;
   // write out name
-  char buffer[256+16];
+  char buffer[256 + 16];
   snprintf(buffer, sizeof(buffer), "[%s]\n", key->name);
   fputs(buffer, file);
   while (curr) {
@@ -310,6 +311,9 @@ bool CRegistry::Import() {
 }
 
 void CRegistry::CreateKey(const char *name) {
+  currentkey = nullptr;
+  if (!name || strlen(name) >= MAX_RECORD_NAME)
+    return;
   tKey *curr;
   if (LookupKey(name)) {
     // mprintf(0,"Key: %s already exists\n",name);
@@ -402,65 +406,35 @@ int CRegistry::GetDataSize(const char *record) {
 }
 
 bool CRegistry::CreateRecord(const char *name, char type, void *data) {
-  if (!currentkey)
+  if (!currentkey || !name || !data || strlen(name) >= MAX_RECORD_NAME || (type != REGT_STRING && type != REGT_DWORD))
     return false;
-  tRecord *curr;
-  // first see if the record exists under this key
-  int datasize = GetDataSize(name);
-  if (datasize) {
-    char *olddata = (char *)malloc(datasize);
-    if (olddata) {
-      curr = LookupRecord(name, olddata);
-      if (curr) {
-        // ok we have an old value, replace it!
-        // mprintf(0,"Replacing %s\n",name);
-        if (curr->data)
-          free(curr->data);
-        free(olddata);
-        curr->type = type;
-        switch (type) {
-        case REGT_STRING:
-          curr->data = malloc(strlen((char *)data) + 1);
-          strcpy((char *)curr->data, (char *)data);
-          break;
-        case REGT_DWORD:
-          curr->data = malloc(sizeof(int));
-          *((int *)curr->data) = *((int *)data);
-          break;
-        }
-        return true;
-      }
-    }
+
+  tRecord **link = &currentkey->records;
+  while (*link && strcasecmp(name, (*link)->name) != 0)
+    link = &(*link)->next;
+
+  // Copy before modifying the old value: data may even alias that value.
+  const size_t size = type == REGT_STRING ? strlen(static_cast<const char *>(data)) + 1 : sizeof(int);
+  std::unique_ptr<void, decltype(&free)> replacement(malloc(size), free);
+  if (!replacement)
+    return false;
+  memcpy(replacement.get(), data, size);
+
+  if (*link) {
+    free((*link)->data);
+    (*link)->data = replacement.release();
+    (*link)->type = type;
+    return true;
   }
 
-  // it is a new record
-  if (currentkey->records) {
-    curr = currentkey->records;
-    while (curr->next)
-      curr = curr->next;
-    curr->next = (tRecord *)malloc(sizeof(tRecord));
-    if (!curr->next)
-      return false;
-    curr = curr->next;
-  } else {
-    currentkey->records = (tRecord *)malloc(sizeof(tRecord));
-    if (!currentkey->records)
-      return false;
-    curr = currentkey->records;
-  }
-  curr->next = NULL;
-  strcpy(curr->name, name);
-  switch (type) {
-  case REGT_STRING:
-    curr->data = malloc(strlen((char *)data) + 1);
-    curr->type = REGT_STRING;
-    strcpy((char *)curr->data, (char *)data);
-    break;
-  case REGT_DWORD:
-    curr->data = malloc(sizeof(int));
-    curr->type = REGT_DWORD;
-    *((int *)curr->data) = *((int *)data);
-    break;
-  };
+  // Do not link a partially initialized record into the registry.
+  auto *record = static_cast<tRecord *>(malloc(sizeof(tRecord)));
+  if (!record)
+    return false;
+  strcpy(record->name, name); // Length checked before allocating.
+  record->type = type;
+  record->data = replacement.release();
+  record->next = nullptr;
+  *link = record;
   return true;
 }

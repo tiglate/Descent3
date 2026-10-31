@@ -214,10 +214,6 @@
 
 // #define MEM_DEBUG
 
-#ifdef MEM_USE_RTL
-#pragma message("mem.cpp: Compiling For Run-Time Library usage")
-#endif
-
 #ifdef MEM_DEBUG
 #pragma message("mem.cpp: Compiling with Debug Settings")
 #endif

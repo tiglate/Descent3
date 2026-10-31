@@ -980,6 +980,7 @@
 #include "mem.h"
 #include "multi.h"
 #include "marker.h"
+#include "grtext.h"
 #include "gamecinematics.h"
 #include "debuggraph.h"
 
@@ -1170,6 +1171,7 @@ void SaveGameSettings() {
   Database->write("RS_bitdepth", Render_preferred_bitdepth);
   Database->write("RS_bilear", Render_preferred_state.filtering);
   Database->write("RS_mipping", Render_preferred_state.mipping);
+  Database->write("RS_highres_fonts", grfont_HighResolutionEnabled());
   Database->write("RS_color_model", Render_state.cur_color_model);
   Database->write("RS_light", Render_state.cur_light_state);
   Database->write("RS_texture_quality", Render_state.cur_texture_quality);
@@ -1221,26 +1223,21 @@ void LoadGameSettings() {
   Lighting_on = true;
 #endif
 
-  Detail_settings.Specular_lighting = false;
-  Detail_settings.Dynamic_lighting = true;
-  Detail_settings.Fast_headlight_on = true;
-  Detail_settings.Mirrored_surfaces = true;
-  Detail_settings.Scorches_enabled = true;
-  Detail_settings.Weapon_coronas_enabled = true;
+  ConfigSetDetailLevel(DETAIL_LEVEL_VERY_HIGH);
+  grfont_SetHighResolutionEnabled(true);
   Render_preferred_state.mipping = true;
   Render_preferred_state.filtering = true;
-  Render_preferred_state.bit_depth = 16;
-  Render_preferred_bitdepth = 16;
+  Render_preferred_state.bit_depth = 32;
+  Render_preferred_bitdepth = 32;
+  Render_state.cur_texture_quality = 2;
   Default_player_terrain_leveling = 2;
   Default_player_room_leveling = 2;
   Render_preferred_state.gamma = 1.5;
   PreferredRenderer = RENDERER_OPENGL;
 
-  Sound_system.SetLLSoundQuantity(MIN_SOUNDS_MIXED + (MAX_SOUNDS_MIXED - MIN_SOUNDS_MIXED) / 2);
+  Sound_system.SetLLSoundQuantity(MAX_SOUNDS_MIXED);
   D3MusicSetVolume(0.5f);
-  Detail_settings.Pixel_error = 8.0;
   Sound_system.SetMasterVolume(1.0);
-  Detail_settings.Terrain_render_distance = 70.0 * TERRAIN_SIZE;
   D3Use_force_feedback = true;
   D3Force_gain = 1.0f;
   D3Force_auto_center = true;
@@ -1248,14 +1245,9 @@ void LoadGameSettings() {
   PlayPowerupVoice = true;
   PlayVoices = true;
   Sound_mixer = SOUND_MIXER_SOFTWARE_16;
-  Sound_quality = SQT_NORMAL;
+  Sound_quality = SQT_HIGH;
   Missile_camera_window = SVW_LEFT;
   Render_preferred_state.vsync_on = true;
-  Detail_settings.Fog_enabled = true;
-  Detail_settings.Coronas_enabled = true;
-  Detail_settings.Procedurals_enabled = true;
-  Detail_settings.Object_complexity = 1;
-  Detail_settings.Powerup_halos = true;
 
   ddio_SetKeyboardLanguage(KBLANG_AMERICAN);
 
@@ -1305,11 +1297,6 @@ void LoadGameSettings() {
   Database->read_int("RoomLeveling", &Default_player_room_leveling);
   Database->read("Specmapping", &Detail_settings.Specular_lighting);
   Database->read("RS_bitdepth", &Render_preferred_bitdepth, sizeof(Render_preferred_bitdepth));
-  Database->read_int("RS_resolution", &tempint);
-  if (tempint >= 0 && static_cast<size_t>(tempint) < std::size(Video_res_list))
-    Current_video_resolution_id = tempint;
-  else
-    LOG_WARNING << "Game settings contain a display resolution index that is out of bounds. Starting with default resolution.";
 
   int tempval = 0;
   Database->read_int("RS_fov", &tempval);
@@ -1317,18 +1304,24 @@ void LoadGameSettings() {
   Render_FOV_setting = static_cast<float>(tempval);
   Render_FOV = Render_FOV_setting;
 
+  tempval = Game_fullscreen;
   Database->read_int("RS_fullscreen", &tempval);
   Game_fullscreen = tempval != 0;
+  if (FindArg("-windowed"))
+    Game_fullscreen = false;
 
   Database->read_int("RS_bilear", &Render_preferred_state.filtering);
   Database->read_int("RS_mipping", &Render_preferred_state.mipping);
+  bool high_resolution_fonts = true;
+  Database->read("RS_highres_fonts", &high_resolution_fonts);
+  grfont_SetHighResolutionEnabled(high_resolution_fonts);
   Database->read_int("RS_color_model", &Render_state.cur_color_model);
   Database->read_int("RS_light", &Render_state.cur_light_state);
   Database->read_int("RS_texture_quality", &Render_state.cur_texture_quality);
   // force feedback stuff
   Database->read("EnableJoystickFF", &D3Use_force_feedback);
   Database->read("ForceFeedbackAutoCenter", &D3Force_auto_center);
-  uint8_t force_gain;
+  uint8_t force_gain = 100;
   Database->read("ForceFeedbackGain", &force_gain, sizeof(force_gain));
   if (force_gain > 100)
     force_gain = 100;
@@ -1354,8 +1347,9 @@ void LoadGameSettings() {
   Database->read("DetailFog", &Detail_settings.Fog_enabled);
   Database->read("DetailCoronas", &Detail_settings.Coronas_enabled);
   Database->read("DetailProcedurals", &Detail_settings.Procedurals_enabled);
+  tempint = Detail_settings.Object_complexity;
   Database->read_int("DetailObjectComp", &tempint);
-  Detail_settings.Object_complexity = (tempint < 0 || tempint > 2) ? 1 : tempint;
+  Detail_settings.Object_complexity = (tempint < 0 || tempint > 2) ? 2 : tempint;
 
   Database->read("DetailPowerupHalos", &Detail_settings.Powerup_halos);
 
@@ -1384,11 +1378,9 @@ void LoadGameSettings() {
   // Now that we have read in all the data, set the detail level if it is a predef setting (custom is ignored in
   // function)
 
-  int level;
-  level = DETAIL_LEVEL_MED;
-
-  Database->read_int("PredefDetailSetting", &level);
-  ConfigSetDetailLevel(level);
+  int level = DETAIL_LEVEL_VERY_HIGH;
+  if (Database->read_int("PredefDetailSetting", &level))
+    ConfigSetDetailLevel(level);
 
   // Motion blur
   Use_motion_blur = 0;

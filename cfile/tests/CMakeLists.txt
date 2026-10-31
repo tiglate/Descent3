@@ -2,6 +2,8 @@ set(CMAKE_FOLDER "tests")
 
 add_executable(cfile_tests
   cfile_tests.cpp
+  inffile_tests.cpp
+  file_length_tests.cpp
 )
 target_link_libraries(cfile_tests PRIVATE
   GTest::gtest_main

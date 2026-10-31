@@ -173,6 +173,7 @@
 #include "pserror.h"
 #include "renderer.h"
 #include "Macros.h"
+#include "window_scale.h"
 
 // SDL reports ordinary mouse-motion units.  Keep UI coordinates in screen
 // pixels: the old factor of 20 divided all menu cursor movement by twenty.
@@ -444,6 +445,24 @@ int ui_ProcessFocusedWindow() {
     ui_KeyPoll();
     ui_MousePoll(true);
     do {
+      // Gadgets retain their authored coordinates. Map input only while the
+      // focused window processes it, then restore pixels for the cursor/others.
+      struct MouseScaleScope {
+        int mx = UI_input.mx, my = UI_input.my;
+        int last_mx = UI_input.last_mx, last_my = UI_input.last_my;
+        explicit MouseScaleScope(float scale) {
+          UI_input.mx = ui_scale::ToLogical(mx, scale);
+          UI_input.my = ui_scale::ToLogical(my, scale);
+          UI_input.last_mx = ui_scale::ToLogical(last_mx, scale);
+          UI_input.last_my = ui_scale::ToLogical(last_my, scale);
+        }
+        ~MouseScaleScope() {
+          UI_input.mx = mx;
+          UI_input.my = my;
+          UI_input.last_mx = last_mx;
+          UI_input.last_my = last_my;
+        }
+      } mouse_scale(UIWindowFocus->GetScale());
       res2 = UIWindowFocus->Process();
       if (res2 != -1)
         res = res2;

@@ -60,6 +60,9 @@ public:
 
   //	parses a line of 'code'.  return value from the lexfn
   //	check INFFILE constants above. (any value less than 0, you should read in a new line.)
+  // Literal operands truncate to fit. Missing/oversized symbolic values return
+  // INFFILE_ERROR with an empty operand. Null/nonpositive capacity is an error
+  // and leaves the current line available for a retry with valid storage.
   int ParseLine(char *operand, int oprlen);
 
 private:

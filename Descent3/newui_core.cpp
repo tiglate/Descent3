@@ -1082,8 +1082,7 @@ void newuiMessageBox::Create(const char *title, int type) {
   ASSERT(title);
   m_bkg = Newui_resources.Load(NEWUI_MSGBOX_FILE);
 
-  UIWindow::Create((Max_window_w - m_bkg->width()) / 2, (Max_window_h - m_bkg->height()) / 2, m_bkg->width(),
-                   m_bkg->height());
+  UIWindow::Create(0, 0, m_bkg->width(), m_bkg->height(), UIF_CENTER | UIF_SCALE_TO_SCREEN);
 
   m_sheet.Create(this, title, NEWUIMENU_SMALL, NEWUI_MSGBOX_SHEET_X, NEWUI_MSGBOX_SHEET_Y);
 

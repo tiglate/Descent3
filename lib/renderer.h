@@ -466,6 +466,13 @@ void rend_SetFlatColor(ddgr_color color);
 // what buffer (if any) to clear
 void rend_StartFrame(int x1, int y1, int x2, int y2, int clear_flags = RF_CLEAR_ZBUFFER);
 
+// Uniform scale for 2D drawing only. Returns the previous scale for scoped use.
+float rend_Set2DScale(float scale);
+float rend_Get2DScale();
+float rend_GetFontPixelScale();
+// Returns whether the mode changed; caller can force a renderer reinitialization.
+bool rend_SetNativeUIMode(bool enabled);
+
 // Tells the renderer the frame is over
 void rend_EndFrame();
 

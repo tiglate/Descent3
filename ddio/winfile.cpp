@@ -144,6 +144,7 @@
 
 #include <cstdarg>
 #include <cstdio>
+#include <limits>
 #include <sys/stat.h>
 #include <io.h>
 #include <fcntl.h>
@@ -177,7 +178,17 @@ bool ddio_FileDiff(const std::filesystem::path &path1, const std::filesystem::pa
 }
 
 // get a file's length
-int ddio_GetFileLength(FILE *filePtr) { return (filelength(fileno(filePtr))); }
+int ddio_GetFileLength(FILE *filePtr) {
+  if (!filePtr)
+    return -1;
+  const int descriptor = _fileno(filePtr);
+  if (descriptor < 0)
+    return -1;
+  const auto size = _filelengthi64(descriptor);
+  if (size < 0 || size > std::numeric_limits<int>::max())
+    return -1;
+  return static_cast<int>(size);
+}
 
 // Split a pathname into its component parts
 void ddio_SplitPath(const char *srcPath, char *path, char *filename, char *ext) {

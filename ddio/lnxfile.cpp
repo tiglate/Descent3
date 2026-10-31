@@ -63,6 +63,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <csignal>
+#include <limits>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -109,18 +110,14 @@ bool ddio_FileDiff(const std::filesystem::path &path1, const std::filesystem::pa
 
 // get a file's length
 int ddio_GetFileLength(FILE *filePtr) {
-  int size = -1;
-  if (filePtr) {
-    int filedes = fileno(filePtr);
-    struct stat info;
-
-    fstat(filedes, &info);
-    size = info.st_size;
-  } else {
-    LOG_FATAL << "Tried getting length of NULL fileptr!";
-    Int3();
-  }
-  return size;
+  if (!filePtr)
+    return -1;
+  const int descriptor = fileno(filePtr);
+  struct stat info {};
+  if (descriptor < 0 || fstat(descriptor, &info) != 0 || info.st_size < 0 ||
+      info.st_size > std::numeric_limits<int>::max())
+    return -1;
+  return static_cast<int>(info.st_size);
 }
 
 // Split a pathname into its component parts

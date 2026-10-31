@@ -30,6 +30,12 @@ set(CPPS
 )
 
 add_library(renderer STATIC ${HEADERS} ${CPPS})
+if(BUILD_TESTING)
+  add_executable(render_dimensions_tests tests/render_dimensions_tests.cpp)
+  target_include_directories(render_dimensions_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+  target_link_libraries(render_dimensions_tests PRIVATE GTest::gtest_main)
+  gtest_discover_tests(render_dimensions_tests)
+endif()
 target_include_directories(renderer PRIVATE ${GENERATED_HEADERS} ${SDL3_INCLUDE_DIRS})
 target_link_libraries(renderer PRIVATE
   glm::glm

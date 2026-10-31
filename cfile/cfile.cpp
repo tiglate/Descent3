@@ -528,6 +528,13 @@ CFILE *open_file_in_directory(const std::filesystem::path &filename, const char 
     using_filename = filename;
   }
 
+  // Reject failed/oversized lengths before converting into CFILE's unsigned size.
+  const int length = ddio_GetFileLength(fp);
+  if (length < 0) {
+    fclose(fp);
+    return nullptr;
+  }
+
   // found the file, open it
   cfile = mem_rmalloc<CFILE>();
   if (!cfile)
@@ -537,7 +544,7 @@ CFILE *open_file_in_directory(const std::filesystem::path &filename, const char 
     Error("Out of memory in open_file_in_directory()");
   cfile->file = fp;
   cfile->lib_handle = -1;
-  cfile->size = ddio_GetFileLength(fp);
+  cfile->size = static_cast<uint32_t>(length);
   cfile->lib_offset = 0; // 0 means on disk, not in HOG
   cfile->position = 0;
   cfile->flags = 0;

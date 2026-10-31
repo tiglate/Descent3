@@ -21,12 +21,12 @@
 //////////////////////////////////////////////////////////////////////
 
 #include <cstring>
+#include <memory>
 
 #include "cfile.h"
 #include "inffile.h"
 #include "pstring.h"
 #include "pserror.h"
-
 
 #define INFFILE_NULL (-1024)
 
@@ -34,7 +34,7 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-InfFile::InfFile() { m_fp = nullptr; }
+InfFile::InfFile() : m_fp(nullptr), m_lexfn(nullptr), m_lineptr(nullptr), m_endptr(nullptr), m_line(0) {}
 
 InfFile::~InfFile() {
   // close file and free symbol lists
@@ -43,13 +43,14 @@ InfFile::~InfFile() {
 
 //	symbol functions.
 void InfFile::AddSymbol(const char *name, const char *text) {
-  tListNode<sym_info> *symbol = new tListNode<sym_info>;
+  auto symbol = std::make_unique<tListNode<sym_info>>();
+  auto value = std::make_unique<char[]>(strlen(text) + 1);
 
   strcpy(symbol->t.name, name);
-  symbol->t.text = new char[strlen(text) + 1];
-  strcpy(symbol->t.text, text);
+  strcpy(value.get(), text);
+  symbol->t.text = value.release();
 
-  m_sym_list.link(symbol);
+  m_sym_list.link(symbol.release());
 }
 
 void InfFile::FreeSymbols() {
@@ -109,6 +110,8 @@ bool InfFile::Open(const std::filesystem::path &filename, const char *tag_check,
 
 //	closes the file
 void InfFile::Close() {
+  m_lineptr = m_endptr = nullptr;
+  m_lexfn = nullptr;
   if (!m_fp)
     return;
 
@@ -120,7 +123,7 @@ void InfFile::Close() {
 
 //	read a command line. returns false on eof.
 bool InfFile::ReadLine() {
-  if (cfeof(m_fp))
+  if (!m_fp || cfeof(m_fp))
     return false;
 
   cf_ReadString(m_linetext, INFFILE_LINELEN, m_fp);
@@ -138,11 +141,15 @@ bool InfFile::ReadLine() {
 //	-1 for error.
 //	-2 for comment
 int InfFile::ParseLine(char *operand, int oprlen) {
+  if (!operand || oprlen <= 0)
+    return INFFILE_ERROR;
+  operand[0] = 0;
   if (!m_lineptr)
     return INFFILE_EOL;
 
   //	tokenize line.
   char command[32]; // Command read from line.
+  char operand_text[INFFILE_LINELEN]{};
   char *opr = NULL, *cmd;
   int retval = INFFILE_NULL;
 
@@ -154,15 +161,17 @@ int InfFile::ParseLine(char *operand, int oprlen) {
   cmd = strtok(m_lineptr, " \t=:");
   if (cmd)
     opr = strtok(NULL, ",;");
-  else
-    Int3();
+  else {
+    m_lineptr = nullptr;
+    return INFFILE_EOL;
+  }
 
   //	clean out trailing and preceeding trash (tabs, spaces, etc)
   CleanupStr(command, cmd, sizeof(command));
-  if (opr)
+  if (opr) {
+    CleanupStr(operand_text, opr, sizeof(operand_text));
     CleanupStr(operand, opr, oprlen);
-  else
-    operand[0] = 0;
+  }
 
   if (strlen(command) == 0) {
     if (strlen(operand) == 0)
@@ -174,12 +183,14 @@ int InfFile::ParseLine(char *operand, int oprlen) {
     retval = INFFILE_COMMENT;
 
   //	do symbolic commands.
-  if (operand[0] == '#') {
-    const char *sym = GetSymbolText(&operand[1]);
-    if (sym)
-      strcpy(operand, sym);
-    else
+  if (operand_text[0] == '#') {
+    const char *sym = GetSymbolText(&operand_text[1]);
+    if (sym && strlen(sym) < static_cast<size_t>(oprlen)) {
+      memcpy(operand, sym, strlen(sym) + 1);
+    } else {
+      operand[0] = 0;
       retval = INFFILE_ERROR;
+    }
   }
 
   if (retval == INFFILE_NULL) {

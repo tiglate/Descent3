@@ -1,5 +1,6 @@
-set(HEADERS)
+set(HEADERS async_dns.h)
 set(CPPS
+  async_dns.cpp
   networking.cpp
   $<$<PLATFORM_ID:Windows>:
     directplay.cpp
@@ -17,5 +18,11 @@ target_link_libraries(networking PRIVATE
   logger
   mem
   module
+  SDL3::SDL3
+  $<$<PLATFORM_ID:Windows>:ws2_32>
   ${PLATFORM_LIBS}
 )
+
+if(BUILD_TESTING)
+  add_subdirectory(tests)
+endif()

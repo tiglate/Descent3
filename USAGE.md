@@ -19,6 +19,34 @@ The direct equivalent is `./make.sh run -windowed`. To launch an installed
 copy without building, run its `Descent3` executable from its installation
 directory.
 
+Small in-game message boxes, including the Abort Mission confirmation, scale
+automatically with the gameplay resolution. Their artwork, text, and button
+targets scale together without stretching on widescreen displays. At 640×480
+they retain their original size.
+
+Scalable high-resolution fonts are enabled by default across menus, dialogs,
+widgets, briefings, and the HUD. Toggle **Options > Video > High-res fonts**
+to use the original bitmap fonts; the choice is saved and takes effect immediately.
+No system font installation is needed. Lettering embedded in artwork or movies
+remains part of those images.
+
+Main-menu items use the bundled Orbitron font by Matt McInerney, with a dark
+outline and drop shadow for contrast over the background.
+Moving the pointer over an item highlights it in gold; keyboard navigation uses
+the same highlight.
+
+The in-game **F1** help window scales with the resolution so its keyboard reference
+stays readable on high-resolution displays. Its text, border, and OK button scale
+together.
+
+Without saved choices, the game starts at the highest supported resolution of
+the selected display, with maximum detail, 32-bit color, full-quality textures,
+bilinear filtering, mipmapping, and high-quality sound. New pilots use Modern
+bindings and Mouselook. Saved graphics settings and pilot controls take precedence.
+Resolution choices made in Video Settings persist by dimensions, so they remain
+valid when the display mode list changes; unavailable modes fall back to the highest
+available resolution. An explicit `-width`/`-height` pair overrides that launch.
+
 ## First-run asset setup
 
 The application asks you to locate the original game's installation on its
@@ -245,13 +273,13 @@ The following command-line options are available in Descent 3. You can set comma
 
     **Type:** integer
 
-    **Default:** Desktop height of the selected display at startup
+    **Default:** Saved selection, or the highest supported resolution
 
     **Platform:** all
 
     **Description:** Overrides gameplay height. Specify `-width` as well.
-    Without both dimensions, startup uses desktop resolution. Video Settings
-    can change the resolution during the current session.
+    Without both dimensions, startup uses the saved Video Settings selection,
+    or the highest supported resolution of the selected display.
 
 - `-himem`
 
@@ -307,13 +335,14 @@ The following command-line options are available in Descent 3. You can set comma
 
     **Type:** integer
 
-    **Default:** Desktop width of the selected display at startup
+    **Default:** Saved selection, or the highest supported resolution
 
     **Platform:** all
 
     **Description:** Overrides gameplay width. Specify `-height` as well.
     Example: `make run ARGS="-width 1920 -height 1080"`. Without an explicit
-    pair, each launch starts at desktop resolution.
+    pair, startup uses the saved Video Settings selection or the highest
+    supported resolution of the selected display.
 
 - `-windowed` or `-w`
 

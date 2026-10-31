@@ -206,7 +206,7 @@ void HelpDisplay(void) {
   int index, res;
   bool exit_menu = false;
 
-  help_wnd.Create(TITLETEXT, 0, 0, WND_HELP_W, WND_HELP_H);
+  help_wnd.Create(TITLETEXT, 0, 0, WND_HELP_W, WND_HELP_H, UIF_SCALE_TO_SCREEN);
   sheet = help_wnd.GetSheet();
 
   // add commands

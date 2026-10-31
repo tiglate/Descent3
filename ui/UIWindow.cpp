@@ -153,6 +153,8 @@
 #include "Macros.h"
 #include "log.h"
 #include "pserror.h"
+#include "window_scale.h"
+#include "renderer.h"
 
 //	the window font for all windows
 int UIWindow::m_WindowFont = 0;
@@ -194,8 +196,8 @@ void UIWindow::Create(int x, int y, int w, int h, int flags) {
   m_naccels = 0;
 
   if (m_Flags & UIF_CENTER) {
-    x = UI_screen_width / 2 - w / 2;
-    y = UI_screen_height / 2 - h / 2;
+    x = ui_scale::ToLogical(UI_screen_width, GetScale()) / 2 - w / 2;
+    y = ui_scale::ToLogical(UI_screen_height, GetScale()) / 2 - h / 2;
   }
 
   UIObject::Create(x, y, w, h);
@@ -553,6 +555,12 @@ void UIWindow::OnKeyUp([[maybe_unused]] int key) {}
 
 //	redraw all gadgets
 void UIWindow::Render() {
+  const float scale = GetScale();
+  struct DrawScaleScope {
+    float previous;
+    explicit DrawScaleScope(float scale) : previous(rend_Set2DScale(scale)) {}
+    ~DrawScaleScope() { rend_Set2DScale(previous); }
+  } scale_scope(scale);
   UIGadget *gadget = m_GadgetHead;
 
   //	draw background of window.
@@ -572,7 +580,8 @@ void UIWindow::Render() {
     gadget->OnFormat();
 
     // draw gadget
-    if (l >= 0 && r <= UI_screen_width && t >= 0 && b <= UI_screen_height) {
+    if (l >= 0 && r <= ui_scale::ToLogical(UI_screen_width, scale) && t >= 0 &&
+        b <= ui_scale::ToLogical(UI_screen_height, scale)) {
       ui_StartDraw(l, t, r, b);
       ui_DrawSetFont(m_FontHandle);
       gadget->OnDraw();
@@ -616,6 +625,10 @@ void UIWindow::Close() { ui_RemoveWindow(this); }
 
 //	settings
 void UIWindow::SetFont(int handle) { m_FontHandle = handle; }
+
+float UIWindow::GetScale() const {
+  return (m_Flags & UIF_SCALE_TO_SCREEN) ? ui_scale::PopupScale(UI_screen_width, UI_screen_height) : 1.0f;
+}
 
 // overridable draws the window background before gadgets
 void UIWindow::OnDraw() {

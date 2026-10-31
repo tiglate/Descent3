@@ -79,7 +79,7 @@
 #endif
 #define MMITEM_ALPHA 192                   // default alpha
 #define MMITEM_SAT 0                       // default saturation
-#define MMITEM_FONT MENU_FONT              // default font
+#define MMITEM_FONT MAIN_MENU_FONT         // default font
 #define MMITEM_COLOR GR_RGB(255, 255, 255) // default color of main menu
 #define MMITEM_X (Max_window_w * 3 / 5)    // x position of menu text
 #define MMITEM_Y 175                       // y position of menu text start
@@ -195,7 +195,8 @@ public:
   void SetMusicRegion(int region);
   friend void MenuScene(); // display menu scene
 protected:
-  virtual void OnDestroy(); // destroys window.
+  void OnUserProcess() override; // follow pointer movement without overriding keyboard navigation
+  virtual void OnDestroy();      // destroys window.
 private:
   void CopyrightText(); // displays the copyright text
 };

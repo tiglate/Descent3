@@ -328,6 +328,9 @@ typedef int socklen_t;
 #include "args.h"
 #include "byteswap.h"
 #include "ctlconfig.h"
+#include "async_dns.h"
+
+static D3::AsyncDnsLookup Async_dns;
 
 #ifndef WIN32
 bool Use_DirectPlay = false;
@@ -531,6 +534,8 @@ int make_nonblocking(SOCKET sock)
 }
 
 void CloseNetworking() {
+  // Join DNS before Winsock teardown, including when socket setup never finished.
+  Async_dns.Cancel();
   if (Sockets_initted != 1)
     return;
 
@@ -580,7 +585,7 @@ void nw_InitNetworking(int iReadBufSizeOverride) {
 
 #ifdef WIN32
   WSADATA ws_data;
-  WORD ver = MAKEWORD(1, 1);
+  WORD ver = MAKEWORD(2, 2);
 #endif
 
   static char szconntype[100];
@@ -2046,218 +2051,18 @@ uint32_t psnet_ras_status() {
 }
 #endif
 
-static async_dns_lookup aslu;
-static async_dns_lookup *lastaslu = NULL;
-
-#ifdef WIN32
-#define CDECLCALL __cdecl
-#else
-#define CDECLCALL
-#endif
-
-#if defined(POSIX)
-int CDECLCALL gethostbynameworker(void *parm);
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_thread.h>
-
-// rcg06192000 use SDL threads.
-// #include <pthread.h>
-// #include <dlfcn.h>
-// typedef int (*pthread_create_fp)(pthread_t *__thread,__const pthread_attr_t *__attr,void *(*__start_routine) (void
-// *),void *__arg); typedef int (*pthread_detach_fp)(pthread_t __th); typedef pthread_t (*pthread_self_fp)(void); static
-// pthread_create_fp dpthread_create = NULL; static pthread_detach_fp dpthread_detach = NULL; static pthread_self_fp
-// dpthread_self = NULL;
-
-void nw_LoadThreadLibrary(void) {
-  // rcg06192000 use SDL threads.
-  /*
-          if(dpthread_create)
-                  return;
-
-          void *lib;
-
-          lib = dlopen("libpthread.so",RTLD_GLOBAL|RTLD_NOW);
-          if(!lib)
-          {
-                  Int3();
-                  return;
-          }
-
-          dpthread_create = (pthread_create_fp)dlsym(lib,"pthread_create");
-          dpthread_detach = (pthread_detach_fp)dlsym(lib,"pthread_detach");
-          dpthread_self = (pthread_self_fp)dlsym(lib,"pthread_self");
-
-          if(!dpthread_create || !dpthread_detach || !dpthread_self)
-          {
-                  dpthread_create = NULL;	//this variable I use to see if the library is loaded
-                  Int3();
-                  return;
-          }
-
-          // don't close the library...we need it open for future use
-          // and we can't close it on atexit() because linux will segfault for some stupid reason
-  */
-}
-#else
-void CDECLCALL gethostbynameworker(void *parm);
-#endif
-
 int nw_Asyncgethostbyname(uint32_t *ip, int command, char *hostname) {
-
-  if (command == NW_AGHBN_LOOKUP) {
-    if (lastaslu) {
-      lastaslu->abort = true;
-
-      // rcg06212000 join the thread.
-#if defined(POSIX)
-      SDL_WaitThread(lastaslu->threadId, NULL);
-      free(lastaslu);
-#endif
-    } // if
-
-    // rcg06262000 don't need all the rigamarole since we join the thread.
-
-#if (!defined(POSIX))
-    async_dns_lookup *newaslu;
-    newaslu = mem_rmalloc<async_dns_lookup>();
-    memset(&newaslu->ip, 0, sizeof(uint32_t));
-    newaslu->host = hostname;
-    newaslu->done = false;
-    newaslu->error = false;
-    newaslu->abort = false;
-    lastaslu = newaslu;
-    aslu.done = false;
-#else
-    memset(&aslu.ip, 0, sizeof(uint32_t));
-    aslu.host = hostname;
-    aslu.done = false;
-    aslu.error = false;
-    aslu.abort = false;
-    lastaslu = &aslu;
-    aslu.done = false;
-#endif
-
-#ifdef WIN32
-    _beginthread(gethostbynameworker, 0, newaslu);
-#elif defined(POSIX)
-    // rcg06192000 use SDL threads.
-    /*
-            nw_LoadThreadLibrary();
-            if(!dpthread_create)
-            {
-
-                    HOSTENT *he = gethostbyname(lastaslu->host);
-                    if(he==NULL)
-                    {
-                            lastaslu->error = true;
-                    }
-                    else
-                    {
-                            memcpy(&lastaslu->ip,he->h_addr_list[0],sizeof(uint32_t));
-                            lastaslu->done = true;
-                            memcpy(&aslu,lastaslu,sizeof(async_dns_lookup));
-                    }
-            }else
-    */
-
-    {
-      // rcg06192000 SDLified.
-      // pthread_t thread;
-      // dpthread_create(&thread, NULL, gethostbynameworker,newaslu);
-      aslu.threadId = SDL_CreateThread(gethostbynameworker, "dnsworker", &aslu);
-    }
-#else
-    HOSTENT *he = gethostbyname(lastaslu->host);
-    if (he == NULL) {
-      lastaslu->error = true;
-    } else {
-      memcpy(&lastaslu->ip, he->h_addr_list[0], sizeof(uint32_t));
-      lastaslu->done = true;
-      memcpy(&aslu, lastaslu, sizeof(async_dns_lookup));
-    }
-#endif
-    return 1;
-  } else if (command == NW_AGHBN_CANCEL) {
-    if (lastaslu) {
-      lastaslu->abort = true;
-
-      // rcg06212000 join the thread.
-#if defined(POSIX)
-      SDL_WaitThread(lastaslu->threadId, NULL);
-#endif
-    } // if
-    lastaslu = NULL;
-  } else if (command == NW_AGHBN_READ) {
-    if (!lastaslu)
-      return -1;
-    if (aslu.done) {
-      // rcg06212000 join the thread.
-#if defined(POSIX)
-      SDL_WaitThread(aslu.threadId, NULL);
-#endif
-
-      lastaslu = NULL;
-      memcpy(ip, &aslu.ip, sizeof(uint32_t));
-      return 1;
-    } else if (aslu.error) {
-      // rcg06212000 join the thread.
-#if defined(POSIX)
-      SDL_WaitThread(aslu.threadId, NULL);
-#else
-      mem_free(lastaslu);
-#endif
-
-      lastaslu = NULL;
-      return -1;
-    } else
-      return 0;
+  switch (command) {
+  case NW_AGHBN_LOOKUP:
+    return Async_dns.Start(hostname) ? 1 : -1;
+  case NW_AGHBN_CANCEL:
+    Async_dns.Cancel();
+    return -2;
+  case NW_AGHBN_READ:
+    return Async_dns.Read(ip);
+  default:
+    return -2;
   }
-  return -2;
-}
-
-// This is the worker thread which does the lookup.
-#if defined(POSIX)
-int CDECLCALL gethostbynameworker(void *parm)
-#else
-void CDECLCALL gethostbynameworker(void *parm)
-#endif
-{
-  // rcg06192000 nope.
-  //	#if defined(POSIX)
-  //	dpthread_detach(dpthread_self());
-  //	#endif
-
-  async_dns_lookup *lookup = (async_dns_lookup *)parm;
-
-  HOSTENT *he = gethostbyname(lookup->host);
-
-  if (he == NULL) {
-    lookup->error = true;
-#if defined(POSIX)
-    return 0;
-#else
-    return;
-#endif
-  } else if (!lookup->abort) {
-    memcpy(&lookup->ip, he->h_addr_list[0], sizeof(uint32_t));
-    LOG_DEBUG.printf("IPLOOKUP: [%s] is %d.%d.%d.%d ...",
-            lookup->host,
-            (lookup->ip & 0x000000FF),
-            (lookup->ip & 0x0000FF00) >> 8,
-            (lookup->ip & 0x00FF0000) >> 16,
-            (lookup->ip & 0xFF000000) >> 24);
-    // memcpy(&aslu,lookup,sizeof(async_dns_lookup));
-    lookup->done = true;
-  }
-
-// rcg06252000 don't free this, 'cause we need the threadId.
-#if !defined(POSIX)
-  mem_free(lookup);
-#endif
-
-#if defined(POSIX)
-  return 0;
-#endif
 }
 
 int nw_ReccomendPPS() {

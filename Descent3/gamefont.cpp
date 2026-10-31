@@ -114,6 +114,7 @@
  */
 
 #include <cstdlib>
+#include <cstring>
 
 #include "gamefont.h"
 #include "grtext.h"
@@ -121,9 +122,7 @@
 #include "pserror.h"
 #include "stringtable.h"
 
-int Game_fonts[NUM_FONTS] = {
-    0, 0, 0, 0, 0, 0,
-};
+int Game_fonts[NUM_FONTS] = {};
 
 // HUD font sizes
 #define HUD_FONT_LOWRES 0
@@ -150,6 +149,11 @@ int LoadFont(const char *font_name) {
   if (handle == -1)
     Error(TXT_ERRNOFONT, font_name);
 
+  const bool shadow = std::strcmp(font_name, "lohud.fnt") == 0 || std::strcmp(font_name, "hihud.fnt") == 0;
+  // The original faces use capital/small-cap shapes and wide character cells.
+  // Keep capital forms throughout the UI, including briefing and HUD text.
+  grfont_EnableScalableUI(handle, true, shadow);
+
   LOG_INFO.printf("Font <%s> height = %d", font_name, grfont_GetHeight(handle));
 
   return handle;
@@ -171,6 +175,10 @@ void LoadAllFonts() {
   MENU_FONT = LoadFont("newmenu.fnt");
   SMALL_UI_FONT = LoadFont("smallui.fnt");
   BIG_UI_FONT = LoadFont("largeui.fnt");
+  // Keep the multiplayer MENU_FONT face unchanged while the main menu uses
+  // Orbitron. Both handles retain newmenu.fnt metrics and legacy fallback.
+  MAIN_MENU_FONT = LoadFont("newmenu.fnt");
+  grfont_EnableScalableUI(MAIN_MENU_FONT, true, false, popup_font::Face::MainMenu);
 
   // Load the HUD font
   HUD_font_resolution = HUD_FONT_LOWRES;

@@ -239,15 +239,30 @@ void mmItem::OnDraw() {
   //	if not disabled, do fancy effects.
   if (m_text) {
     int i;
+    const bool focused = HasFocus();
+    const ddgr_color text_color = focused ? GR_RGB(255, 200, 48) : m_colors[0];
 
     ui_DrawSetFont(MMITEM_FONT);
     ui_DrawSetTextType(0);
+    // Give the shadow room outside the text's original bounds without changing
+    // the item's layout or mouse target. Outline the bright fire-facing edges.
+    ui_SetTextClip(-1, -1, m_W + 3, m_H + 3);
+    ui_SetCharAlpha(220);
+    ui_DrawString(GR_RGB(0, 0, 0), 2, 2, m_text);
     ui_SetCharAlpha(255);
-    ui_DrawString(m_colors[0], 0, 0, m_text);
+    constexpr int outline[][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    for (const auto &offset : outline)
+      ui_DrawString(GR_RGB(0, 0, 0), offset[0], offset[1], m_text);
+    ui_DrawString(text_color, 0, 0, m_text);
     ui_DrawSetTextType(UI_TEXTTYPE_SATURATE);
     ui_SetCharAlpha((uint8_t)m_alpha);
     for (i = 0; i < m_satcount; i++)
-      ui_DrawString(m_colors[0], 0, 0, m_text);
+      // A restrained amber glow keeps the existing focus animation visible
+      // without adding white back over the selected item's gold color.
+      ui_DrawString(focused ? GR_RGB(32, 16, 0) : GR_RGB(0, 0, 0), 0, 0, m_text);
+    ui_SetTextClip(0, 0, m_W + 1, m_H + 1);
+    ui_DrawSetTextType(0);
+    ui_SetCharAlpha(255);
   }
 
   if ((UI_TIME() - m_last_frametime) >= m_process_speed) {
@@ -371,6 +386,22 @@ int mmInterface::DoUI() {
   ui_Flush();
 
   return UI_frame_result;
+}
+
+void mmInterface::OnUserProcess() {
+  // A stationary pointer must not steal focus back from keyboard navigation.
+  if ((UI_input.mx == UI_input.last_mx && UI_input.my == UI_input.last_my) || UI_input.b1_status == UIMSEBTN_PRESSED ||
+      UI_input.key_status == UIKEY_PRESSED || UI_input.key_status == UIKEY_CLICKED)
+    return;
+
+  for (int i = 0; i < m_nmenu_items; ++i) {
+    auto &item = m_menuitems[i];
+    if (!item.IsDisabled() && PT_IN_GADGET(this, &item, UI_input.mx, UI_input.my)) {
+      if (GetFocus() != &item)
+        SetFocusOnGadget(&item);
+      break;
+    }
+  }
 }
 
 //	add item.

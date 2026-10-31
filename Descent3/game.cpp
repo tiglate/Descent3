@@ -920,6 +920,8 @@ void SetScreenMode(int sm, bool force_res_change) {
   if (old_sm == sm && !force_res_change)
     return;
 
+  const bool ui_density_changed = rend_SetNativeUIMode(sm == SM_MENU);
+
   //	close down any systems previously opened and that must be closed (like software->hardware, etc.)
   //	make sure renderer is initialized
   //	also set any preferred renderer states.
@@ -983,14 +985,14 @@ void SetScreenMode(int sm, bool force_res_change) {
       }
 
       if (rend_width != scr_width || rend_height != scr_height ||
-          Game_fullscreen != Render_preferred_state.fullscreen) {
+          Game_fullscreen != Render_preferred_state.fullscreen || ui_density_changed) {
         Render_preferred_state.width = scr_width;
         Render_preferred_state.height = scr_height;
         Render_preferred_state.bit_depth = scr_bitdepth;
         Render_preferred_state.fullscreen = Game_fullscreen;
 
         LOG_INFO.printf("Setting rend_width=%d height=%d", scr_width, scr_height);
-        int retval = rend_SetPreferredState(&Render_preferred_state);
+        int retval = rend_SetPreferredState(&Render_preferred_state, ui_density_changed);
 
         if (retval == -1) {
           // We're using the default, so change some values for the menus
