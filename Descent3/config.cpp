@@ -746,7 +746,8 @@ static void config_gamma() {
       // get & set the gamma
       Render_preferred_state.gamma =
           CALC_SLIDER_FLOAT_VALUE(*gamma_slider, slider_set.min_val.f, slider_set.max_val.f, GAMMA_SLIDER_UNITS);
-      rend_SetPreferredState(&Render_preferred_state);
+      if (!rend_SetPreferredState(&Render_preferred_state))
+        rend_FatalError();
     }
   } while (res != UID_OK && res != UID_CANCEL);
 
@@ -758,7 +759,8 @@ static void config_gamma() {
     Render_preferred_state.gamma = init_gamma;
   }
 
-  rend_SetPreferredState(&Render_preferred_state);
+  if (!rend_SetPreferredState(&Render_preferred_state))
+    rend_FatalError();
 
   // cleanup
   gamma_wnd.Close();
@@ -868,7 +870,8 @@ struct video_menu {
       Game_fullscreen = *fullscreen;
       SetScreenMode(GetScreenMode(), true);
       Render_preferred_state.bit_depth = Render_preferred_bitdepth;
-      rend_SetPreferredState(&Render_preferred_state, true);
+      if (!rend_SetPreferredState(&Render_preferred_state, true))
+        rend_FatalError();
 
       int temp_w = Video_res_list[Current_video_resolution_id].width;
       int temp_h = Video_res_list[Current_video_resolution_id].height;

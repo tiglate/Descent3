@@ -16,6 +16,9 @@ def main():
     parser.add_argument("--build-dir", default="build")
     parser.add_argument("--jobs", type=int, default=3)
     args = parser.parse_args()
+    version = subprocess.run(["rtk", "proxy", "clang-tidy", "--version"], capture_output=True, text=True, check=True)
+    if not re.search(r"\b18\.1\.3\b", version.stdout):
+        raise SystemExit("The review baseline requires clang-tidy 18.1.3")
     baseline = json.loads((ROOT / "docs/code-review/progress.json").read_text())
     scan = baseline["scan"]
     build = (ROOT / args.build_dir).resolve()

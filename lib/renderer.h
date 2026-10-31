@@ -477,6 +477,8 @@ bool rend_SetNativeUIMode(bool enabled);
 void rend_EndFrame();
 
 // Init our renderer, pass the application object also.
+// Drawing and GPU state setters require successful initialization and main-thread use.
+// Closing or failed reinitialization ends that lifetime; callers must stop drawing.
 int rend_Init(renderer_type state, oeApplication *app, renderer_preferred_state *pref_state);
 
 // de-init the renderer
@@ -590,7 +592,8 @@ void rend_DrawScaledChunkedBitmap(chunked_bitmap *chunk, int x, int y, int neww,
 void rend_DrawSpecialLine(g3Point *p0, g3Point *p1);
 
 // Sets some global preferences for the renderer
-// Returns -1 if it had to use the default resolution/bitdepth
+// Returns 0 on failure, 1 on success, -1 if it had to use the default resolution/bitdepth.
+// A failed reinitialization leaves the renderer closed; callers must not draw.
 int rend_SetPreferredState(renderer_preferred_state *pref_state, bool reinit = false);
 
 // Sets the gamma value
@@ -620,6 +623,9 @@ void rend_SetCoplanarPolygonOffset(float factor);
 
 // Gets the error message string
 const char *rend_GetErrorMessage();
+
+// Report a renderer failure and exit even if Debug's Error handler returns.
+[[noreturn]] void rend_FatalError();
 
 // Sets the error message string
 void rend_SetErrorMessage(const char *str);

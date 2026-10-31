@@ -217,7 +217,7 @@ extern renderer_preferred_state gpu_preferred_state;
 
 bool OpenGL_multitexture_state = false;
 module *OpenGLDLLHandle = nullptr;
-int Already_loaded = 0;
+static bool OpenGL_functions_loaded = false;
 bool opengl_Blending_on = false;
 
 static oeApplication *ParentApplication = nullptr;
@@ -287,17 +287,29 @@ int opengl_MakeTextureObject(int tn) {
   return num;
 }
 
+static void opengl_FreeCache() {
+  mem_free(OpenGL_bitmap_remap);
+  mem_free(OpenGL_lightmap_remap);
+  mem_free(OpenGL_bitmap_states);
+  mem_free(OpenGL_lightmap_states);
+  OpenGL_bitmap_remap = nullptr;
+  OpenGL_lightmap_remap = nullptr;
+  OpenGL_bitmap_states = nullptr;
+  OpenGL_lightmap_states = nullptr;
+  OpenGL_cache_initted = 0;
+}
+
 int opengl_InitCache() {
 
   OpenGL_bitmap_remap = mem_rmalloc<uint16_t>(MAX_BITMAPS);
-  ASSERT(OpenGL_bitmap_remap);
   OpenGL_lightmap_remap = mem_rmalloc<uint16_t>(MAX_LIGHTMAPS);
-  ASSERT(OpenGL_lightmap_remap);
 
   OpenGL_bitmap_states = mem_rmalloc<uint8_t>(MAX_BITMAPS);
-  ASSERT(OpenGL_bitmap_states);
   OpenGL_lightmap_states = mem_rmalloc<uint8_t>(MAX_LIGHTMAPS);
-  ASSERT(OpenGL_lightmap_states);
+  if (!OpenGL_bitmap_remap || !OpenGL_lightmap_remap || !OpenGL_bitmap_states || !OpenGL_lightmap_states) {
+    opengl_FreeCache();
+    return 0;
+  }
 
   // Setup textures and cacheing
   int i;
@@ -369,186 +381,101 @@ void opengl_SetDefaults() {
 extern renderer_preferred_state Render_preferred_state;
 
 int opengl_Setup([[maybe_unused]] oeApplication *app, const int *width, const int *height) {
-  int winw = Video_res_list[Current_video_resolution_id].width;
-  int winh = Video_res_list[Current_video_resolution_id].height;
+  if (Current_video_resolution_id < 0 || static_cast<size_t>(Current_video_resolution_id) >= Video_res_list.size())
+    throw std::runtime_error("Invalid video resolution selection.");
+  const int winw = Video_res_list[Current_video_resolution_id].width;
+  const int winh = Video_res_list[Current_video_resolution_id].height;
 
   SDL_ClearError();
-  if (!SDL_WasInit(SDL_INIT_VIDEO)) {
-    const int rc = SDL_Init(SDL_INIT_VIDEO);
-    if (rc != 0) {
-      char buffer[512];
-      snprintf(buffer, sizeof(buffer), "SDL_GetError() reports \"%s\".\n", SDL_GetError());
-      fprintf(stderr, "SDL: SDL_Init() failed! rc == (%d).\n", rc);
-      fprintf(stderr, "%s", buffer);
-      rend_SetErrorMessage(buffer);
-      return (0);
-    }
-  }
+  if (!SDL_WasInit(SDL_INIT_VIDEO) && !SDL_Init(SDL_INIT_VIDEO))
+    throw std::runtime_error(std::string("SDL video initialization failed: ") + SDL_GetError());
 
-  if (!Already_loaded) {
-    char gl_library[256];
-    int arg;
-    arg = FindArgChar("-gllibrary", 'g');
-    if (arg != 0) {
-      strcpy(gl_library, GameArgs[arg + 1]);
-    } else {
-      gl_library[0] = 0;
-    }
-
-    LOG_INFO.printf("OpenGL: Attempting to use \"%s\" for OpenGL",
-                    gl_library[0] ? gl_library : "[system default library]");
-
-    // ryan's adds. 04/18/2000...SDL stuff on 04/25/2000
-    bool success = true;
-
+  if (!OpenGLDLLHandle) {
+    const int arg = FindArgChar("-gllibrary", 'g');
+    const char *gl_library = arg ? GameArgs[arg + 1] : "";
     OpenGLDLLHandle = LoadOpenGLDLL(gl_library);
-    if (!(OpenGLDLLHandle)) {
-      // rcg07072000 last ditch effort...
+    if (!OpenGLDLLHandle) {
 #if defined(POSIX)
-      strcpy(gl_library, "libGL.so.1");
+      OpenGLDLLHandle = LoadOpenGLDLL("libGL.so.1");
 #else
-      strcpy(gl_library, "opengl32.dll");
+      OpenGLDLLHandle = LoadOpenGLDLL("opengl32.dll");
 #endif
-      OpenGLDLLHandle = LoadOpenGLDLL(gl_library);
-      if (!(OpenGLDLLHandle)) {
-        success = false;
-      }
-    } // if
-
-    if (!success) {
-      char buffer[512];
-      snprintf(buffer, sizeof(buffer), "Failed to load library [%s].\n", gl_library);
-      fprintf(stderr, "%s", buffer);
-      rend_SetErrorMessage(buffer);
-      return 0;
-    } // if
+    }
+    if (!OpenGLDLLHandle)
+      throw std::runtime_error(std::string("OpenGL library loading failed: ") + SDL_GetError());
   }
 
-  SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
-  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+  if (!SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8) || !SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8) ||
+      !SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8) || !SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16) ||
+      !SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1) || !SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3) ||
+      !SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2) ||
+      !SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE))
+    throw std::runtime_error(std::string("OpenGL attributes failed: ") + SDL_GetError());
 
   if (!GSDLWindow) {
-    // Video modes already specify the requested resolution. Multiplying by
-    // desktop content scaling would enlarge a native-resolution window again.
-
-    SDL_PropertiesID props = SDL_CreateProperties();
-    SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, "Descent 3");
-    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER, SDL_WINDOWPOS_UNDEFINED_DISPLAY(Display_id));
-    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_Y_NUMBER, SDL_WINDOWPOS_UNDEFINED_DISPLAY(Display_id));
-    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, winw);
-    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, winh);
-    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_FLAGS_NUMBER, SDL_WINDOW_OPENGL);
-    GSDLWindow = SDL_CreateWindowWithProperties(props);
+    const SDL_PropertiesID props = SDL_CreateProperties();
+    if (!props)
+      throw std::runtime_error(std::string("Window properties creation failed: ") + SDL_GetError());
+    const bool properties_set =
+        SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, "Descent 3") &&
+        SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER, SDL_WINDOWPOS_UNDEFINED_DISPLAY(Display_id)) &&
+        SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_Y_NUMBER, SDL_WINDOWPOS_UNDEFINED_DISPLAY(Display_id)) &&
+        SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, winw) &&
+        SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, winh) &&
+        SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_FLAGS_NUMBER, SDL_WINDOW_OPENGL);
+    if (properties_set)
+      GSDLWindow = SDL_CreateWindowWithProperties(props);
     SDL_DestroyProperties(props);
-    if (!GSDLWindow) {
-      LOG_ERROR.printf("OpenGL: SDL window creation failed: %s", SDL_GetError());
-      return 0;
-    }
+    if (!GSDLWindow)
+      throw std::runtime_error(std::string("SDL window creation failed: ") + SDL_GetError());
 
     // Retain the user's Ctrl+G capture choice when recreating the window.
-    bool grabMouse = ddio_MouseGetGrab();
-    SDL_SetWindowRelativeMouseMode(GSDLWindow, grabMouse);
-
+    SDL_SetWindowRelativeMouseMode(GSDLWindow, ddio_MouseGetGrab());
     rend_SetFullScreen(Game_fullscreen);
-  } else if (!Game_fullscreen) {
-    SDL_SetWindowSize(GSDLWindow, winw, winh);
+  } else if (!Game_fullscreen && !SDL_SetWindowSize(GSDLWindow, winw, winh)) {
+    throw std::runtime_error(std::string("SDL window resize failed: ") + SDL_GetError());
   }
 
-  if (!GSDLGLContext) {
-    GSDLGLContext = SDL_GL_CreateContext(GSDLWindow);
-    if (!GSDLGLContext) {
-      LOG_ERROR.printf("OpenGL: OpenGL context creation failed: %s", SDL_GetError());
-      SDL_DestroyWindow(GSDLWindow);
-      GSDLWindow = nullptr;
-      return 0;
-    }
-  }
+  GSDLGLContext = SDL_GL_CreateContext(GSDLWindow);
+  if (!GSDLGLContext)
+    throw std::runtime_error(std::string("OpenGL context creation failed: ") + SDL_GetError());
+  if (!SDL_GL_MakeCurrent(GSDLWindow, GSDLGLContext))
+    throw std::runtime_error(std::string("OpenGL context activation failed: ") + SDL_GetError());
 
-  try {
-    LoadGLFnPtrs();
-  } catch (std::exception const &ex) {
-    // TODO: more raii-esque construction and cleanup here
-    SDL_GL_DestroyContext(GSDLGLContext);
-    GSDLGLContext = nullptr;
-    SDL_DestroyWindow(GSDLWindow);
-    GSDLWindow = nullptr;
-    LOG_ERROR.printf("Error loading opengl dll: %s", ex.what());
-    mod_FreeModule(&OpenGLDLLInst);
-    OpenGLDLLHandle = nullptr;
-    return 0;
-  }
+  LoadGLFnPtrs();
+  OpenGL_functions_loaded = true;
 
-  // clear the window framebuffer to start.
   dglClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   dglClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   SDL_GL_SwapWindow(GSDLWindow);
 
-  /* Tear down the backbuffer and rebuild at new dimensions... */
-  if (GOpenGLFBO) {
-    dglBindFramebuffer(GL_FRAMEBUFFER, GOpenGLFBO);
-    dglFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, 0);
-    dglFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
-    dglBindRenderbuffer(GL_RENDERBUFFER, 0);
-    dglBindFramebuffer(GL_FRAMEBUFFER, 0);
-    dglDeleteFramebuffers(1, &GOpenGLFBO);
-    dglDeleteRenderbuffers(1, &GOpenGLRBOColor);
-    dglDeleteRenderbuffers(1, &GOpenGLRBODepth);
-    GOpenGLFBOWidth = GOpenGLFBOHeight = GOpenGLFBO = GOpenGLRBOColor = GOpenGLRBODepth = 0;
-  }
-
   int drawable_w, drawable_h;
-  SDL_GetWindowSizeInPixels(GSDLWindow, &drawable_w, &drawable_h);
+  if (!SDL_GetWindowSizeInPixels(GSDLWindow, &drawable_w, &drawable_h) || drawable_w <= 0 || drawable_h <= 0)
+    throw std::runtime_error(std::string("Window drawable size query failed: ") + SDL_GetError());
   const auto buffer = render_dimensions::Buffer({*width, *height}, {drawable_w, drawable_h}, NativeUIMode);
   const GLsizei w = buffer.width;
   const GLsizei h = buffer.height;
-
   GOpenGLFBOWidth = w;
   GOpenGLFBOHeight = h;
 
   dglGenFramebuffers(1, &GOpenGLFBO);
   dglBindFramebuffer(GL_FRAMEBUFFER, GOpenGLFBO);
-
   dglGenRenderbuffers(1, &GOpenGLRBOColor);
   dglBindRenderbuffer(GL_RENDERBUFFER, GOpenGLRBOColor);
   dglRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, w, h);
   dglFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, GOpenGLRBOColor);
-
   dglGenRenderbuffers(1, &GOpenGLRBODepth);
   dglBindRenderbuffer(GL_RENDERBUFFER, GOpenGLRBODepth);
   dglRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, w, h);
   dglFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, GOpenGLRBODepth);
+  if (dglCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    throw std::runtime_error("OpenGL framebuffer is incomplete.");
 
-  if (dglCheckFramebufferStatus(GL_FRAMEBUFFER_EXT) != GL_FRAMEBUFFER_COMPLETE_EXT) {
-    LOG_WARNING << "OpenGL: our framebuffer object is incomplete, giving up";
-    dglFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, 0);
-    dglFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
-    dglBindRenderbuffer(GL_RENDERBUFFER, 0);
-    dglBindFramebuffer(GL_FRAMEBUFFER, 0);
-    dglDeleteFramebuffers(1, &GOpenGLFBO);
-    dglDeleteRenderbuffers(1, &GOpenGLRBOColor);
-    dglDeleteRenderbuffers(1, &GOpenGLRBODepth);
-    GOpenGLFBO = GOpenGLRBOColor = GOpenGLRBODepth = 0;
-    SDL_GL_DestroyContext(GSDLGLContext);
-    SDL_DestroyWindow(GSDLWindow);
-    GSDLGLContext = nullptr;
-    GSDLWindow = nullptr;
-    return 0;
-  }
-
-  if (ParentApplication) {
+  if (ParentApplication)
     reinterpret_cast<oeLnxApplication *>(ParentApplication)->set_sizepos(0, 0, *width, *height);
-  }
 
   gRenderer.emplace();
   g3_ForceTransformRefresh();
-
-  Already_loaded = 1;
   return 1;
 }
 
@@ -560,6 +487,9 @@ int opengl_Init(oeApplication *app, renderer_preferred_state *pref_state) {
   int i;
 
   LOG_INFO << "Setting up opengl mode!";
+
+  if (GSDLGLContext)
+    opengl_Close(true);
 
   if (pref_state) {
     gpu_preferred_state = *pref_state;
@@ -577,206 +507,213 @@ int opengl_Init(oeApplication *app, renderer_preferred_state *pref_state) {
   width = gpu_preferred_state.width;
   height = gpu_preferred_state.height;
 
-  if (!opengl_Setup(app, &width, &height)) {
+  try {
+    if (width <= 0 || height <= 0)
+      throw std::runtime_error("Invalid renderer dimensions.");
+    if (!opengl_Setup(app, &width, &height)) {
+      opengl_Close();
+      return 0;
+    }
+
+    memset(&gpu_state, 0, sizeof(rendering_state));
+    gpu_state.screen_width = width;
+    gpu_state.screen_height = height;
+
+    // Get some info
+    opengl_GetInformation();
+
+    // Do we have packed pixel formats?
+    OpenGL_packed_pixels = opengl_CheckExtension("GL_EXT_packed_pixels");
+
+    if (!opengl_InitCache())
+      throw std::bad_alloc();
+
+    if (OpenGL_packed_pixels) {
+      opengl_packed_Upload_data = mem_rmalloc<uint16_t>(2048 * 2048);
+      opengl_packed_Translate_table = mem_rmalloc<uint16_t>(65536);
+      opengl_packed_4444_translate_table = mem_rmalloc<uint16_t>(65536);
+
+      if (!opengl_packed_Upload_data || !opengl_packed_Translate_table || !opengl_packed_4444_translate_table)
+        throw std::bad_alloc();
+
+      LOG_INFO << "Building packed OpenGL translate table...";
+
+      for (i = 0; i < 65536; i++) {
+        int r = (i >> 10) & 0x1f;
+        int g = (i >> 5) & 0x1f;
+        int b = i & 0x1f;
+
+#ifdef BRIGHTNESS_HACK
+        r *= BRIGHTNESS_HACK;
+        g *= BRIGHTNESS_HACK;
+        b *= BRIGHTNESS_HACK;
+        if (r > 0x1F)
+          r = 0x1F;
+        if (g > 0x1F)
+          g = 0x1F;
+        if (b > 0x1F)
+          b = 0x1F;
+#endif
+
+        uint16_t pix;
+
+        if (!(i & OPAQUE_FLAG)) {
+          pix = 0;
+        } else {
+          pix = (r << 11) | (g << 6) | (b << 1) | 1;
+        }
+
+        opengl_packed_Translate_table[i] = INTEL_INT(pix);
+
+        // 4444 table
+        int a = (i >> 12) & 0xf;
+        r = (i >> 8) & 0xf;
+        g = (i >> 4) & 0xf;
+        b = i & 0xf;
+
+        pix = (r << 12) | (g << 8) | (b << 4) | a;
+        opengl_packed_4444_translate_table[i] = INTEL_INT(pix);
+      }
+    } else {
+      opengl_Upload_data = mem_rmalloc<uint32_t>(2048 * 2048);
+      opengl_Translate_table = mem_rmalloc<uint32_t>(65536);
+      opengl_4444_translate_table = mem_rmalloc<uint32_t>(65536);
+
+      if (!opengl_Upload_data || !opengl_Translate_table || !opengl_4444_translate_table)
+        throw std::bad_alloc();
+
+      LOG_INFO << "Building OpenGL translate table...";
+
+      for (i = 0; i < 65536; i++) {
+        uint32_t pix;
+        int r = (i >> 10) & 0x1f;
+        int g = (i >> 5) & 0x1f;
+        int b = i & 0x1f;
+
+#ifdef BRIGHTNESS_HACK
+        r *= BRIGHTNESS_HACK;
+        g *= BRIGHTNESS_HACK;
+        b *= BRIGHTNESS_HACK;
+        if (r > 0x1F)
+          r = 0x1F;
+        if (g > 0x1F)
+          g = 0x1F;
+        if (b > 0x1F)
+          b = 0x1F;
+#endif
+
+        float fr = (float)r / 31.0f;
+        float fg = (float)g / 31.0f;
+        float fb = (float)b / 31.0f;
+
+        r = 255 * fr;
+        g = 255 * fg;
+        b = 255 * fb;
+
+        if (!(i & OPAQUE_FLAG)) {
+          pix = 0;
+        } else {
+          pix = (255 << 24) | (b << 16) | (g << 8) | (r);
+        }
+
+        opengl_Translate_table[i] = INTEL_INT(pix);
+
+        // Do 4444
+        int a = (i >> 12) & 0xf;
+        r = (i >> 8) & 0xf;
+        g = (i >> 4) & 0xf;
+        b = i & 0xf;
+
+        float fa = (float)a / 15.0f;
+        fr = (float)r / 15.0f;
+        fg = (float)g / 15.0f;
+        fb = (float)b / 15.0f;
+
+        a = 255 * fa;
+        r = 255 * fr;
+        g = 255 * fg;
+        b = 255 * fb;
+
+        pix = (a << 24) | (b << 16) | (g << 8) | (r);
+
+        opengl_4444_translate_table[i] = INTEL_INT(pix);
+      }
+    }
+
+    opengl_SetDefaults();
+
+    g3_ForceTransformRefresh();
+
+    CHECK_ERROR(4)
+
+    gpu_state.initted = 1;
+    Renderer_initted = 1;
+
+    LOG_INFO.printf("OpenGL initialization at %d x %d was successful.", width, height);
+
+    return retval;
+  } catch (const std::exception &error) {
+    LOG_ERROR.printf("Renderer initialization failed: %s", error.what());
+    rend_SetErrorMessage(error.what());
     opengl_Close();
     return 0;
   }
-
-  memset(&gpu_state, 0, sizeof(rendering_state));
-  gpu_state.screen_width = width;
-  gpu_state.screen_height = height;
-
-  // Get some info
-  opengl_GetInformation();
-
-  // Do we have packed pixel formats?
-  OpenGL_packed_pixels = opengl_CheckExtension("GL_EXT_packed_pixels");
-
-  opengl_InitCache();
-
-  if (OpenGL_packed_pixels) {
-    opengl_packed_Upload_data = mem_rmalloc<uint16_t>(2048 * 2048);
-    opengl_packed_Translate_table = mem_rmalloc<uint16_t>(65536);
-    opengl_packed_4444_translate_table = mem_rmalloc<uint16_t>(65536);
-
-    ASSERT(opengl_packed_Upload_data);
-    ASSERT(opengl_packed_Translate_table);
-    ASSERT(opengl_packed_4444_translate_table);
-
-    LOG_INFO << "Building packed OpenGL translate table...";
-
-    for (i = 0; i < 65536; i++) {
-      int r = (i >> 10) & 0x1f;
-      int g = (i >> 5) & 0x1f;
-      int b = i & 0x1f;
-
-#ifdef BRIGHTNESS_HACK
-      r *= BRIGHTNESS_HACK;
-      g *= BRIGHTNESS_HACK;
-      b *= BRIGHTNESS_HACK;
-      if (r > 0x1F)
-        r = 0x1F;
-      if (g > 0x1F)
-        g = 0x1F;
-      if (b > 0x1F)
-        b = 0x1F;
-#endif
-
-      uint16_t pix;
-
-      if (!(i & OPAQUE_FLAG)) {
-        pix = 0;
-      } else {
-        pix = (r << 11) | (g << 6) | (b << 1) | 1;
-      }
-
-      opengl_packed_Translate_table[i] = INTEL_INT(pix);
-
-      // 4444 table
-      int a = (i >> 12) & 0xf;
-      r = (i >> 8) & 0xf;
-      g = (i >> 4) & 0xf;
-      b = i & 0xf;
-
-      pix = (r << 12) | (g << 8) | (b << 4) | a;
-      opengl_packed_4444_translate_table[i] = INTEL_INT(pix);
-    }
-  } else {
-    opengl_Upload_data = mem_rmalloc<uint32_t>(2048 * 2048);
-    opengl_Translate_table = mem_rmalloc<uint32_t>(65536);
-    opengl_4444_translate_table = mem_rmalloc<uint32_t>(65536);
-
-    ASSERT(opengl_Upload_data);
-    ASSERT(opengl_Translate_table);
-    ASSERT(opengl_4444_translate_table);
-
-    LOG_INFO << "Building OpenGL translate table...";
-
-    for (i = 0; i < 65536; i++) {
-      uint32_t pix;
-      int r = (i >> 10) & 0x1f;
-      int g = (i >> 5) & 0x1f;
-      int b = i & 0x1f;
-
-#ifdef BRIGHTNESS_HACK
-      r *= BRIGHTNESS_HACK;
-      g *= BRIGHTNESS_HACK;
-      b *= BRIGHTNESS_HACK;
-      if (r > 0x1F)
-        r = 0x1F;
-      if (g > 0x1F)
-        g = 0x1F;
-      if (b > 0x1F)
-        b = 0x1F;
-#endif
-
-      float fr = (float)r / 31.0f;
-      float fg = (float)g / 31.0f;
-      float fb = (float)b / 31.0f;
-
-      r = 255 * fr;
-      g = 255 * fg;
-      b = 255 * fb;
-
-      if (!(i & OPAQUE_FLAG)) {
-        pix = 0;
-      } else {
-        pix = (255 << 24) | (b << 16) | (g << 8) | (r);
-      }
-
-      opengl_Translate_table[i] = INTEL_INT(pix);
-
-      // Do 4444
-      int a = (i >> 12) & 0xf;
-      r = (i >> 8) & 0xf;
-      g = (i >> 4) & 0xf;
-      b = i & 0xf;
-
-      float fa = (float)a / 15.0f;
-      fr = (float)r / 15.0f;
-      fg = (float)g / 15.0f;
-      fb = (float)b / 15.0f;
-
-      a = 255 * fa;
-      r = 255 * fr;
-      g = 255 * fg;
-      b = 255 * fb;
-
-      pix = (a << 24) | (b << 16) | (g << 8) | (r);
-
-      opengl_4444_translate_table[i] = INTEL_INT(pix);
-    }
-  }
-
-  opengl_SetDefaults();
-
-  g3_ForceTransformRefresh();
-
-  CHECK_ERROR(4)
-
-  gpu_state.initted = 1;
-
-  LOG_INFO.printf("OpenGL initialization at %d x %d was successful.", width, height);
-
-  return retval;
 }
 
 // Releases the rendering context
 void opengl_Close(const bool just_resizing) {
-  CHECK_ERROR(5)
+  gpu_state.initted = 0;
+  Renderer_initted = 0;
 
-  dglDeleteTextures(textures_.size(), textures_.data());
+  // Never call GL through a partially loaded table or without our current
+  // context. If the context is lost, its destruction releases GPU resources.
+  const bool delete_gpu = GSDLGLContext && OpenGL_functions_loaded && SDL_GL_MakeCurrent(GSDLWindow, GSDLGLContext);
+  if (!delete_gpu)
+    ClearGLFnPtrs();
+
+  if (delete_gpu) {
+    if (!textures_.empty())
+      dglDeleteTextures(textures_.size(), textures_.data());
+    if (GOpenGLFBO)
+      dglDeleteFramebuffers(1, &GOpenGLFBO);
+    if (GOpenGLRBOColor)
+      dglDeleteRenderbuffers(1, &GOpenGLRBOColor);
+    if (GOpenGLRBODepth)
+      dglDeleteRenderbuffers(1, &GOpenGLRBODepth);
+  }
   textures_.clear();
-
   gRenderer.reset();
+  ClearGLFnPtrs();
+  OpenGL_functions_loaded = false;
+  GOpenGLFBOWidth = GOpenGLFBOHeight = GOpenGLFBO = GOpenGLRBOColor = GOpenGLRBODepth = 0;
 
   if (GSDLGLContext) {
     SDL_GL_MakeCurrent(nullptr, nullptr);
     SDL_GL_DestroyContext(GSDLGLContext);
     GSDLGLContext = nullptr;
-    GOpenGLFBOWidth = GOpenGLFBOHeight = GOpenGLFBO = GOpenGLRBOColor = GOpenGLRBODepth = 0;
   }
-
   if (!just_resizing && GSDLWindow) {
     SDL_DestroyWindow(GSDLWindow);
     GSDLWindow = nullptr;
   }
-
-  if (OpenGL_packed_pixels) {
-    if (opengl_packed_Upload_data) {
-      mem_free(opengl_packed_Upload_data);
-    }
-    if (opengl_packed_Translate_table) {
-      mem_free(opengl_packed_Translate_table);
-    }
-    if (opengl_packed_4444_translate_table) {
-      mem_free(opengl_packed_4444_translate_table);
-    }
-    opengl_packed_Upload_data = nullptr;
-    opengl_packed_Translate_table = nullptr;
-    opengl_packed_4444_translate_table = nullptr;
-  } else {
-    if (opengl_Upload_data)
-      mem_free(opengl_Upload_data);
-    if (opengl_Translate_table)
-      mem_free(opengl_Translate_table);
-    if (opengl_4444_translate_table)
-      mem_free(opengl_4444_translate_table);
-    opengl_Upload_data = nullptr;
-    opengl_Translate_table = nullptr;
-    opengl_4444_translate_table = nullptr;
+  if (!just_resizing && OpenGLDLLHandle) {
+    SDL_GL_UnloadLibrary();
+    OpenGLDLLHandle = nullptr;
   }
 
-  if (OpenGL_cache_initted) {
-    mem_free(OpenGL_lightmap_remap);
-    mem_free(OpenGL_bitmap_remap);
-    mem_free(OpenGL_lightmap_states);
-    mem_free(OpenGL_bitmap_states);
-    OpenGL_cache_initted = 0;
-  }
-
-  // mod_FreeModule (OpenGLDLLHandle);
-  gpu_state.initted = 0;
+  mem_free(opengl_packed_Upload_data);
+  mem_free(opengl_packed_Translate_table);
+  mem_free(opengl_packed_4444_translate_table);
+  opengl_packed_Upload_data = nullptr;
+  opengl_packed_Translate_table = nullptr;
+  opengl_packed_4444_translate_table = nullptr;
+  mem_free(opengl_Upload_data);
+  mem_free(opengl_Translate_table);
+  mem_free(opengl_4444_translate_table);
+  opengl_Upload_data = nullptr;
+  opengl_Translate_table = nullptr;
+  opengl_4444_translate_table = nullptr;
+  opengl_FreeCache();
 }
 
 // Takes our 16bit format and converts it into the memory scheme that OpenGL wants
@@ -1186,15 +1123,11 @@ bool rend_InitWindowMode() {
 
 // Resets the texture cache
 void opengl_ResetCache() {
-  if (OpenGL_cache_initted) {
-    mem_free(OpenGL_lightmap_remap);
-    mem_free(OpenGL_bitmap_remap);
-    mem_free(OpenGL_lightmap_states);
-    mem_free(OpenGL_bitmap_states);
-    OpenGL_cache_initted = 0;
+  opengl_FreeCache();
+  if (!opengl_InitCache()) {
+    rend_SetErrorMessage("Out of memory initializing the texture cache.");
+    rend_FatalError();
   }
-
-  opengl_InitCache();
 }
 
 uint8_t opengl_Framebuffer_ready = 0;
@@ -1301,13 +1234,9 @@ int rend_Init(renderer_type state, oeApplication *app, renderer_preferred_state 
   int retval = 0;
 #ifndef DEDICATED_ONLY
   rend_SetRendererType(state);
-  if (!Renderer_initted) {
-    if (!Renderer_close_flag) {
-      atexit(rend_Close);
-      Renderer_close_flag = 1;
-    }
-
-    Renderer_initted = 1;
+  if (!Renderer_close_flag) {
+    atexit(rend_Close);
+    Renderer_close_flag = 1;
   }
 
   LOG_DEBUG.printf("Renderer init is set to %d", Renderer_initted);
@@ -1323,13 +1252,7 @@ int rend_Init(renderer_type state, oeApplication *app, renderer_preferred_state 
 
 void rend_Close() {
   LOG_DEBUG.printf("CLOSE: Renderer init is set to %d", Renderer_initted);
-  if (!Renderer_initted)
-    return;
-
   opengl_Close();
-  SDL_GL_UnloadLibrary();
-
-  Renderer_initted = 0;
 }
 
 void gpu_BindTexture(int handle, int map_type, int slot) {

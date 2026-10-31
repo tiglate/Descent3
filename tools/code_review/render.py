@@ -35,15 +35,18 @@ def main():
              "including included headers. These are not confirmed bug counts. Deduplication uses file, line, "
              "column, check and message; dependencies/system headers are excluded. Manual reference searches "
              "also covered disabled blocks, allocation/cleanup paths, timeouts, and HTTP/audio configuration.", "",
-             "No engine fixes, game launch, sanitizer execution, cross-platform compilation, or gameplay "
-             "verification was performed during this review. Windows, editor, most gameplay/physics and "
+             "The initial baseline scan did not include engine fixes, game launch, sanitizer execution, "
+             "cross-platform compilation, or gameplay verification. Later implementation and validation "
+             "evidence is recorded per item below. Windows, editor, most gameplay/physics and "
              "plugins require further analysis. Dead-code claims are limited to permanently disabled blocks, "
              "specific dead stores and explicitly labeled removal candidates. Platform-only code is not dead code.", "",
-             "## First implementation priorities", "",
-             "1. M01: fix DNS freeing static storage and shared-thread lifetime/synchronization.",
-             "2. M02: close WAV input once on the missing-data error path.",
-             "3. M03: prevent multi-chunk WAV allocations from overwriting owned sample buffers.",
-             "4. M04 and B01: make registry allocation failure safe and bound INF symbol expansion.", "",
+             "## Next implementation priorities", ""]
+    pending = sorted((i for i in items if i["status"] in {"Backlog", "In progress"}),
+                     key=lambda i: (i["priority"], i["phase"], i["id"]))
+    for number, item in enumerate(pending[:4], 1):
+        lines.append(f"{number}. [{item['id']}](#{item['id'].lower()}): {item['title']}.")
+    lines += ["", "Items marked Review have implementation or triage evidence but still have an acceptance "
+             "gate open; see their notes for the remaining work.", "",
              "P1 = address before lower-risk cleanup; P2 = schedule next; P3 = cleanup/measurement. "
              "S/M/L are relative effort estimates, not delivery dates. Confidence is independent of priority: "
              "source-confirmed means visible control/data flow, not a runtime reproduction.", "",

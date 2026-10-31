@@ -962,12 +962,12 @@ void SetScreenMode(int sm, bool force_res_change) {
       // If bitdepth changed but not initting, switch bitdepth
       if (Render_preferred_state.bit_depth != scr_bitdepth) {
         Render_preferred_state.bit_depth = scr_bitdepth;
-        rend_SetPreferredState(&Render_preferred_state);
+        rend_initted = rend_SetPreferredState(&Render_preferred_state);
       }
     }
 
     if (!rend_initted) {
-      Error(rend_GetErrorMessage());
+      rend_FatalError();
     } else {
       int t = FindArg("-ForceStateLimited");
       if (t) {
@@ -993,6 +993,10 @@ void SetScreenMode(int sm, bool force_res_change) {
 
         LOG_INFO.printf("Setting rend_width=%d height=%d", scr_width, scr_height);
         int retval = rend_SetPreferredState(&Render_preferred_state, ui_density_changed);
+        if (!retval) {
+          rend_initted = 0;
+          rend_FatalError();
+        }
 
         if (retval == -1) {
           // We're using the default, so change some values for the menus

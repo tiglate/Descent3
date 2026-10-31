@@ -91,10 +91,12 @@ protected:
 
 private:
   static void DeleteBuffer(GLuint id) {
-    dglDeleteBuffers(1, &id);
+    if (id && dglDeleteBuffers)
+      dglDeleteBuffers(1, &id);
   }
   static void DeleteVertexArray(GLuint id) {
-    dglDeleteVertexArrays(1, &id);
+    if (id && dglDeleteVertexArrays)
+      dglDeleteVertexArrays(1, &id);
   }
   template <typename Generator>
   GLuint outval(Generator&& gen) {
@@ -174,7 +176,8 @@ struct Shader {
 
 private:
   static void DeleteShader(GLuint id) {
-    dglDeleteShader(id);
+    if (id && dglDeleteShader)
+      dglDeleteShader(id);
   }
   MoveOnlyHolder<GLuint, DeleteShader> id_;
 };
@@ -249,7 +252,8 @@ private:
   }
 
   static void DeleteProgram(GLuint id) {
-    dglDeleteProgram(id);
+    if (id && dglDeleteProgram)
+      dglDeleteProgram(id);
   }
 
   MoveOnlyHolder<GLuint, DeleteProgram> id_;

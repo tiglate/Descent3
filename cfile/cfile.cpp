@@ -411,8 +411,11 @@ CFILE *cf_OpenFileInLibrary(const std::filesystem::path &filename, int libhandle
     }
   }
   auto cfile = mem_rmalloc<CFILE>();
-  if (!cfile)
+  if (!cfile) {
+    fclose(fp);
     Error("Out of memory in cf_OpenFileInLibrary()");
+    return nullptr; // Debug builds allow the user to continue after Error().
+  }
   cfile->name = lib->entries[i]->name;
   cfile->file = fp;
   cfile->lib_handle = lib->handle;
@@ -466,8 +469,11 @@ CFILE *open_file_in_lib(const char *filename) {
         }
       }
       cfile = mem_rmalloc<CFILE>();
-      if (!cfile)
+      if (!cfile) {
+        fclose(fp);
         Error("Out of memory in open_file_in_lib()");
+        return nullptr;
+      }
       cfile->name = lib->entries[i]->name;
       cfile->file = fp;
       cfile->lib_handle = lib->handle;
@@ -537,11 +543,18 @@ CFILE *open_file_in_directory(const std::filesystem::path &filename, const char 
 
   // found the file, open it
   cfile = mem_rmalloc<CFILE>();
-  if (!cfile)
+  if (!cfile) {
+    fclose(fp);
     Error("Out of memory in open_file_in_directory()");
+    return nullptr;
+  }
   cfile->name = mem_strdup(PATH_TO_CSTR(using_filename));
-  if (!cfile->name)
+  if (!cfile->name) {
+    mem_free(cfile);
+    fclose(fp);
     Error("Out of memory in open_file_in_directory()");
+    return nullptr;
+  }
   cfile->file = fp;
   cfile->lib_handle = -1;
   cfile->size = static_cast<uint32_t>(length);

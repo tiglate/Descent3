@@ -40,7 +40,9 @@
 
 inline void CheckError() {
 #if defined(FATAL_GL_ERRORS)
-  static auto _dglGetError = reinterpret_cast<GLenum (*)()>(SDL_GL_GetProcAddress("glGetError"));
+  auto _dglGetError = reinterpret_cast<decltype(&glGetError)>(SDL_GL_GetProcAddress("glGetError"));
+  if (!_dglGetError)
+    throw std::runtime_error("failed to find glGetError");
   auto err = _dglGetError();
   switch (err) {
   case GL_NO_ERROR:
@@ -96,7 +98,14 @@ static void LoadGLFnPtrs() {
       throw std::runtime_error(std::string{"failed to find "} + name.data());
     }
   }
-  inits_.clear();
+  // Keep the registrations: entry points can belong to a particular context
+  // and must be reloaded after reinitialization, including a failed first load.
+}
+
+static void ClearGLFnPtrs() {
+  for (auto &[ptr, name, optional] : inits_) {
+    *ptr = nullptr;
+  }
 }
 
 template<typename Ret, typename... Args>
@@ -106,9 +115,7 @@ FnPtr<Ret GLFUNCCALL(Args...)>::FnPtr(std::string_view name, bool optional) : fn
 
 static module *LoadOpenGLDLL(const char *dllname) {
   LOG_INFO << "Loading OpenGL dll...";
-  int rc = SDL_GL_LoadLibrary(dllname[0] ? dllname : nullptr);
-
-  if (rc < 0) {
+  if (!SDL_GL_LoadLibrary(dllname[0] ? dllname : nullptr)) {
     const char *sdlErr = SDL_GetError();
     LOG_ERROR.printf("OpenGL: Couldn't open library [%s]: SDL error [%s].",
                      dllname[0] ? dllname : "system default", sdlErr);

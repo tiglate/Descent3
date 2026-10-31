@@ -842,7 +842,8 @@ bool TelComShow(bool ingame, bool ShipSelect) {
   Render_preferred_state.mipping = 0;
   // turn off bilinear filtering
   Render_preferred_state.filtering = 1;
-  rend_SetPreferredState(&Render_preferred_state);
+  if (!rend_SetPreferredState(&Render_preferred_state))
+    rend_FatalError();
   rend_SetFiltering(0);
 
   // keep the mouse in view
@@ -870,7 +871,8 @@ telcom_bad_error:
   rend_SetZBufferState(1);
   Render_preferred_state.mipping = oldmip;
   Render_preferred_state.filtering = oldbil;
-  rend_SetPreferredState(&Render_preferred_state);
+  if (!rend_SetPreferredState(&Render_preferred_state))
+    rend_FatalError();
   rend_SetFiltering(1);
   rend_SetWrapType(WT_WRAP);
 

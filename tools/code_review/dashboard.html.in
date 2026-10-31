@@ -35,22 +35,34 @@ const key='descent3-code-review-v1-'+base.scan.commit;
 const $=id=>document.getElementById(id);
 function message(text,error=false){$('message').textContent=text;$('message').classList.toggle('error',error)}
 function el(tag,text,cls){const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node}
-function merge(saved){
+function merge(saved,preferLatest=false){
  if(saved.schema_version!==1||saved.scan?.commit!==base.scan.commit||!Array.isArray(saved.items)||saved.items.length!==base.items.length)throw Error('The file belongs to a different review or schema.');
  const next=structuredClone(base), seen=new Set();
  for(const row of saved.items){const target=next.items.find(i=>i.id===row.id);if(!target||seen.has(row.id)||!statuses.includes(row.status))throw Error('Unknown ID, duplicate ID or invalid status.');seen.add(row.id);
   for(const k of ['owner','notes','updated'])if(typeof row[k]!=='string')throw Error('Invalid progress fields.');
   if(row.owner.length>300||row.notes.length>20000)throw Error('Progress field is too long.');
-  Object.assign(target,{status:row.status,owner:row.owner,notes:row.notes,updated:row.updated});
+  if(!preferLatest||(Date.parse(row.updated)||0)>(Date.parse(target.updated)||0))
+   Object.assign(target,{status:row.status,owner:row.owner,notes:row.notes,updated:row.updated});
  }
  for(const row of next.items){if(['Done','Dismissed'].includes(row.status)&&!row.notes.trim())throw Error(row.id+' requires evidence or a dismissal reason.');if(row.status==='Done'&&row.dependencies.some(id=>next.items.find(i=>i.id===id).status!=='Done'))throw Error(row.id+' has incomplete dependencies.');}
  if(!Array.isArray(saved.history)||!Array.isArray(saved.snapshots))throw Error('Missing history or snapshots.');
  if(saved.history.some(h=>!h||!['date','id','field','from','to'].every(k=>typeof h[k]==='string')))throw Error('Invalid history.');
- if(saved.snapshots.some(s=>!s||typeof s.date!=='string'||!['done','dismissed','total'].every(k=>Number.isInteger(s[k])&&s[k]>=0)||s.total!==next.items.length||s.done+s.dismissed>s.total))throw Error('Invalid completion snapshots.');
- next.history=saved.history;next.snapshots=saved.snapshots;return next;
+ if(saved.snapshots.some(s=>!s||typeof s.date!=='string'||!['done','dismissed','total'].every(k=>Number.isInteger(s[k])&&s[k]>=0)||s.done+s.dismissed>s.total))throw Error('Invalid completion snapshots.');
+ if(preferLatest){
+  const historyKey=h=>JSON.stringify([h.date,h.id,h.field,h.from,h.to]),known=new Set(next.history.map(historyKey));
+  for(const h of saved.history)if(!known.has(historyKey(h))){next.history.push(h);known.add(historyKey(h))}
+  next.history.sort((a,b)=>(Date.parse(a.date)||0)-(Date.parse(b.date)||0));
+  const dates=new Set(next.snapshots.map(s=>s.date));
+  for(const s of saved.snapshots)if(!dates.has(s.date)){next.snapshots.push(s);dates.add(s.date)}
+  const latest=Math.max(0,...next.items.map(i=>Date.parse(i.updated)||0));
+  if(latest){const date=new Date(latest).toISOString().slice(0,10),snapshot={date,done:next.items.filter(i=>i.status==='Done').length,dismissed:next.items.filter(i=>i.status==='Dismissed').length,total:next.items.length};
+   next.snapshots=next.snapshots.filter(s=>s.date!==date);next.snapshots.push(snapshot);
+  }
+ }else{next.history=saved.history;next.snapshots=saved.snapshots}
+ return next;
 }
 function save(){try{localStorage.setItem(key,JSON.stringify(data));return true}catch{message('Browser storage is unavailable. Export progress now to keep your changes.',true);return false}}
-try{const saved=localStorage.getItem(key);if(saved)data=merge(JSON.parse(saved));}catch{message('Saved browser data could not be loaded. Showing the repository baseline; import a valid export to restore it.',true)}
+try{const saved=localStorage.getItem(key);if(saved)data=merge(JSON.parse(saved),true);}catch{message('Saved browser data could not be loaded. Showing the repository baseline; import a valid export to restore it.',true)}
 function resolved(i){return ['Done','Dismissed'].includes(i.status)}
 function record(id,field,value){const item=data.items.find(i=>i.id===id),before=item[field];if(before===value)return;
  if(field==='status'&&['Done','Dismissed'].includes(value)&&!item.notes.trim()){message('Add validation evidence or a dismissal reason in Notes before closing '+id+'.',true);renderTable();return}

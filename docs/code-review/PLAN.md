@@ -8,14 +8,16 @@ Risk-based source review plus an actual Ubuntu LLVM clang-tidy 18.1.3 run on **1
 
 The run produced **719 distinct first-party diagnostic locations/messages**, including included headers. These are not confirmed bug counts. Deduplication uses file, line, column, check and message; dependencies/system headers are excluded. Manual reference searches also covered disabled blocks, allocation/cleanup paths, timeouts, and HTTP/audio configuration.
 
-No engine fixes, game launch, sanitizer execution, cross-platform compilation, or gameplay verification was performed during this review. Windows, editor, most gameplay/physics and plugins require further analysis. Dead-code claims are limited to permanently disabled blocks, specific dead stores and explicitly labeled removal candidates. Platform-only code is not dead code.
+The initial baseline scan did not include engine fixes, game launch, sanitizer execution, cross-platform compilation, or gameplay verification. Later implementation and validation evidence is recorded per item below. Windows, editor, most gameplay/physics and plugins require further analysis. Dead-code claims are limited to permanently disabled blocks, specific dead stores and explicitly labeled removal candidates. Platform-only code is not dead code.
 
-## First implementation priorities
+## Next implementation priorities
 
-1. M01: fix DNS freeing static storage and shared-thread lifetime/synchronization.
-2. M02: close WAV input once on the missing-data error path.
-3. M03: prevent multi-chunk WAV allocations from overwriting owned sample buffers.
-4. M04 and B01: make registry allocation failure safe and bound INF symbol expansion.
+1. [A01](#a01): Establish a reproducible incremental clang-tidy gate.
+2. [C01](#c01): Expose bounded network timing policy.
+3. [C02](#c02): Make HTTP connection timeout an explicit option.
+4. [C03](#c03): Resolve the ignored SDL sound-buffer option.
+
+Items marked Review have implementation or triage evidence but still have an acceptance gate open; see their notes for the remaining work.
 
 P1 = address before lower-risk cleanup; P2 = schedule next; P3 = cleanup/measurement. S/M/L are relative effort estimates, not delivery dates. Confidence is independent of priority: source-confirmed means visible control/data flow, not a runtime reproduction.
 
@@ -24,7 +26,7 @@ P1 = address before lower-risk cleanup; P2 = schedule next; P3 = cleanup/measure
 | Phase | Outcome | Items | Exit gate |
 | --- | --- | --- | --- |
 | 0 — Baseline and triage | Pin tools, classify warnings and establish the regression gate. | T03, A01 | Each item's acceptance evidence recorded |
-| 1 — Resource and parser safety | Fix ownership and bounds issues with synthetic fixtures and sanitizers. | M01, M02, M03, M04, M05, B01 | Each item's acceptance evidence recorded |
+| 1 — Resource and parser safety | Fix ownership and bounds issues with synthetic fixtures and sanitizers. | M01, M02, M03, M04, M05, M06, B01, B04 | Each item's acceptance evidence recorded |
 | 2 — Runtime policy and correctness | Expose validated options with unchanged defaults; fix file-size handling. | B02, B03, C01, C02, C03 | Each item's acceptance evidence recorded |
 | 3 — Cleanup and measured modernization | Remove proven dead code; apply small reviewed tidy batches. | D01, D02, D03, T01, T02 | Each item's acceptance evidence recorded |
 | 4 — Coverage and release verification | Extend platform coverage and record runtime validation. | A02 | Each item's acceptance evidence recorded |
@@ -50,9 +52,11 @@ flowchart LR
 | [M03](#m03) | P1 | Memory and resources | M | Source-confirmed | Review |
 | [M04](#m04) | P1 | Memory and resources | M | Source-confirmed | Done |
 | [M05](#m05) | P2 | Memory and resources | S | Runtime-confirmed | Done |
+| [M06](#m06) | P1 | Memory and resources | S | Runtime-confirmed | Done |
 | [B01](#b01) | P1 | Correctness | M | Source-confirmed | Done |
 | [B02](#b02) | P2 | Correctness | M | Source-confirmed | Review |
 | [B03](#b03) | P3 | Correctness | S | Source-confirmed | Backlog |
+| [B04](#b04) | P1 | Correctness | L | Runtime-confirmed | Review |
 | [C01](#c01) | P2 | Configuration | M | Design opportunity | Backlog |
 | [C02](#c02) | P2 | Configuration | S | Design opportunity | Backlog |
 | [C03](#c03) | P2 | Configuration | M | Source-confirmed | Backlog |
@@ -61,8 +65,8 @@ flowchart LR
 | [D03](#d03) | P3 | Dead code | S | Source-confirmed | Backlog |
 | [T01](#t01) | P3 | Clang-tidy | M | Source-confirmed | Backlog |
 | [T02](#t02) | P3 | Clang-tidy | M | Source-confirmed | Backlog |
-| [T03](#t03) | P2 | Clang-tidy | M | Analyzer candidates | Backlog |
-| [A01](#a01) | P2 | Clang-tidy | M | Source-confirmed | Backlog |
+| [T03](#t03) | P2 | Clang-tidy | M | Analyzer candidates | Done |
+| [A01](#a01) | P2 | Clang-tidy | M | Source-confirmed | In progress |
 | [A02](#a02) | P2 | Clang-tidy | L | Source-confirmed | Backlog |
 
 ## M01
@@ -165,6 +169,26 @@ Owner: Codex
 
 Progress evidence / disposition: Console buffers are prepared in temporary owners and published together. Failed/repeated initialization and destroy are safe, failed reinit preserves pending input, and closed consoles do not poll keys. Original failed-init/retry leaked 84 bytes under LSan. Nine console tests passed 100 ASan/UBSan/LSan repetitions plus Release; all 109 Debug tests and the engine build passed. Keyboard events were simulated; real gameplay was not run. Evidence: docs/code-review/validation/M05-B02.md.
 
+## M06
+
+### Clean up CFILE allocation failures when Error returns
+
+Sources: [cfile/cfile.cpp, line 415](../../cfile/cfile.cpp); [cfile/cfile.cpp, line 474](../../cfile/cfile.cpp); [cfile/cfile.cpp, line 546](../../cfile/cfile.cpp); [ddebug/error.cpp, line 135](../../ddebug/error.cpp).
+
+**Evidence (Runtime-confirmed):** At 8b4c924c, disk and both HOG opening paths call Error after a failed CFILE allocation, then dereference null. Error can return in Debug. Failed disk filename duplication also publishes an incomplete handle. Five injected handle-failure cases exit 139 with the original code; the filename-failure regression also fails.
+
+**Change:** Close the acquired FILE before reporting failure; free a partially allocated disk CFILE if filename duplication fails, then return null if Error returns. Preserve retry and the lifetime of other active HOG member streams.
+
+**Acceptance:** Inject disk handle/name and explicit/searched HOG handle failures with cached/reopened streams. Verify cleanup before return, active member contents and successful retry. Run Debug/Release, ASan/UBSan/LSan and focused clang-tidy.
+
+**Dependencies:** None. **Checks:** `clang-analyzer-core.NullDereference`.
+
+- [x] Implemented and validated (Done)
+
+Owner: Codex
+
+Progress evidence / disposition: All four failure exits release resources before Error and return null if it returns. Seven Linux allocation regressions pass Debug and Release; 100 ASan/UBSan/LSan repetitions pass outside the sandbox. All 139 Debug CTest tests and the Debug engine build pass. Focused clang-tidy 18.1.3 emits no NullDereference or unix.Malloc findings. Linux RTL allocator/linker wrappers simulate a returning Debug Error handler; no interactive dialog or cross-platform fault injection was performed. Evidence: docs/code-review/validation/M06-T03.md.
+
 ## B01
 
 ### Bound INF symbolic operand expansion
@@ -220,6 +244,26 @@ Sources: [Descent3/pilot.cpp, line 2914](../../Descent3/pilot.cpp).
 **Dependencies:** None. **Checks:** `bugprone-integer-division`.
 
 - [ ] Implemented and validated (Backlog)
+
+## B04
+
+### Propagate renderer initialization failure and make partial cleanup safe
+
+Sources: [renderer/HardwareBaseGPU.cpp, line 361](../../renderer/HardwareBaseGPU.cpp); [renderer/HardwareOpenGL.cpp, line 580](../../renderer/HardwareOpenGL.cpp); [renderer/HardwareOpenGL.cpp, line 725](../../renderer/HardwareOpenGL.cpp); [renderer/HardwareOpenGL.cpp, line 1300](../../renderer/HardwareOpenGL.cpp).
+
+**Evidence (Runtime-confirmed):** rend_SetPreferredState ignores rend_ReInit failure and returns success. If gamma also changes, rend_SetGammaValue dereferences gRenderer after failed setup left it empty. rend_Init publishes Renderer_initted before successful initialization. opengl_Init's failed-setup cleanup can issue GL calls before pointers/context exist. Source-confirmed, without injected GL failure or gameplay reproduction yet.
+
+**Change:** Publish readiness only after successful initialization, release partial resources only with valid GL entry points/context, propagate reinitialization failure before gamma/draw operations, and audit callers so failed setup stops rendering. Make cleanup and retry safe; do not hide missing initialization with blanket optional guards.
+
+**Acceptance:** Inject SDL/window/context/GL-loading/framebuffer failures at startup and reinit, including simultaneous resolution/gamma changes. Verify failure propagation, no GL calls without context, repeatable shutdown, no leaks, and successful retry/drawing. Run a real GL smoke session and supported platform builds.
+
+**Dependencies:** None. **Checks:** `bugprone-unchecked-optional-access`.
+
+- [ ] Implemented and validated (Review)
+
+Owner: Codex
+
+Progress evidence / disposition: Implemented checked SDL3 initialization/library loading, persistent per-context entry-point reload, readiness publication after complete initialization, centralized partial cleanup, checked cache/upload allocation, bounded diagnostics, failure propagation before gamma and checked engine callers. Linux Debug/Release engine builds and 30 lifecycle cases pass; 169 Debug CTest cases pass with one opt-in GL case skipped, then the real-GL case passes separately. ASan/UBSan/LSan: 30 cases x 100 repetitions pass. Original code fails the reload test and three failure comparisons exit 139. Windows build/runtime and interactive settings/gameplay/debugger checks remain pending, so this stays Review. Evidence: docs/code-review/validation/B04-T03.md.
 
 ## C01
 
@@ -365,9 +409,11 @@ Sources: [linux/registry.cpp, line 437](../../linux/registry.cpp); [sndlib/ddsou
 
 **Dependencies:** None. **Checks:** `clang-analyzer-unix.Malloc`, `clang-analyzer-core.uninitialized.Assign`, `clang-analyzer-core.NullDereference`, `bugprone-unchecked-optional-access`.
 
-- [ ] Implemented and validated (Backlog)
+- [x] Implemented and validated (Done)
 
-Progress evidence / disposition: Partial triage: the WAV uninitialized-value diagnostic at original line 467 is no longer emitted after M02/M03 replaced global intermediate state with local owned buffers and checked reads. No analyzer suppressions were added. Registry, cfopen and renderer candidates still require triage. M04 removed the olddata allocation and its unix.Malloc warning is no longer emitted; original allocation-failure and aliasing defects were independently reproduced and fixed. cfopen and renderer candidates remain open; no suppression added.
+Owner: Codex
+
+Progress evidence / disposition: Original Linux candidates now have dispositions: registry and WAV warnings were removed and validated by M04 and M02/M03; M06 reproduced and fixed the returning-Error CFILE failure. B04 repaired renderer failure propagation, partial cleanup and per-context GL loading. Thirty lifecycle regressions pass Debug/Release, 3,000 sanitizer executions pass, and actual offscreen GL drawing/reopen/reinit passes. Twenty optional-access diagnostics remain under the documented successful-initialization/main-thread precondition; no suppressions or blanket drawing guards were added. Remaining Windows and interactive renderer acceptance is tracked in B04. Evidence: docs/code-review/validation/B04-T03.md.
 
 ## A01
 
@@ -383,7 +429,11 @@ Sources: [CMakeLists.txt, line 67](../../CMakeLists.txt); [.github/workflows/bui
 
 **Dependencies:** None. **Checks:** Manual review / targeted regression.
 
-- [ ] Implemented and validated (Backlog)
+- [ ] Implemented and validated (In progress)
+
+Owner: Codex
+
+Progress evidence / disposition: Pinned scan now rejects clang-tidy versions other than 18.1.3. Added a preliminary analyzer baseline comparison that rejects incomplete/failed scans, deduplicates header locations and compares per-file/check/message counts without depending on line numbers. Synthetic baseline and excluded third-party warnings pass; a seeded finding and timeout fail. The current 16-file Linux scan completed successfully and compares 42 analyzer findings with zero new. Identical warning replacement within one file can evade counts; CI integration, robust configuration selection, broader coverage and a real seeded clang-tidy warning remain open. CTest PRE_TEST discovery is also needed for configuration-specific CI. See docs/code-review/README.md.
 
 ## A02
 
@@ -440,7 +490,7 @@ Use a separate build directory for ASan/LSan/UBSan and another for TSan; instrum
 
 ## Progress tracking
 
-Current: 4 implemented, 0 dismissed, 15 unresolved items.
+Current: 6 implemented, 0 dismissed, 15 unresolved items.
 
 Open [dashboard.html](dashboard.html) for live charts, priority/category breakdowns, roadmap, editable owners/status/notes and actual change history. Changes use browser storage when available. Export progress, replace `progress.json`, and run `rtk proxy python3 tools/code_review/render.py` to update both this plan and the dashboard. Import transfers progress without changing the finding definitions. Dismissal is resolution with a reason, not implementation. Done requires validation evidence and Done dependencies.
 

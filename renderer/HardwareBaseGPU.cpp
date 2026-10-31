@@ -19,6 +19,8 @@
 // TODO: This is missing a good way of overriding base behavior (like, you know, method overrides...)
 
 #include <algorithm>
+#include <cstdio>
+#include <cstdlib>
 #include <cstring>
 
 #include "pserror.h"
@@ -96,8 +98,14 @@ const char *rend_GetErrorMessage() { return Renderer_error_message; }
 
 // Sets an error message
 void rend_SetErrorMessage(const char *str) {
-  ASSERT(strlen(str) < 256);
-  strcpy(Renderer_error_message, str);
+  snprintf(Renderer_error_message, sizeof(Renderer_error_message), "%s", str);
+}
+
+[[noreturn]] void rend_FatalError() {
+  // Rendering cannot continue if initialization failed, even if Debug's Error
+  // dialog allows Ignore/Cancel. Keep the diagnostic as data, not a format string.
+  Error("Renderer initialization failed: %s", rend_GetErrorMessage());
+  std::exit(EXIT_FAILURE);
 }
 
 // FIXME: Unused
@@ -357,7 +365,9 @@ int rend_SetPreferredState(renderer_preferred_state *pref_state, bool reinit) {
 
     if (pref_state->width != gpu_state.screen_width || pref_state->height != gpu_state.screen_height ||
         old_state.bit_depth != pref_state->bit_depth || reinit) {
-      rend_ReInit();
+      retval = rend_ReInit();
+      if (!retval)
+        return 0;
     }
 
     if (old_state.gamma != pref_state->gamma) {

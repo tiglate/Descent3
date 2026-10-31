@@ -694,8 +694,13 @@ void D3DebugStopHandler() {
 
 void D3DebugResumeHandler() {
   //	reopen all systems for gameplay.
-  if (rend_initted)
+  if (rend_initted) {
     rend_initted = rend_Init(PreferredRenderer, Descent, &Render_preferred_state);
+    if (!rend_initted) {
+      LOG_ERROR.printf("Unable to resume renderer: %s", rend_GetErrorMessage());
+      std::exit(EXIT_FAILURE); // Do not recursively reopen Error's debug dialog.
+    }
+  }
 
   if (rend_initted != 0)
     rend_initted = 1;
