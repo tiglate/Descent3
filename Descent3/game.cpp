@@ -671,6 +671,7 @@
 #include "descent.h"
 #include "doorway.h"
 #include "game.h"
+#include "menu_screen.h"
 #include "game2dll.h"
 #include "gamefont.h"
 #include "gameloop.h"
@@ -897,6 +898,7 @@ void SetGameMode(int mode) {
 ///////////////////////////////////////////////////////////////////////////////
 
 static int Screen_mode = SM_NULL;
+bool Main_menu_widescreen = false;
 
 int GetScreenMode() { return Screen_mode; }
 
@@ -945,6 +947,10 @@ void SetScreenMode(int sm, bool force_res_change) {
     } else {
       scr_width = FIXED_SCREEN_WIDTH;
       scr_height = FIXED_SCREEN_HEIGHT;
+      if (sm == SM_MENU && Main_menu_widescreen && !Video_res_list.empty()) {
+        const auto &resolution = Video_res_list[Current_video_resolution_id];
+        scr_width = MenuScreenWidth(resolution.width, resolution.height, true);
+      }
       scr_bitdepth = 32;
     }
 

@@ -215,6 +215,7 @@ int GetScreenMode();
 
 //	ALWAYS CALL THESE TO START AND END RENDERING
 void StartFrame(bool clear = true);
+extern bool Main_menu_widescreen;
 void StartFrame(int x, int y, int x2, int y2, bool clear = true, bool push_on_stack = true);
 void EndFrame();
 

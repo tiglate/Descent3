@@ -783,6 +783,7 @@ struct video_menu {
   bool *mipmapping = nullptr;
   bool *vsync = nullptr;
   bool *high_resolution_fonts = nullptr;
+  bool *modern_menu = nullptr;
   char *resolution_string = nullptr;
   short *fov = nullptr;
   bool resolution_changed = false;
@@ -839,8 +840,11 @@ struct video_menu {
     filtering = sheet->AddLongCheckBox(TXT_BILINEAR, (Render_preferred_state.filtering != 0));
     mipmapping = sheet->AddLongCheckBox(TXT_MIPMAPPING, (Render_preferred_state.mipping != 0));
     high_resolution_fonts = sheet->AddLongCheckBox("High-res fonts", grfont_HighResolutionEnabled());
+    int modern_menu_enabled = 1;
+    Database->read_int("ModernMenuBackground", &modern_menu_enabled);
+    modern_menu = sheet->AddLongCheckBox("Modern menu", modern_menu_enabled != 0);
 
-    sheet->NewGroup(TXT_MONITOR, 0, 150);
+    sheet->NewGroup(TXT_MONITOR, 0, 175);
     vsync = sheet->AddLongCheckBox(TXT_CFG_VSYNCENABLED, (Render_preferred_state.vsync_on != 0));
 
     sheet->AddText("");
@@ -859,6 +863,8 @@ struct video_menu {
       Render_preferred_state.vsync_on = (*vsync) ? 1 : 0;
     if (high_resolution_fonts)
       grfont_SetHighResolutionEnabled(*high_resolution_fonts);
+    if (modern_menu)
+      Database->write("ModernMenuBackground", *modern_menu ? 1 : 0);
 #if !defined(POSIX)
     if (bitdepth)
       Render_preferred_bitdepth = (*bitdepth) == 1 ? 32 : 16;

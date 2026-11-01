@@ -4,6 +4,9 @@
 
 ### Added
 
+- A modern widescreen main-menu movie, enabled by default, with a Video
+  Settings toggle to restore the classic background.
+- A matching full-color loading screen when the modern menu is enabled.
 - Native first-run folder selection for the original game installation, with
   validation, retry/cancel handling, and a saved `game-assets.cfg` location.
 - `-assetdir` to configure or change the original game location without a

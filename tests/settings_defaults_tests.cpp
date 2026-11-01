@@ -4,8 +4,16 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 #include "settings_defaults.h"
+#include "menu_screen.h"
 #include <gtest/gtest.h>
 
+TEST(MenuScreen, PreservesClassicCanvasAndFitsModernDisplayAspect) {
+  EXPECT_EQ(MenuScreenWidth(1920, 1080, false), 640);
+  EXPECT_EQ(MenuScreenWidth(1920, 1080, true), 853);
+  EXPECT_EQ(MenuScreenWidth(3440, 1440, true), 1146);
+  EXPECT_EQ(MenuScreenWidth(800, 1200, true), 640);
+  EXPECT_EQ(MenuScreenWidth(1920, 0, true), 640);
+}
 TEST(SettingsDefaults, ChoosesHighestPixelCountWithoutSavedChoice) {
   const std::vector<tVideoResolution> modes{{3840, 1080}, {1280, 720}, {2560, 2160}, {1920, 1080}};
   EXPECT_EQ(SelectStartupResolution(modes), 2);

@@ -26,7 +26,6 @@
 *.rc text eol=lf
 *.rule text eol=lf
 *.sh text eol=lf
-*.sqlite text eol=lf
 *.str text eol=lf
 *.txt text eol=lf
 *.yaml text eol=lf
@@ -60,3 +59,15 @@
 *.stamp binary
 *.tlog binary
 *.wav binary
+*.sqlite binary
+
+# Large source and runtime media are stored through Git LFS.
+*.png filter=lfs diff=lfs merge=lfs -text
+*.jpg filter=lfs diff=lfs merge=lfs -text
+*.jpeg filter=lfs diff=lfs merge=lfs -text
+*.webp filter=lfs diff=lfs merge=lfs -text
+*.gif filter=lfs diff=lfs merge=lfs -text
+*.mp4 filter=lfs diff=lfs merge=lfs -text
+*.mov filter=lfs diff=lfs merge=lfs -text
+*.ogv filter=lfs diff=lfs merge=lfs -text
+*.webm filter=lfs diff=lfs merge=lfs -text

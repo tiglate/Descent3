@@ -946,6 +946,8 @@
 #include "appdatabase.h"
 #include "room.h"
 #include "game.h"
+#include "menu_image.h"
+#include <memory>
 #include "gamefile.h"
 #include "gamespy.h"
 #include "TelCom.h"
@@ -1033,6 +1035,7 @@ static chunked_bitmap Title_bitmap;
 static bool Init_systems_init = false;
 static bool Graphics_init = false;
 static bool Title_bitmap_init = false;
+static std::unique_ptr<MenuImage> Modern_title_image;
 uint8_t Use_motion_blur = 0;
 
 extern int Min_allowed_frametime;
@@ -1681,7 +1684,10 @@ void InitMessage(const char *c, float progress) {
 
   StartFrame();
 
-  if (Title_bitmap_init) {
+  if (Modern_title_image) {
+    rend_ClearScreen(GR_BLACK);
+    Modern_title_image->Draw(Game_window_w, Game_window_h);
+  } else if (Title_bitmap_init) {
     rend_ClearScreen(GR_BLACK);
     rend_DrawChunkedBitmap(&Title_bitmap, x, y, 255);
   }
@@ -1747,6 +1753,21 @@ void InitMessage(const char *c, float progress) {
 //////////////////////////////////////////////////////////////////////////////
 
 void IntroScreen() {
+#if !defined(OEM) && !defined(DEMO)
+  int modern = 1;
+  Database->read_int("ModernMenuBackground", &modern);
+  if (modern) {
+    auto image = std::make_unique<MenuImage>();
+    if (image->Open()) {
+      Modern_title_image = std::move(image);
+      Main_menu_widescreen = true;
+      SetScreenMode(SM_MENU, true);
+      InitMessage(nullptr);
+      return;
+    }
+    LOG_WARNING << "Unable to load modern startup image; using classic artwork.";
+  }
+#endif
 // #if (defined(OEM) || defined(DEMO) )
 #ifdef DEMO
   ShowStaticScreen("tantrum.ogf", true, 3.0);
@@ -1958,6 +1979,7 @@ void InitD3Systems2(bool editor) {
   Init_systems_init = true;
 
   // free title screen bitmap.
+  Modern_title_image.reset();
   if (Title_bitmap_init) {
     bm_DestroyChunkedBitmap(&Title_bitmap);
     Title_bitmap_init = false;

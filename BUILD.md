@@ -13,9 +13,16 @@ The build process uses [**CMake**](https://cmake.org/) and, by default, [**Ninja
 - [**glm**](https://github.com/g-truc/glm) providing useful additions to OpenGL.
 - [**plog**](https://github.com/SergiusTheBest/plog) for logging
 - [**zlib**](https://www.zlib.net/) as a compression utility
+- [**libpng**](http://www.libpng.org/pub/png/libpng.html) for loading the modern startup image.
+- [**libtheora** and **libogg**](https://xiph.org/) for the modern menu movie.
 - [**gtest**](https://github.com/google/googletest) (optional) for testing.
 
 You can supply these dependencies yourself via your system's library management tools, or the build system can locate the dependencies for you using [vcpkg](https://github.com/microsoft/vcpkg), a cross-platform dependency-management system developed by Microsoft. The official builds source their dependencies from vcpkg.
+
+The repository stores images and video in Git LFS. Install Git LFS and run
+`git lfs install` before cloning; after an existing clone, run `git lfs pull`
+to download the media files. Builds and installs need the actual files rather
+than the small LFS pointer files.
 
 ## Installing and using vcpkg
 

@@ -7,6 +7,8 @@
     },
     "glm",
     "gtest",
+    "libpng",
+    "libtheora",
     "plog",
     {
       "name": "sdl3",

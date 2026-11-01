@@ -41,9 +41,14 @@ bms_lightmap GameLightmaps[MAX_LIGHTMAPS]{};
 int bm_w(int, int) { return 2; }
 int bm_h(int, int) { return 2; }
 int bm_mipped(int) { return 0; }
-int bm_format(int) { return BITMAP_FORMAT_1555; }
+static bool use_rgba_bitmap = false;
+alignas(uint16_t) static const std::array<uint8_t, 16> rgba_pixels{1, 2, 3, 255, 8, 9, 10, 255,
+                                                                17, 18, 19, 255, 31, 32, 33, 255};
+int bm_format(int) { return use_rgba_bitmap ? BITMAP_FORMAT_RGBA8888 : BITMAP_FORMAT_1555; }
 uint16_t *bm_data(int, int) {
   static uint16_t pixels[4]{0xffff, 0xffff, 0xffff, 0xffff};
+  if (use_rgba_bitmap)
+    return reinterpret_cast<uint16_t *>(const_cast<uint8_t *>(rgba_pixels.data()));
   return pixels;
 }
 uint16_t *lm_data(int) { return bm_data(0, 0); }
@@ -71,6 +76,7 @@ extern rendering_state gpu_state;
 extern uint8_t Renderer_initted;
 extern SDL_Window *GSDLWindow;
 extern SDL_GLContext GSDLGLContext;
+extern void opengl_TranslateBitmapToOpenGL(int texnum, int bm_handle, int map_type, int replace, int tn);
 
 namespace {
 enum class Failure {
@@ -102,11 +108,36 @@ bool watch_allocations = false;
 int fail_allocation_after = -1;
 std::array<void *, 32> cpu_objects{};
 std::string driver_error = "injected renderer failure %s";
+std::array<uint8_t, 16> uploaded_rgba{};
+GLint uploaded_internal_format = 0;
+GLenum uploaded_format = 0, uploaded_type = 0;
+int rgba_creates = 0, rgba_updates = 0;
 
 void RecordGL() {
   ++gl_calls;
   if (!current_context)
     ++bad_gl_calls;
+}
+void GLFUNCCALL CaptureTexImage(GLenum, GLint, GLint internal, GLsizei width, GLsizei height, GLint, GLenum format,
+                                GLenum type, const void *data) {
+  RecordGL();
+  if (use_rgba_bitmap && width == 2 && height == 2 && data) {
+    uploaded_internal_format = internal;
+    uploaded_format = format;
+    uploaded_type = type;
+    std::memcpy(uploaded_rgba.data(), data, uploaded_rgba.size());
+    ++rgba_creates;
+  }
+}
+void GLFUNCCALL CaptureTexSubImage(GLenum, GLint, GLint, GLint, GLsizei width, GLsizei height, GLenum format,
+                                   GLenum type, const void *data) {
+  RecordGL();
+  if (use_rgba_bitmap && width == 2 && height == 2 && data) {
+    uploaded_format = format;
+    uploaded_type = type;
+    std::memcpy(uploaded_rgba.data(), data, uploaded_rgba.size());
+    ++rgba_updates;
+  }
 }
 GLuint NewObject() {
   RecordGL();
@@ -306,6 +337,8 @@ extern "C" SDL_FunctionPointer __wrap_SDL_GL_GetProcAddress(const char *name) {
   SPECIAL_GL(glGetStringi, GetStringIndex);
   SPECIAL_GL(glCheckFramebufferStatus, FramebufferStatus);
   SPECIAL_GL(glGetUniformLocation, UniformLocation);
+  SPECIAL_GL(glTexImage2D, CaptureTexImage);
+  SPECIAL_GL(glTexSubImage2D, CaptureTexSubImage);
   SPECIAL_GL(glMapBufferRange, MapBuffer);
   SPECIAL_GL(glGenTextures, GenObjects);
   SPECIAL_GL(glGenBuffers, GenObjects);
@@ -373,6 +406,8 @@ protected:
     rend_Close();
     video_initialized = true;
     packed_pixels = false;
+    use_rgba_bitmap = false;
+    rgba_creates = rgba_updates = 0;
     error_calls = bad_gl_calls = gl_calls = lookup_calls = 0;
     next_id = 1;
     watch_allocations = false;
@@ -434,6 +469,31 @@ TEST_F(RendererLifecycleTest, VideoInitializationUsesSDL3BooleanResult) {
   auto pref = Preferences();
   ASSERT_EQ(rend_Init(RENDERER_OPENGL, nullptr, &pref), 1);
   ExpectReadyAndDraw();
+}
+
+TEST_F(RendererLifecycleTest, RgbaBitmapUploadsWithoutReducingColorPrecision) {
+  for (bool packed : {false, true}) {
+    packed_pixels = packed;
+    rgba_creates = rgba_updates = 0;
+    auto pref = Preferences();
+    ASSERT_EQ(rend_Init(RENDERER_OPENGL, nullptr, &pref), 1);
+    use_rgba_bitmap = true;
+    GameBitmaps[1].flags = BF_BRAND_NEW;
+    opengl_TranslateBitmapToOpenGL(1, 1, MAP_TYPE_BITMAP, 0, 0);
+    EXPECT_EQ(rgba_creates, 1);
+    EXPECT_EQ(uploaded_internal_format, GL_RGBA8);
+    EXPECT_EQ(uploaded_format, GL_RGBA);
+    EXPECT_EQ(uploaded_type, GL_UNSIGNED_BYTE);
+    EXPECT_EQ(uploaded_rgba, rgba_pixels);
+    GameBitmaps[1].flags = BF_CHANGED;
+    opengl_TranslateBitmapToOpenGL(1, 1, MAP_TYPE_BITMAP, 1, 0);
+    EXPECT_EQ(rgba_updates, 1);
+    EXPECT_EQ(uploaded_format, GL_RGBA);
+    EXPECT_EQ(uploaded_type, GL_UNSIGNED_BYTE);
+    EXPECT_EQ(uploaded_rgba, rgba_pixels);
+    use_rgba_bitmap = false;
+    rend_Close();
+  }
 }
 
 class RendererFailureTest : public RendererLifecycleTest, public testing::WithParamInterface<Failure> {};

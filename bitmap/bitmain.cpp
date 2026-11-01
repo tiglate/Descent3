@@ -537,6 +537,15 @@ int bm_AllocBitmap(int w, int h, int add_mem) {
   }
   return ret;
 }
+
+int bm_AllocBitmapRGBA(int w, int h) {
+  if (w <= 0 || h <= 0 || w > 32767 || h > 32767 || static_cast<int64_t>(w) * h > (INT32_MAX - 2) / 4)
+    return -1;
+  int handle = bm_AllocBitmap(w, h, w * h * 2);
+  if (handle >= 0)
+    GameBitmaps[handle].format = BITMAP_FORMAT_RGBA8888;
+  return handle;
+}
 // Just like bm_AllocBitmap but doesn't actually allocate memory.  Useful for paging!
 int bm_AllocNoMemBitmap(int w, int h) {
   int n = 0, i;
@@ -604,7 +613,8 @@ void bm_FreeBitmap(int handle) {
 void bm_FreeBitmapData(int handle) {
   if (GameBitmaps[handle].data16 != NULL && !(GameBitmaps[handle].flags & BF_NOT_RESIDENT)) {
     if (!(GameBitmaps[handle].flags & BF_NOT_RESIDENT)) {
-      int mem_used = (GameBitmaps[handle].width * GameBitmaps[handle].height * 2);
+      int mem_used = GameBitmaps[handle].width * GameBitmaps[handle].height *
+                     (GameBitmaps[handle].format == BITMAP_FORMAT_RGBA8888 ? 4 : 2);
       Bitmap_memory_used -= mem_used;
       if (GameBitmaps[handle].flags & BF_MIPMAPPED)
         Bitmap_memory_used -= (mem_used / 3);

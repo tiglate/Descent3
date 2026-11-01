@@ -167,6 +167,9 @@ set(CPPS
   ctlconfig.cpp
   D3ForceFeedback.cpp
   d3movie.cpp
+  menu_movie.cpp
+  menu_image.cpp
+  menu_image_decode.cpp
   d3music.cpp
   damage.cpp
   debuggraph.cpp
@@ -321,6 +324,8 @@ file(GLOB_RECURSE INCS "../lib/*.h")
 add_executable(Descent3 WIN32 MACOSX_BUNDLE ${D3Icon} ${HEADERS} ${CPPS} ${INCS} ${MANIFEST} ${RC_FILE})
 target_link_libraries(Descent3 PRIVATE
   SDL3::SDL3
+  PNG::PNG
+  unofficial::theora::theoradec
   2dlib
   AudioEncode
   bitmap
@@ -354,6 +359,15 @@ target_link_libraries(Descent3 PRIVATE
 target_include_directories(Descent3 PRIVATE ${PROJECT_BINARY_DIR}/lib ${SDL3_INCLUDE_DIRS})
 target_link_options(Descent3 PRIVATE $<$<PLATFORM_ID:Windows>:/DEBUG:FULL>)
 set_target_properties(Descent3 PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/build")
+set_property(TARGET Descent3 APPEND PROPERTY LINK_DEPENDS
+  "${PROJECT_SOURCE_DIR}/images/mainmenu_new.png" "${PROJECT_SOURCE_DIR}/movies/mainmenu-modern.ogv")
+add_custom_command(TARGET Descent3 POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:Descent3>/movies"
+  COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:Descent3>/images"
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/movies/mainmenu-modern.ogv"
+          "$<TARGET_FILE_DIR:Descent3>/movies/mainmenu-modern.ogv"
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/images/mainmenu_new.png"
+          "$<TARGET_FILE_DIR:Descent3>/images/mainmenu_new.png")
 add_dependencies(Descent3
   get_git_hash
   Direct_TCP_IP_Hog
@@ -372,6 +386,8 @@ add_dependencies(Descent3
 )
 
 install(TARGETS Descent3 RUNTIME BUNDLE DESTINATION .)
+install(FILES ${PROJECT_SOURCE_DIR}/movies/mainmenu-modern.ogv DESTINATION movies)
+install(FILES ${PROJECT_SOURCE_DIR}/images/mainmenu_new.png DESTINATION images)
 if(MSVC)
   install(FILES $<TARGET_PDB_FILE:Descent3> DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()

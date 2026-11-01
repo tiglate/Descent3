@@ -189,6 +189,8 @@ public:
   // type MM_STARTMENU_TYPE = start, type MM_ENDMENU_TYPE = end, (1+2) = start and end, type 0 = normal
   bool AddItem(int id, int key, const char *text, int type = 0);
   void Create();
+  void ReloadBackground(bool allow_modern = true);
+  bool HasModernBackground() const;
   int DoUI(); //	does user interface.
 public:
   int SoundHandles[N_MM_SOUNDS];

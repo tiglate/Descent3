@@ -677,6 +677,8 @@
 #include "cinematics.h"
 #include "multi_dll_mgr.h"
 #include "newui_core.h"
+#include "appdatabase.h"
+#include "cfile.h"
 
 #ifdef _WIN32
 #define USE_DIRECTPLAY
@@ -731,24 +733,42 @@ int MainMenu() {
     }
   }
 
-  // setup screen
-  SetScreenMode(SM_MENU, true);
-  // create interface
-  main_menu.Create();
-  main_menu.AddItem(IDV_NEWGAME, KEY_N, TXT_MENUNEWGAME, MM_STARTMENU_TYPE);
-  main_menu.AddItem(IDV_LOADGAME, KEY_L, TXT_LOADGAME);
-  // #ifndef DEMO
-  main_menu.AddItem(IDV_PLAYDEMO, KEY_D, TXT_VIEWDEMO);
-  // #endif
-  main_menu.AddItem(IDV_OPTIONS, KEY_O, TXT_MENUOPTIONS);
-  main_menu.AddItem(IDV_PILOT, KEY_P, TXT_MENUPILOTS);
-  main_menu.AddItem(IDV_MULTIPLAYER, KEY_M, TXT_MENUMULTIPLAYER);
-  main_menu.AddItem(IDV_CREDITS, KEY_C, TXT_MENUCREDITS);
-  main_menu.AddItem(IDV_QUIT, KEY_Q, TXT_MENUQUIT, MM_ENDMENU_TYPE);
-#ifdef _DEBUG
-  main_menu.AddItem(0, 0, nullptr);
-  main_menu.AddItem(IDV_LOADLEVEL, 0, "Load Level");
+  auto wants_widescreen = [&]() {
+    int modern = 1;
+    Database->read_int("ModernMenuBackground", &modern);
+#ifdef MOVIE_MENU
+    return modern && !cf_LocatePath(std::filesystem::path("movies") / "mainmenu-modern.ogv").empty();
+#else
+    return false;
 #endif
+  };
+  auto configure_menu_screen = [&]() {
+    Main_menu_widescreen = wants_widescreen();
+    SetScreenMode(SM_MENU, true);
+  };
+  auto create_menu = [&]() {
+    main_menu.Create();
+    if (Main_menu_widescreen && !main_menu.HasModernBackground()) {
+      main_menu.Destroy();
+      Main_menu_widescreen = false;
+      SetScreenMode(SM_MENU, true);
+      main_menu.Create();
+    }
+    main_menu.AddItem(IDV_NEWGAME, KEY_N, TXT_MENUNEWGAME, MM_STARTMENU_TYPE);
+    main_menu.AddItem(IDV_LOADGAME, KEY_L, TXT_LOADGAME);
+    main_menu.AddItem(IDV_PLAYDEMO, KEY_D, TXT_VIEWDEMO);
+    main_menu.AddItem(IDV_OPTIONS, KEY_O, TXT_MENUOPTIONS);
+    main_menu.AddItem(IDV_PILOT, KEY_P, TXT_MENUPILOTS);
+    main_menu.AddItem(IDV_MULTIPLAYER, KEY_M, TXT_MENUMULTIPLAYER);
+    main_menu.AddItem(IDV_CREDITS, KEY_C, TXT_MENUCREDITS);
+    main_menu.AddItem(IDV_QUIT, KEY_Q, TXT_MENUQUIT, MM_ENDMENU_TYPE);
+#ifdef _DEBUG
+    main_menu.AddItem(0, 0, nullptr);
+    main_menu.AddItem(IDV_LOADLEVEL, 0, "Load Level");
+#endif
+  };
+  configure_menu_screen();
+  create_menu();
   //	page in ui data.
   newuiCore_PageInBitmaps();
   // do special junk.
@@ -833,10 +853,20 @@ int MainMenu() {
         exit_menu = 1;
       }
       break;
-    case IDV_OPTIONS:
+    case IDV_OPTIONS: {
+      const int previous_width = Max_window_w, previous_height = Max_window_h;
       main_menu.SetMusicRegion(OPTIONS_MUSIC_REGION);
       OptionsMenu();
+      if (Main_menu_widescreen != wants_widescreen() || Max_window_w != previous_width ||
+          Max_window_h != previous_height) {
+        main_menu.Close();
+        main_menu.Destroy();
+        configure_menu_screen();
+        create_menu();
+        main_menu.Open();
+      }
       break;
+    }
     case IDV_PILOT:
       main_menu.SetMusicRegion(OPTIONS_MUSIC_REGION);
       DoWaitMessage(true);
@@ -894,6 +924,7 @@ int MainMenu() {
   // close menu
   main_menu.Close();
   main_menu.Destroy();
+  Main_menu_widescreen = false;
   //	page in ui data.
   newuiCore_ReleaseBitmaps();
   return exit_game ? 1 : 0;

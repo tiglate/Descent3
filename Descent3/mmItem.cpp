@@ -311,13 +311,49 @@ void mmItem::OnDraw() {
 //	MAIN MENU INTERFACE CODE
 
 #include "stdlib.h" //need this to get _MAX_PATH, which really ought to be in ddio.h
+#include "menu_movie.h"
+#include "appdatabase.h"
+#include <memory>
 
 bool static_menu_background = false;
+static std::unique_ptr<MenuMovie> modern_menu_movie;
+bool mmInterface::HasModernBackground() const { return modern_menu_movie != nullptr; }
+
+void mmInterface::ReloadBackground([[maybe_unused]] bool allow_modern) {
+#ifdef MOVIE_MENU
+  modern_menu_movie.reset();
+  if (static_menu_background) FreeLargeBitmap(&m_art);
+  else if (m_movie) EndMovie(m_movie);
+  m_movie = nullptr;
+  static_menu_background = false;
+  int modern = 1;
+  Database->read_int("ModernMenuBackground", &modern);
+  if (modern && allow_modern) {
+    modern_menu_movie = std::make_unique<MenuMovie>();
+    if (modern_menu_movie->Open()) return;
+    modern_menu_movie.reset();
+  }
+  if (cfexist("mainmenuoverride.ogf")) {
+    if (!LoadLargeBitmap("mainmenuoverride.ogf", &m_art)) Error("Unable to load main menu art mainmenuoverride.ogf.");
+    static_menu_background = true;
+  } else {
+    m_movie = StartMovie("mainmenu", true);
+    if (!m_movie) {
+      if (!LoadLargeBitmap("mainmenu.ogf", &m_art)) Error("Unable to load main menu art mainmenu.ogf.");
+      static_menu_background = true;
+    }
+  }
+#endif
+}
 
 void mmInterface::Create() {
   int i;
 
   MM_object = this;
+  static_menu_background = false;
+#ifdef MOVIE_MENU
+  m_movie = nullptr;
+#endif
 
   UIWindow::Create(0, 0, Max_window_w, Max_window_h);
   mmItem::AttachInterface(this);
@@ -337,24 +373,7 @@ void mmInterface::Create() {
   }
 #endif
 #else
-  if (cfexist("mainmenuoverride.ogf")) {
-    if (!LoadLargeBitmap("mainmenuoverride.ogf", &m_art)) {
-      Error("Unable to load main menu art mainmenuoverride.ogf.");
-    }
-    m_movie = NULL;
-    static_menu_background = true;
-  } else {
-    m_movie = StartMovie("mainmenu", true);
-
-    if (!m_movie) //[ISB] Didn't find the menu movie?
-    {
-      if (!LoadLargeBitmap("mainmenu.ogf", &m_art)) {
-        Error("Unable to load main menu art mainmenu.ogf.");
-      } else {
-        static_menu_background = true;
-      }
-    }
-  }
+  ReloadBackground();
 #endif
 
   // load sounds and music
@@ -428,7 +447,9 @@ void mmInterface::OnDestroy() {
   D3MusicStop();
   Sound_system.StopAllSounds();
 
-  if (static_menu_background) {
+  if (modern_menu_movie) {
+    modern_menu_movie.reset();
+  } else if (static_menu_background) {
     FreeLargeBitmap(&m_art);
   } else {
 #ifdef MOVIE_MENU
@@ -497,7 +518,9 @@ void MenuScene() {
   if (MM_object) {
     StartFrame();
 
-    if (static_menu_background) {
+    if (modern_menu_movie) {
+      if (!modern_menu_movie->Draw(Max_window_w, Max_window_h)) MM_object->ReloadBackground(false);
+    } else if (static_menu_background) {
       DrawLargeBitmap(&MM_object->m_art, 0, 0, 1.0f);
     } else {
 #ifdef MOVIE_MENU

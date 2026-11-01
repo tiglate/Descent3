@@ -52,6 +52,7 @@
 #define BITMAP_FORMAT_STANDARD 0
 #define BITMAP_FORMAT_1555 0
 #define BITMAP_FORMAT_4444 1
+#define BITMAP_FORMAT_RGBA8888 2
 
 struct bms_bitmap {
   uint16_t *data16;       // 16bit data
@@ -83,6 +84,8 @@ void bm_ShutdownBitmaps(void);
 // (added due to the way the tmapper works)
 // Returns bitmap handle if successful, -1 if otherwise
 int bm_AllocBitmap(int w, int h, int add_mem);
+// Allocates a non-mipmapped bitmap with four bytes per pixel in RGBA order.
+int bm_AllocBitmapRGBA(int w, int h);
 // Given a handle, frees the bitmap memory and flags this bitmap as unused
 void bm_FreeBitmap(int handle);
 // Allocs and loads a bitmap

@@ -752,6 +752,16 @@ void opengl_TranslateBitmapToOpenGL(int texnum, int bm_handle, int map_type, int
     OpenGL_last_bound[tn] = texnum;
   }
 
+  if (map_type != MAP_TYPE_LIGHTMAP && bm_format(bm_handle) == BITMAP_FORMAT_RGBA8888) {
+    if (replace)
+      dglTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, bm_ptr);
+    else
+      dglTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, bm_ptr);
+    CHECK_ERROR(6)
+    OpenGL_uploads++;
+    return;
+  }
+
   if (OpenGL_packed_pixels) {
     if (map_type == MAP_TYPE_LIGHTMAP) {
       uint16_t *left_data = (uint16_t *)opengl_packed_Upload_data;
