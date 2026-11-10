@@ -4,11 +4,11 @@
 
 ARGS ?=
 
-.PHONY: all build release configure install run test clean purge help
+.PHONY: all build release configure install uninstall run test clean purge help
 
 all: build
 
-build release configure install run test clean purge:
+build release configure install uninstall run test clean purge:
 	@./make.sh $@ $(ARGS)
 
 help:

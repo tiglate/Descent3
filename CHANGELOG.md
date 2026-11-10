@@ -13,7 +13,8 @@
   folder chooser, including for dedicated servers.
 - A Linux `make.sh` workflow and Makefile proxy for configuring, building,
   testing, installing, and running. User-local installation defaults to
-  `~/Apps/Descent3`.
+  `~/Apps/Descent3`. `uninstall` removes exactly the installed files and
+  keeps saved games, pilots and settings.
 - Modern/Classic/Custom control-preset selection with binding previews,
   Replace/Swap/Cancel conflict handling, and Restore Settings support.
 - An explicit Invert Mouse Y checkbox in Joystick/Mouse Settings.

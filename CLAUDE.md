@@ -15,6 +15,7 @@ Linux wrapper (build dir `build/`, install prefix `~/Apps/Descent3`):
 ./make.sh build          # Debug
 ./make.sh release        # Release
 ./make.sh install        # Release + install
+./make.sh uninstall      # remove files listed in build/install_manifest.txt
 ./make.sh run -windowed  # install if needed, launch; args go to the game
 ./make.sh test           # Debug build + ctest
 ```

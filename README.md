@@ -1,88 +1,74 @@
-# Descent 3 Open Source
+# Descent 3
 
-![Descent 3](https://github.com/DescentDevelopers/Descent3/assets/47716344/82ba0911-ee32-4565-84ee-b432c215ab95)
+![Descent 3 main menu with the modern widescreen artwork](screenshots/main-menu.png)
 
-The Descent 3 engine, licensed under [GPL-3.0](LICENSE). It includes the 1.5
-patch by Kevin Bentley and Jeff Slutter and subsequent work by the Descent
-community. This checkout adds modern controls, high-resolution text and UI,
-higher default graphics and sound quality, simpler asset setup, and a Linux
-build/run wrapper, alongside ongoing reliability improvements.
+The Descent 3 engine, open source under [GPL-3.0](LICENSE). This fork builds on
+the community engine with modern controls, smoother mouse handling, a
+high-resolution interface, simpler setup and many reliability fixes, while
+staying compatible with original pilots, saves and missions.
 
-**Game assets are not included.** You need an official copy of Descent 3.
-See [USAGE.md](USAGE.md) for asset requirements and installation details.
+**Game assets are not included.** You need an official copy of Descent 3 (for
+example from GOG or Steam). See [USAGE.md](USAGE.md) for what the engine needs.
 
-## Improvements in this checkout
+## Credits
 
-| Area | Improvements |
-| --- | --- |
-| Graphics and sound | Highest supported display resolution, maximum detail, full-quality textures, and high-quality audio for fresh settings; saved choices are respected |
-| Interface | Scalable fonts throughout engine-rendered UI, native-resolution menus, resolution-aware message boxes and F1 help, and corrected artwork tile seams |
-| Main menu | Orbitron lettering, dark shadows and outlines, and gold highlights for mouse hover and keyboard focus |
-| Controls | Modern keyboard/mouse defaults, Mouselook for new pilots, configurable sensitivity and inversion, and conflict-aware rebinding |
-| Setup | Native first-run asset chooser, saved asset location, and separate writable preferences |
-| Reliability | Fixes for asynchronous DNS lifetime, WAV loading and cleanup, configuration parsing, and file-size handling, backed by regression tests |
+**The original game.** Descent 3 was developed by **Outrage Entertainment** and
+published by **Interplay** in 1999, continuing the Descent series created by
+**Parallax Software**. Everything you fly through, see and hear is their work.
 
-The following sections explain the settings and workflow. See
-[USAGE.md](USAGE.md) for the full runtime guide and
-[the UI implementation notes](docs/ui-fonts-and-defaults.md) for rendering details
-and validation evidence.
+**The open source release.** The source was released under GPL-3.0 in April
+2024. It includes the unreleased 1.5 patch by **Kevin Bentley** and **Jeff
+Slutter**.
 
-## Build and run on Linux
+**The community engine.** The [Descent Developers](https://github.com/DescentDevelopers/Descent3)
+community turned the release into a portable, maintained engine for 64-bit
+Windows, macOS and Linux on SDL. Major contributors include Azamat H. Hackimov,
+Louis Gombert, Jan Engelhardt, Chris Sarbora, Thomas Roß, GravisZro, Jason Yundt,
+C.W. Betts, Ryan C. Gordon and many others. See the
+[contributor list](https://github.com/DescentDevelopers/Descent3/graphs/contributors).
+This fork regularly merges their work.
 
-Install CMake, Ninja, a C++17 compiler, and the host dependencies listed in
-[BUILD.md](BUILD.md). Point `VCPKG_ROOT` at a bootstrapped vcpkg checkout;
-the wrapper uses vcpkg to resolve the engine's dependencies.
+**This fork.** The improvements listed below are by **Tiglate Pileser III**.
 
-```sh
-export VCPKG_ROOT=/path/to/vcpkg
-make release
-make run ARGS="-windowed"
-```
+Bundled fonts are Orbitron by Matt McInerney and Arimo, both under the SIL Open
+Font License. See [third_party/fonts](third_party/fonts/README.md) and
+[THIRD_PARTY.md](THIRD_PARTY.md) for all third-party credits.
 
-The root Makefile forwards actions to `make.sh`. Use `make run`, `make install`,
-or `make help`; plain `make` builds Debug. Pass wrapper options or game arguments
-through `ARGS`, for example `make release ARGS="-j 4"`. The direct `make.sh`
-commands below remain available.
+## What's new in this fork
 
-On the first launch, a native folder chooser asks where the original game is
-installed. Choose the folder containing `d3.hog` and `missions/`. The engine
-validates it and saves its absolute path in `game-assets.cfg` in your user
-preferences directory. Later launches read that file automatically. If the
-installation moves or becomes unavailable, setup asks for its new location.
-The original game files are read directly and are not modified or copied.
+- **Modern controls:** WASD flight with Mouselook for new pilots, a
+  Modern/Classic/Custom preset selector with previews, and rebinding that
+  detects conflicts and offers Replace, Swap or Cancel.
+- **Better mouse handling:** precise and consistent cursor and flight input on
+  Linux and high-DPI displays. See [Mouse handling](#mouse-handling) below.
+- **High-resolution interface:** scalable fonts across menus, dialogs, HUD and
+  briefings, menus drawn at native resolution, and message boxes and F1 help that
+  scale with the game resolution.
+- **Modern main menu:** widescreen menu movie and loading screen, Orbitron
+  lettering, and gold hover and focus highlights. The classic background is one
+  toggle away.
+- **Better defaults:** fresh installs start at the desktop resolution with
+  maximum detail, full-quality textures and high-quality sound. Saved settings
+  always win.
+- **Simple setup:** a native folder chooser on first launch finds your
+  original game and remembers it, and `-assetdir` sets it from the command line.
+- **Linux workflow:** a `make.sh` wrapper and Makefile to configure, build,
+  test, install and run.
+- **Reliability:** a warning-free build, plus fixes found along the way:
+  ammo wrap-around, missing `break` statements, shifted detail presets, DNS
+  lookup lifetime, WAV parsing, startup with missing config files, and renderer
+  re-initialization. Regression tests cover these fixes.
+- **Documentation:** a reference for the game data and model formats in
+  [docs/](docs/), and an ongoing [source review plan](docs/code-review/PLAN.md).
 
-You can set or change the location explicitly, including for headless use:
-
-```sh
-./make.sh run -assetdir "/path/to/Descent 3"
-```
-
-This validates and saves the location too. Compilation and installation do
-not require game assets, and the wrapper embeds no machine-specific asset path.
-
-| Command | Purpose |
-| --- | --- |
-| `./make.sh configure` | Configure the Ninja Multi-Config build in `build/` |
-| `./make.sh build` | Compile Debug |
-| `./make.sh release` | Compile optimized Release |
-| `./make.sh install` | Build Release and install to `~/Apps/Descent3` |
-| `./make.sh run [game arguments]` | Build, install, and launch Release |
-| `./make.sh clean` | Remove compiled outputs while retaining configuration |
-
-Use `./make.sh --help` for additional options. The installed executable is
-`~/Apps/Descent3/Descent3`. On Linux, pilots and preferences normally live in
-`~/.local/share/Outrage Entertainment/Descent 3/`, or under `XDG_DATA_HOME` when set.
-The saved asset-location file is stored there as well. Delete only
-`game-assets.cfg` to repeat setup without deleting your pilots or other settings.
-
-For Windows, macOS, and manual CMake builds, follow [BUILD.md](BUILD.md).
+The [CHANGELOG](CHANGELOG.md) has the full list.
 
 ## Controls
 
-New pilots use the **Modern** preset with **Mouselook** enabled. For an existing
-pilot, open **Configure Keyboard → Control preset… → Modern → OK**, then leave the
-controls menu to save. The selector previews both Modern and Classic;
-Custom keeps your current bindings.
+New pilots start with the **Modern** preset and **Mouselook**. To switch an
+existing pilot, open **Configure Keyboard → Control preset… → Modern → OK**, then
+leave the controls menu to save. **Classic** restores the original layout, and
+**Custom** keeps your own bindings.
 
 | Action | Modern binding |
 | --- | --- |
@@ -91,108 +77,86 @@ Custom keeps your current bindings.
 | Ascend / descend | Space / Left Ctrl |
 | Roll left / right | Q / E |
 | Afterburner | Left Shift |
-| Primary / missile fire | Left / right mouse |
-| Cycle primary weapons / missiles | Wheel up / down |
-| Flare | F or middle mouse |
+| Fire primary / missile | Left / right mouse button |
+| Cycle primaries / missiles | Mouse wheel up / down |
+| Flare | F or middle mouse button |
 | Automap / headlight | Tab / H |
+| Release or capture the mouse | Ctrl+G |
 
-Reassigning an occupied input offers **Replace**, **Swap**, or **Cancel**.
-**Restore Settings** restores bindings from when you entered the controls menu.
-Preset changes preserve joystick bindings, mouse sensitivity, inversion, and
-mouse-control mode. See [the controls guide](USAGE.md#keyboard-and-mouse-presets)
-for details.
+If you bind an input that is already in use, you can **Replace** the old
+binding, **Swap** the two, or **Cancel**. **Restore Settings** undoes changes
+made since you opened the menu. Switching presets keeps your joystick bindings,
+mouse sensitivity, inversion and mouse mode. The
+[controls guide](USAGE.md#keyboard-and-mouse-presets) has more detail.
 
-## Graphics, sound, and mouse settings
+## Mouse handling
 
-Without saved settings, the game starts with the highest supported resolution
-on the selected display, maximum detail, 32-bit color, full-quality textures,
-bilinear filtering, mipmapping, and high-quality sound with the maximum number
-of mixed sounds. Change these through Options; existing saved choices take
-precedence over the new defaults.
+The mouse code was reworked for SDL3, and the result is most noticeable on
+Linux:
 
-- Resolution selections persist by width and height. If a saved mode becomes
-  unavailable, startup falls back to the highest supported resolution.
-  An explicit `-width` and `-height` pair overrides a single launch.
-- **Options → Detail → Highest** enables maximum terrain distance, object
-  detail, and quality effects. Opening and closing Settings preserves the
-  selected terrain detail.
-- **Joystick/Mouse → Adjust Settings** provides mouse X/Y sensitivity up to
-  16× and **Invert mouse Y**, which is enabled for new/default controls.
-- **Mouselook** uses the full sensitivity value; flight-sim mode retains the
-  ship's turning-rate limit. Gameplay sensitivity does not change menu cursor speed.
-- **Ctrl+G** toggles mouse capture. Capture is restored while focused according
-  to that choice, including after window recreation.
+- **Accurate cursor:** sub-pixel SDL3 motion is kept instead of dropped, the
+  old 20× menu-cursor slowdown is gone, and motion is no longer re-applied, which
+  used to make the cursor speed up unpredictably.
+- **Same speed everywhere:** the cursor in in-game dialogs moves as fast as in
+  the main menus, whatever the game resolution.
+- **All your buttons:** right and middle buttons are mapped correctly, the wheel
+  works as weapon cycling, and side buttons (4 to 8) can be bound separately
+  from the wheel.
+- **Reliable capture:** the mouse is captured and the desktop cursor hidden
+  during play. Your Ctrl+G choice survives focus changes, fullscreen switches and
+  window recreation. `-nomousegrab` disables capture entirely.
+- **Tunable feel:** under **Joy/Mouse → Adjust Settings**, choose Mouselook or
+  Flight Sim, set X/Y sensitivity up to 16×, and toggle **Invert mouse Y**.
+  Mouselook uses the full sensitivity value, and gameplay sensitivity never
+  changes the menu cursor.
 
-For example, to launch with an explicit resolution:
+## Getting started on Linux
 
-```sh
-./make.sh run -windowed -width 1920 -height 1080
-```
-
-## High-resolution interface
-
-Scalable fonts are enabled by default for engine-rendered menus, buttons,
-labels, text entry, lists, dialogs, briefings, HUD text, and multiplayer overlays
-that use the shared game fonts. Menus render at the display's pixel resolution
-while preserving their original layout and aspect ratio.
-
-Main-menu items use **Orbitron Regular**, designed by **Matt McInerney**, with
-a dark outline and drop shadow for readability over the background. Hovering
-over an item highlights it in gold with an amber glow; keyboard navigation uses
-the same highlight. Other shared UI fonts use **Arimo Bold**.
-
-**Options → Video → High-res fonts** lets you switch between scalable and original
-bitmap fonts; the choice takes effect immediately and is saved. Fonts are bundled,
-so no system font installation is needed. Text embedded in original artwork,
-textures, and movies remains part of those assets.
-
-In-game message boxes, including **Abort Mission**, and the **F1** keyboard-help
-window scale their artwork, text, and button targets together with the gameplay
-resolution. They stay centered without stretching on widescreen displays and
-retain their original size at 640×480. Texture clamping also prevents visible
-seams between UI artwork tiles while retaining bilinear filtering.
-
-## Tests
-
-Tests use GoogleTest and CTest. Enable them explicitly, then build and run:
+Install CMake, Ninja, a C++17 compiler and the packages listed in
+[BUILD.md](BUILD.md), and point `VCPKG_ROOT` at a bootstrapped vcpkg checkout.
+Images and videos are stored with Git LFS, so run `git lfs install` before
+cloning, or `git lfs pull` in an existing clone.
 
 ```sh
-./make.sh configure
-cmake -S . -B build -DBUILD_TESTING=ON
-cmake --build build --config Release --parallel
-ctest --test-dir build -C Release --output-on-failure
+export VCPKG_ROOT=/path/to/vcpkg
+./make.sh run -windowed
 ```
 
-To run only control-preset and binding tests, add
-`-R 'Control(Presets|Bindings)'` to the CTest command.
+The first launch asks where Descent 3 is installed. Pick the folder that
+contains `d3.hog` and `missions/`. The location is saved in `game-assets.cfg` in
+`~/.local/share/Outrage Entertainment/Descent 3/`, next to your pilots. Your
+original game files are never modified. To set or change the location without
+the dialog:
 
-Regression coverage also includes font rasterization, UI scaling and mouse
-coordinates, rendering dimensions, startup defaults, asset setup, file handling,
-WAV parsing, and asynchronous DNS. UI validation and focused sanitizer results
-are recorded in the [implementation notes](docs/ui-fonts-and-defaults.md).
+```sh
+./make.sh run -assetdir "/path/to/Descent 3"
+```
 
-The ongoing source review tracks dead code, configuration opportunities,
-resource ownership, and clang-tidy findings in a
-[Markdown plan](docs/code-review/PLAN.md) and an
-[interactive progress dashboard](docs/code-review/dashboard.html).
-Open the dashboard locally in a browser for charts, status tables, and
-progress import/export; see the [tracker guide](docs/code-review/README.md).
+| Command | Purpose |
+| --- | --- |
+| `./make.sh build` | Debug build |
+| `./make.sh release` | Release build |
+| `./make.sh install` | Release build installed to `~/Apps/Descent3` |
+| `./make.sh uninstall` | Remove the installed files, keeping pilots and settings |
+| `./make.sh run [game arguments]` | Install if needed, then launch |
+| `./make.sh test` | Debug build and run the test suite |
 
-## License and credits
-
-The engine is licensed under [GPL-3.0](LICENSE). Bundled Orbitron and Arimo fonts
-use the SIL Open Font License 1.1. Font author credits, provenance, and full
-license files are included in [third_party/fonts](third_party/fonts/README.md)
-and installed with the game. See [THIRD_PARTY.md](THIRD_PARTY.md) for dependency
-credits and licenses. Original commercial game assets are supplied separately.
+`make release`, `make run ARGS="-windowed"` and so on work the same through
+the root Makefile. For Windows, macOS and manual CMake builds, see
+[BUILD.md](BUILD.md). For command-line options and file locations, see
+[USAGE.md](USAGE.md).
 
 ## Contributing
 
-Read [AGENTS.md](AGENTS.md) for repository structure, coding conventions, and
-testing guidance. Use the [pull request template](.github/pull_request_template.md)
-and include screenshots for visible UI changes.
+Read [AGENTS.md](AGENTS.md) for the repository layout, code style and testing
+guidelines. Include screenshots for visible UI changes. Issues that also affect
+the upstream engine belong on the
+[Descent Developers tracker](https://github.com/DescentDevelopers/Descent3/issues).
+The community meets at the [Descent Developer Network](https://discord.gg/GNy5CUQ)
+on Discord.
 
-Upstream build and runtime issues can be reported on the
-[GitHub tracker](https://github.com/DescentDevelopers/Descent3/issues).
-Community discussion is available at the
-[Descent Developer Network](https://discord.gg/GNy5CUQ).
+## License
+
+The engine is licensed under [GPL-3.0](LICENSE). The bundled fonts use the SIL
+Open Font License 1.1. The original game's data is commercial and is not part of
+this repository.

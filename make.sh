@@ -23,11 +23,13 @@ Actions:
   install         Build Release and install it into ~/Apps/Descent3 (or --prefix).
   run [args...]   Install Release if needed, then start the game. Arguments are
                   passed directly to Descent3 (for example: -windowed).
+  uninstall       Remove the files installed by 'install' from the prefix.
+                  Pilots, settings and the saved asset location are kept.
   test            Build Debug and run CTest.
   clean           Remove compiled files but retain the CMake configuration.
   purge           Remove generated build and install directories.
 
-Options (configure, build, release, install, test):
+Options (configure, build, release, install, uninstall, test):
   -p, --prefix DIR  Install prefix (default: ~/Apps/Descent3).
   -j, --jobs N      Parallel build jobs (default: all available cores).
   -v, --verbose     Show underlying build commands.
@@ -99,6 +101,52 @@ install() {
     mkdir -p "$INSTALL_PREFIX/custom" "$INSTALL_PREFIX/savegame"
 }
 
+# Removes exactly the files CMake recorded in its install manifest, then any
+# directories left empty. Anything else in the prefix (for example saved games
+# or user-added missions) is kept, and the user data directory is never touched.
+uninstall() {
+    local manifest="$BUILD_DIR/install_manifest.txt"
+    if [ ! -d "$INSTALL_PREFIX" ]; then
+        echo "Nothing to uninstall: $INSTALL_PREFIX does not exist."
+        return 0
+    fi
+    [ -f "$manifest" ] || die "no install manifest at $manifest, so the installed files are unknown.
+Run './make.sh install' and then './make.sh uninstall', or remove $INSTALL_PREFIX yourself."
+
+    local prefix real_prefix
+    prefix="${INSTALL_PREFIX%/}"
+    real_prefix="$(cd "$INSTALL_PREFIX" && pwd -P)"
+    case "$real_prefix" in
+        /|"$HOME"|"$(cd "$HOME" && pwd -P)") die "refusing to uninstall from $real_prefix" ;;
+    esac
+
+    local file path removed=0 outside=0
+    while IFS= read -r file || [ -n "$file" ]; do
+        [ -n "$file" ] || continue
+        path="${file//\/.\//\/}"
+        case "$path" in
+            "$prefix"/*|"$real_prefix"/*) ;;
+            *) outside=$((outside + 1)); continue ;;
+        esac
+        if [ -e "$path" ] || [ -L "$path" ]; then
+            rm -f -- "$path"
+            removed=$((removed + 1))
+        fi
+    done < "$manifest"
+
+    find "$real_prefix" -depth -type d -empty -delete
+
+    echo "Removed $removed installed file(s) from $real_prefix."
+    if [ "$outside" -gt 0 ]; then
+        echo "Skipped $outside recorded file(s) outside this prefix; the last install used a different --prefix."
+    fi
+    if [ -d "$real_prefix" ]; then
+        echo "Kept $real_prefix because it still contains files that were not installed by make.sh:"
+        find "$real_prefix" -type f | head -n 10 | sed 's|^|  |'
+    fi
+    echo "Pilots, settings and game-assets.cfg in ${XDG_DATA_HOME:-$HOME/.local/share}/Outrage Entertainment/Descent 3/ were not changed."
+}
+
 ACTION="${1:-}"
 [ -n "$ACTION" ] || { usage; exit 1; }
 shift
@@ -138,6 +186,7 @@ case "$ACTION" in
     build)     build Debug ;;
     release)   build Release ;;
     install)   install ;;
+    uninstall) uninstall ;;
     test)      build Debug; ctest --test-dir "$BUILD_DIR" -C Debug --output-on-failure --parallel "$JOBS" ;;
     clean)     [ -f "$BUILD_DIR/build.ninja" ] && cmake --build "$BUILD_DIR" --target clean || echo "nothing configured yet" ;;
     purge)     rm -rf "$BUILD_DIR" "$INSTALL_PREFIX" ;;
