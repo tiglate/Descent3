@@ -314,6 +314,11 @@ void ddio_MouseGetLimits(int *left, int *top, int *right, int *bottom, int *zmin
 // virtual coordinate system for mouse (match to video resolution set for optimal mouse usage.
 void ddio_MouseSetVCoords(int width, int height);
 
+// Multiplier applied to relative motion when moving the absolute cursor (x, y).
+// Lets high-resolution UI coordinate spaces keep the same hand-to-screen speed
+// as the 640x480 menus. Mouse deltas (dx, dy) used for flight are unaffected.
+void ddio_MouseSetCursorSpeed(float scale);
+
 //	---------------------------------------------------------------------------
 //	File Operations
 //	---------------------------------------------------------------------------
@@ -372,7 +377,7 @@ void ddio_MakePath(char *newPath, const char *absolutePathHeader, const char *su
  * @return number of processed files
  */
 void ddio_DoForeachFile(const std::filesystem::path &search_path, const std::regex &regex,
-                       const std::function<void(std::filesystem::path)> &func);
+                        const std::function<void(std::filesystem::path)> &func);
 
 /**
  * Generates a temporary filename based on the prefix in basedir. Function ensures that generated

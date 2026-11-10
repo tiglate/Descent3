@@ -1,5 +1,5 @@
 /*
-* Descent 3 
+* Descent 3
 * Copyright (C) 2024 Parallax Software
 *
 * This program is free software: you can redistribute it and/or modify
@@ -229,10 +229,10 @@ void ui_Init(oeApplication *app, tUIInitInfo *init_info) {
 }
 //	frees ui input cache
 void ui_Flush() {
-//	UI_input.mx = 0;
-//	UI_input.last_mx = 0;
-//	UI_input.my = 0;
-//	UI_input.last_my = 0;
+  //	UI_input.mx = 0;
+  //	UI_input.last_mx = 0;
+  //	UI_input.my = 0;
+  //	UI_input.last_my = 0;
   UI_input.b1_status = 0;
   UI_input.b1_last_status = 0;
   UI_input.b1_count = 0;
@@ -572,6 +572,9 @@ void ui_SetScreenMode(int w, int h) {
   UI_aspect_y = (float)h / (float)FIXED_SCREEN_HEIGHT;
   ddio_MouseReset();
   ddio_MouseSetVCoords(UI_screen_width * kDefaultMouseScale, UI_screen_height * kDefaultMouseScale);
+  // In-game dialogs are scaled up by PopupScale at high resolutions; move the
+  // cursor by the same factor so it feels as fast as in the 640x480 menus.
+  ddio_MouseSetCursorSpeed(ui_scale::PopupScale(w, h));
   UI_input.cur_time = timer_GetTime();
   //	reposition all active open windows to their correct locations in this new resolution
   //@@	tUIWindowNode *wndnode = UIWindowList;

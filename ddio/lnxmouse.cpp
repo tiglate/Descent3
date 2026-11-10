@@ -1,5 +1,5 @@
 /*
-* Descent 3 
+* Descent 3
 * Copyright (C) 2024 Parallax Software
 *
 * This program is free software: you can redistribute it and/or modify
@@ -81,6 +81,7 @@
 //	Mouse Interface
 // ----------------------------------------------------------------------------
 
+#include <cmath>
 #include <cstring>
 #include <SDL3/SDL.h>
 
@@ -94,13 +95,13 @@ static bool ddio_mouseGrabbed = true;
 static bool DDIO_mouse_init = false;
 
 static struct mses_state {
-  int fd;                   // file descriptor of mouse
-  int t, l, b, r;           // limit rectangle of absolute mouse coords
+  int fd;         // file descriptor of mouse
+  int t, l, b, r; // limit rectangle of absolute mouse coords
   // SDL3 reports mouse coordinates and relative motion as floats.  Retain
   // fractional cursor motion here so high-DPI/scaled displays do not lose
   // every sub-pixel event when the legacy integer API is queried.
-  float x, y, cx, cy;       // current x,y,z in absolute mouse coords
-  float dx, dy;             
+  float x, y, cx, cy; // current x,y,z in absolute mouse coords
+  float dx, dy;
   int btn_mask;
 } DDIO_mouse_state;
 
@@ -120,6 +121,7 @@ struct t_mse_event {
 static t_mse_button_info DIM_buttons;
 static tQueue<t_mse_event, 16> MB_queue;
 static int Mouse_mode = MOUSE_STANDARD_MODE;
+static float Mouse_cursor_speed = 1.0f;
 
 //	---------------------------------------------------------------------------
 //	Initialization Functions
@@ -130,13 +132,9 @@ bool ddio_MouseInit(void) {
   return true;
 }
 
-bool ddio_MouseGetGrab() {
-  return ddio_mouseGrabbed;
-}
+bool ddio_MouseGetGrab() { return ddio_mouseGrabbed; }
 
-void ddio_MouseSetGrab(bool grab) {
-  ddio_mouseGrabbed = grab;
-}
+void ddio_MouseSetGrab(bool grab) { ddio_mouseGrabbed = grab; }
 
 int ddio_MouseGetCaps(int *buttons, int *axes) {
   *buttons = 8;
@@ -195,6 +193,8 @@ void ddio_MouseMode(int mode) { Mouse_mode = mode; }
 // virtual coordinate system for mouse (match to video resolution set for optimal mouse usage.
 void ddio_MouseSetVCoords(int width, int height) { ddio_MouseSetLimits(0, 0, width, height); }
 
+void ddio_MouseSetCursorSpeed(float scale) { Mouse_cursor_speed = std::isfinite(scale) && scale > 0.0f ? scale : 1.0f; }
+
 void sdlMouseButtonDownEvent(SDL_Event const *event) {
   ASSERT(event->type == SDL_EVENT_MOUSE_BUTTON_DOWN);
   const int button = EngineMouseButtonIndex(event->button.button);
@@ -240,8 +240,8 @@ void sdlMouseWheelEvent(SDL_Event const *event) {
     mevt.state = true;
     MB_queue.send(mevt);
 
-    // send an immediate release event, as if the "button" was clicked. !!! FIXME: this also needs improvements in the engine.
-    // don't remove from btn_mask
+    // send an immediate release event, as if the "button" was clicked. !!! FIXME: this also needs improvements in the
+    // engine. don't remove from btn_mask
     DIM_buttons.up_count[4]++;
     DIM_buttons.is_down[4] = false;
     DIM_buttons.time_up[4] = timer_GetTime();
@@ -258,8 +258,8 @@ void sdlMouseWheelEvent(SDL_Event const *event) {
     mevt.state = true;
     MB_queue.send(mevt);
 
-    // send an immediate release event, as if the "button" was clicked. !!! FIXME: this also needs improvements in the engine.
-    // don't remove from btn_mask
+    // send an immediate release event, as if the "button" was clicked. !!! FIXME: this also needs improvements in the
+    // engine. don't remove from btn_mask
     DIM_buttons.up_count[5]++;
     DIM_buttons.is_down[5] = false;
     DIM_buttons.time_up[5] = timer_GetTime();
@@ -274,8 +274,8 @@ void sdlMouseMotionEvent(SDL_Event const *event) {
   if (event->type == SDL_EVENT_JOYSTICK_BALL_MOTION) {
     DDIO_mouse_state.dx = event->jball.xrel / 100.0f;
     DDIO_mouse_state.dy = event->jball.yrel / 100.0f;
-    DDIO_mouse_state.x += DDIO_mouse_state.dx;
-    DDIO_mouse_state.y += DDIO_mouse_state.dy;
+    DDIO_mouse_state.x += DDIO_mouse_state.dx * Mouse_cursor_speed;
+    DDIO_mouse_state.y += DDIO_mouse_state.dy * Mouse_cursor_speed;
   } else {
     DDIO_mouse_state.dx += event->motion.xrel;
     DDIO_mouse_state.dy += event->motion.yrel;
@@ -283,8 +283,8 @@ void sdlMouseMotionEvent(SDL_Event const *event) {
     // intentionally accumulate until ddio_MouseGetState() consumes them, but
     // using those accumulated values here applies earlier motion again for
     // every event and makes the cursor accelerate unpredictably.
-    DDIO_mouse_state.x += event->motion.xrel;
-    DDIO_mouse_state.y += event->motion.yrel;
+    DDIO_mouse_state.x += event->motion.xrel * Mouse_cursor_speed;
+    DDIO_mouse_state.y += event->motion.yrel * Mouse_cursor_speed;
   }
 
   if (DDIO_mouse_state.x < DDIO_mouse_state.l)
@@ -342,7 +342,7 @@ int ddio_MouseGetState(int *x, int *y, int *dx, int *dy, int *z, int *dz) {
   DDIO_mouse_state.dy = 0.0f;
 
   // unset the mouse wheel "button" once it's been retrieved.
-  DDIO_mouse_state.btn_mask &= ~(MOUSE_B5|MOUSE_B6);
+  DDIO_mouse_state.btn_mask &= ~(MOUSE_B5 | MOUSE_B6);
 
   return btn_mask;
 }
