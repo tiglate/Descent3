@@ -87,6 +87,11 @@ void FetchApi() {
   D3::HttpClient http_client(TSETSEFLYAPI_HOST);
   std::stringstream input;
   auto result = http_client.Get(TSETSEFLYAPI_URI);
+  // A failed request (timeout, refused connection) has no response object.
+  if (!result) {
+    LOG_WARNING << "Game list request failed: " << httplib::to_string(result.error());
+    return;
+  }
   if (result->status == 200) {
     input << result->body;
     DecodeApiAnswer(input);

@@ -80,5 +80,11 @@ from `progress.json`; see [M01 validation](validation/M01.md),
 [M04/B01 validation](validation/M04-B01.md),
 [M05/B02 validation](validation/M05-B02.md),
 [M06/T03 validation](validation/M06-T03.md),
-[B04/T03 validation](validation/B04-T03.md), and
-[A01 validation](validation/A01.md) for implementation evidence.
+[B04/T03 validation](validation/B04-T03.md),
+[A01 validation](validation/A01.md),
+[C01 validation](validation/C01.md),
+[C02 validation](validation/C02.md),
+[C03 validation](validation/C03.md),
+[B03/D01–D03 validation](validation/B03-D01-D03.md), and
+[T01/T02 validation](validation/T01-T02.md), and
+[A02 coverage batch](validation/A02.md) for implementation evidence.

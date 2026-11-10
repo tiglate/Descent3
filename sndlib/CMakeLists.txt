@@ -4,6 +4,7 @@ set(HEADERS
   mixer.h
   sdlsound.h
   sndrender.h
+  sound_buffer_option.h
   soundload.h
   ssl_lib.h)
 set(CPPS

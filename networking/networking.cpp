@@ -322,6 +322,7 @@ typedef int socklen_t;
 #include "pserror.h"
 #include "log.h"
 #include "networking.h"
+#include "net_timing.h"
 #include "ddio.h"
 #include "mem.h"
 #include "game.h"
@@ -331,12 +332,26 @@ typedef int socklen_t;
 #include "async_dns.h"
 
 static D3::AsyncDnsLookup Async_dns;
+static nw_timing_policy Net_timing;
+static_assert(nw_timing_policy{}.connect_timeout == NETTIMEOUT && nw_timing_policy{}.idle_timeout == NETTIMEOUT &&
+                  nw_timing_policy{}.retry_time == static_cast<float>(NETRETRYTIME) &&
+                  nw_timing_policy{}.min_retry_time == static_cast<float>(MIN_NET_RETRYTIME) &&
+                  nw_timing::kHeartbeatSeconds == NETHEARTBEATTIME,
+              "timing policy defaults must match the legacy constants");
+
+bool nw_SetTimingPolicy(const nw_timing_policy &policy) {
+  if (nw_timing::Validate(policy))
+    return false;
+  Net_timing = policy;
+  return true;
+}
+
+const nw_timing_policy &nw_GetTimingPolicy() { return Net_timing; }
 
 #ifndef WIN32
 bool Use_DirectPlay = false;
 #endif
 
-#define MAX_CONNECT_TRIES 50
 #define MAX_RECEIVE_BUFSIZE 32768
 //(1<<16)			// 16 K, eh?
 
@@ -1160,7 +1175,7 @@ int nw_SendReliable(uint32_t socketid, uint8_t *data, int length, bool urgent) {
 
       if ((bytesout == SOCKET_ERROR) && (WSAEWOULDBLOCK == WSAGetLastError())) {
         // This will cause it to try to send again next frame. (or sooner)
-        rsocket->timesent[use_buffer] = timer_GetTime() - (NETRETRYTIME * 4);
+        rsocket->timesent[use_buffer] = timer_GetTime() - (Net_timing.retry_time * 4);
       } else {
         rsocket->timesent[use_buffer] = timer_GetTime();
       }
@@ -1177,7 +1192,6 @@ int nw_SendReliable(uint32_t socketid, uint8_t *data, int length, bool urgent) {
 
   // Add the new packet to the sending list and send it.
   for (i = 0; i < MAXNETBUFFERS; i++) {
-    use_buffer = -1;
     if (nullptr == rsocket->sbuffers[i]) {
       // mprintf(0,"Sending in nw_SendReliable() %d bytes seq=%d.\n",length,rsocket->theirsequence);
 
@@ -1189,7 +1203,6 @@ int nw_SendReliable(uint32_t socketid, uint8_t *data, int length, bool urgent) {
       send_header.seq = INTEL_SHORT(rsocket->theirsequence);
       rsocket->ssequence[i] = rsocket->theirsequence;
 
-      use_buffer = i;
       rsocket->waiting_packet_number = i;
 
       rsocket->theirsequence++;
@@ -1282,7 +1295,7 @@ void nw_WorkReliable(uint8_t *data, int len, network_address *naddr) {
   reliable_socket *rsocket = nullptr;
   // Check to see if we need to send a packet out.
   if ((serverconn != UINT32_MAX) && (reliable_sockets[serverconn].status == RNF_LIMBO) &&
-      ((timer_GetTime() - last_sent_iamhere) > NETRETRYTIME)) {
+      ((timer_GetTime() - last_sent_iamhere) > Net_timing.retry_time)) {
     reliable_header conn_header;
     // Now send I_AM_HERE packet
     conn_header.type = RNT_I_AM_HERE;
@@ -1303,7 +1316,7 @@ void nw_WorkReliable(uint8_t *data, int len, network_address *naddr) {
     int ret = nw_SendWithID(NWT_RELIABLE, (uint8_t *)&conn_header, RELIABLE_PACKET_HEADER_ONLY_SIZE, &send_address);
 
     if ((ret == SOCKET_ERROR) && (WSAEWOULDBLOCK == WSAGetLastError())) {
-      reliable_sockets[serverconn].last_packet_sent = timer_GetTime() - NETRETRYTIME;
+      reliable_sockets[serverconn].last_packet_sent = timer_GetTime() - Net_timing.retry_time;
     } else {
       reliable_sockets[serverconn].last_packet_sent = timer_GetTime();
     }
@@ -1367,7 +1380,6 @@ void nw_WorkReliable(uint8_t *data, int len, network_address *naddr) {
       }
 
       // Find out if this is a packet from someone we were expecting a packet.
-      rcvaddr = (SOCKADDR_IN *)&rcv_addr;
       for (i = 1; i < MAXRELIABLESOCKETS; i++) {
 
         if (memcmp(&d3_rcv_addr, &reliable_sockets[i].net_addr, sizeof(network_address)) == 0) {
@@ -1662,8 +1674,7 @@ void nw_ConnectToServer(SOCKET *socket, network_address *server_addr) {
       }
     }
 
-  } while ((timer_GetTime() - first_sent_req) < NETTIMEOUT);
-  return;
+  } while ((timer_GetTime() - first_sent_req) < Net_timing.connect_timeout);
 }
 
 void nw_CloseSocket(SOCKET *sockp) {
@@ -2240,27 +2251,7 @@ int nw_DoReceiveCallbacks(void) {
   nw_ReliableResend();
 
   while (TCP_active) {
-    // check if there is any data on the socket to be read.  The amount of data that can be
-    // atomically read is stored in len.
-
-#if 0
-		fd_set	rfds;
-		FD_ZERO(&rfds);
-		FD_SET( TCP_socket, &rfds );
-		timeout.tv_sec = 0;
-		timeout.tv_usec = 0;
-
-		timeval	timeout;
-		if ( select( TCP_socket+1, &rfds, NULL, NULL, &timeout) == SOCKET_ERROR)
-		{
-			LOG_ERROR.printf("Error %d doing a socket select on IP read", WSAGetLastError());
-			break;
-		}
-
-		// if the read file descriptor is not set, then bail!
-		if ( !FD_ISSET(TCP_socket, &rfds ) )
-			break;
-#endif
+    // The socket is non-blocking: read until recvfrom reports it would block.
     // get data off the socket and process
     from_len = sizeof(SOCKADDR_IN);
     read_len = recvfrom(TCP_socket, (char *)packet_data, 1500, 0, (SOCKADDR *)&ip_addr, &from_len);
@@ -2312,13 +2303,13 @@ void nw_ReliableResend(void) {
 
     if (serverconn == UINT32_MAX) {
       if (rsocket->status == RNF_LIMBO)
-        if ((timer_GetTime() - rsocket->last_packet_received) > NETTIMEOUT) {
+        if ((timer_GetTime() - rsocket->last_packet_received) > Net_timing.connect_timeout) {
           LOG_WARNING.printf("Reliable (but in limbo) socket (%d) timed out in nw_WorkReliable().", j);
           memset(rsocket, 0, sizeof(reliable_socket));
           rsocket->status = RNF_UNUSED; // Won't work if this is an outgoing connection.
         }
     } else {
-      if ((rsocket->status == RNF_LIMBO) && ((timer_GetTime() - first_sent_iamhere) > NETTIMEOUT)) {
+      if ((rsocket->status == RNF_LIMBO) && ((timer_GetTime() - first_sent_iamhere) > Net_timing.connect_timeout)) {
         rsocket->status = RNF_BROKEN;
         LOG_WARNING.printf("Reliable socket (%d) timed out in nw_WorkReliable().", j);
       }
@@ -2326,11 +2317,11 @@ void nw_ReliableResend(void) {
 
     if (rsocket->status == RNF_CONNECTED) {
       float retry_packet_time;
-      if ((rsocket->mean_ping == 0) || (rsocket->mean_ping > (NETRETRYTIME * 4))) {
-        retry_packet_time = NETRETRYTIME;
+      if ((rsocket->mean_ping == 0) || (rsocket->mean_ping > (Net_timing.retry_time * 4))) {
+        retry_packet_time = Net_timing.retry_time;
       } else {
-        if (rsocket->mean_ping < MIN_NET_RETRYTIME) {
-          retry_packet_time = (float)MIN_NET_RETRYTIME;
+        if (rsocket->mean_ping < Net_timing.min_retry_time) {
+          retry_packet_time = Net_timing.min_retry_time;
           // mprintf(0,"Using retransmission time of %f\n",retry_packet_time);
         } else {
           retry_packet_time = ((float)(float)rsocket->mean_ping * (float)1.25);
@@ -2383,7 +2374,7 @@ void nw_ReliableResend(void) {
 
           if ((rcode == SOCKET_ERROR) && (WSAEWOULDBLOCK == WSAGetLastError())) {
             // The packet didn't get sent, flag it to try again next frame
-            rsocket->timesent[i] = timer_GetTime() - (NETRETRYTIME * 4);
+            rsocket->timesent[i] = timer_GetTime() - (Net_timing.retry_time * 4);
           } else {
             rsocket->last_packet_sent = timer_GetTime();
             rsocket->timesent[i] = timer_GetTime();
@@ -2400,7 +2391,6 @@ void nw_ReliableResend(void) {
         send_header.data_len = INTEL_SHORT((int16_t)0);
         send_header.type = RNT_HEARTBEAT;
 
-        rcode = -1;
         network_address send_address;
         memset(&send_address, 0, sizeof(network_address));
 
@@ -2428,7 +2418,8 @@ void nw_ReliableResend(void) {
         }
       }
 
-      if ((rsocket->status == RNF_CONNECTED) && ((timer_GetTime() - rsocket->last_packet_received) > NETTIMEOUT)) {
+      if ((rsocket->status == RNF_CONNECTED) &&
+          ((timer_GetTime() - rsocket->last_packet_received) > Net_timing.idle_timeout)) {
         // This socket is hosed.....inform someone?
         LOG_WARNING.printf("Reliable Socket (%d) timed out in nw_WorkReliable().", j);
         rsocket->status = RNF_BROKEN;

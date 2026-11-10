@@ -358,6 +358,12 @@ void nw_CloseSocket(SOCKET *sockp);
 // Inits the sockets layer to activity
 void nw_InitNetworking(int iReadBufSizeOverride = -1);
 
+struct nw_timing_policy;
+// Replaces the reliable-UDP timing policy; returns false and keeps the current
+// policy if the values are invalid (see networking/net_timing.h).
+bool nw_SetTimingPolicy(const nw_timing_policy &policy);
+const nw_timing_policy &nw_GetTimingPolicy();
+
 // called by psnet_init to initialize the listen socket used by a host/server
 int nw_InitReliableSocket();
 
@@ -427,9 +433,9 @@ int nw_psnet_buffer_get_next_by_packet_id(uint8_t *data, int *length, uint32_t p
 #define MAXNETBUFFERS                                                                                                  \
   150                    // Maximum network buffers (For between network and upper level functions, which is
                          // required in case of out of order packets
-#define NETRETRYTIME .75 // Time after sending before we resend
+#define NETRETRYTIME .75 // Default time after sending before we resend (see nw_GetTimingPolicy)
 #define MIN_NET_RETRYTIME .2
-#define NETTIMEOUT 300        // Time after receiving the last packet before we drop that user
+#define NETTIMEOUT 300        // Default connect/idle timeout (see nw_GetTimingPolicy)
 #define NETHEARTBEATTIME 10   // How often to send a heartbeat
 #define MAXRELIABLESOCKETS 40 // Max reliable sockets to open at once...
 #define NETBUFFERSIZE 600     // Max size of a network packet

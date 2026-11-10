@@ -958,6 +958,7 @@
 #include "lightmap_info.h"
 #include "fireball.h"
 #include "networking.h"
+#include "net_timing.h"
 #include "args.h"
 #include "pilot.h"
 #include "gameloop.h"
@@ -1934,6 +1935,19 @@ void InitD3Systems1(bool editor) {
   if (!FindArg("-nonetwork")) {
     nw_InitNetworking();
     nw_InitSockets(Gameport);
+
+    const nw_timing_policy timing = nw_timing::PolicyFromOptions(
+        [](const char *name, const char **value) {
+          int index = FindArg(name);
+          *value = index ? GetArg(index + 1) : nullptr;
+          return index != 0;
+        },
+        [](const char *reason, const char *option, const char *value) {
+          LOG_WARNING.printf("Network timing: %s (%s %s)", reason, option, value);
+        });
+    nw_SetTimingPolicy(timing);
+    LOG_INFO.printf("Network timing: connect %.2fs, idle %.2fs, retry %.2fs (min %.2fs)", timing.connect_timeout,
+                    timing.idle_timeout, timing.retry_time, timing.min_retry_time);
   }
 
   int timeoutarg = FindArg("-timeout");

@@ -376,6 +376,16 @@ The following command-line options are available in Descent 3. You can set comma
 
     **Description:** Disables all sound, including music.
 
+- `-sdlSndSize <frames>`
+
+    **Type:** integer, 64 to 8192
+
+    **Default:** Chosen by SDL
+
+    **Platform:** all
+
+    **Description:** Requests an audio device buffer of this many sample frames at the device rate. Smaller values lower latency; larger values help with crackling. SDL may adjust or ignore the request; the obtained size is logged. Invalid values are ignored with a warning. The `SDL_AUDIO_DEVICE_SAMPLE_FRAMES` environment variable takes precedence.
+
 ### Input Options
 
 - `-deadzone# <k>`
@@ -516,6 +526,16 @@ Settings** to change gameplay sensitivity instead.
 
     **Description:** Specifies a GameSpy configuration file to use.
 
+- `-httpconnecttimeout <seconds>`
+
+    **Type:** integer, 1 to 60
+
+    **Default:** 5
+
+    **Platform:** all
+
+    **Description:** How long mission downloads wait to establish the HTTP connection.
+
 - `-httpproxy <addr>` or `-httpproxy <addr:port>`
 
     **Type:** string
@@ -525,6 +545,56 @@ Settings** to change gameplay sensitivity instead.
     **Platform:** all
 
     **Description:** Specifies an HTTP proxy server. Descent 3 uses HTTP to auto-download a mission; use this option if your ISP requires a proxy server for HTTP connections. If the first form is used, the port value defaults to 80.
+
+- `-httpreadtimeout <seconds>`
+
+    **Type:** integer, 1 to 600
+
+    **Default:** 300
+
+    **Platform:** all
+
+    **Description:** How long a mission download may wait for more data before failing. This limits inactivity, not the total download time. Invalid HTTP timeout values are ignored with a warning.
+
+- `-netconnecttimeout <seconds>`
+
+    **Type:** floating-point number, 1 to 600
+
+    **Default:** 300
+
+    **Platform:** all
+
+    **Description:** How long to wait for a reliable connection handshake before giving up, both when joining a server and for half-open incoming connections.
+
+- `-netidletimeout <seconds>`
+
+    **Type:** floating-point number, 30 to 3600
+
+    **Default:** 300
+
+    **Platform:** all
+
+    **Description:** How long an established peer may stay silent before it is dropped. Peers send a heartbeat every 10 seconds, so the minimum is three heartbeats.
+
+- `-netminretrytime <seconds>`
+
+    **Type:** floating-point number, 0.05 to the retry time
+
+    **Default:** 0.2
+
+    **Platform:** all
+
+    **Description:** Lower bound for the ping-based resend interval of unacknowledged reliable packets.
+
+- `-netretrytime <seconds>`
+
+    **Type:** floating-point number, 0.05 to 5
+
+    **Default:** 0.75
+
+    **Platform:** all
+
+    **Description:** Base resend interval for unacknowledged reliable packets, used when no ping is known or the ping is high. A malformed network timing value is ignored with a warning; if the values are inconsistent (for example a minimum above the retry time), all four network timing defaults are kept.
 
 - `-nooutragelogo`
 

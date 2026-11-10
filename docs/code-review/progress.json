@@ -329,10 +329,10 @@
         "bugprone-integer-division"
       ],
       "dependencies": [],
-      "status": "Backlog",
-      "owner": "",
-      "notes": "",
-      "updated": ""
+      "status": "Done",
+      "owner": "Claude",
+      "notes": "Preview rotation (pilot.cpp, and the identical TelCom.cpp expression) now converts with 65536.0f / 360.0f. Expected per-frame angle units at 1/60, 1/30, 0.1 and 0.5 s are identical to the old values (91/182/546/2730); 1 s differs by one unit, so the preview cannot look different and no visual check was needed. Debug/Release builds and CTest pass. Evidence: docs/code-review/validation/B03-D01-D03.md.",
+      "updated": "2026-11-10T12:36:00.720493+00:00"
     },
     {
       "id": "B04",
@@ -399,10 +399,10 @@
       "confidence": "Design opportunity",
       "checks": [],
       "dependencies": [],
-      "status": "Backlog",
-      "owner": "",
-      "notes": "",
-      "updated": ""
+      "status": "Review",
+      "owner": "Claude",
+      "notes": "Added nw_timing_policy (lib/net_timing.h) with separate connect and idle timeouts plus base/minimum resend intervals, set from -netconnecttimeout, -netidletimeout, -netretrytime and -netminretrytime. Defaults are unchanged (compile-time asserted against NETTIMEOUT/NETRETRYTIME/MIN_NET_RETRYTIME); values must be finite plain decimals within documented ranges (idle >= 3 heartbeats, min retry <= retry); malformed values are ignored and inconsistent combinations keep all defaults, with warnings. The effective policy is logged; packet layouts and heartbeat are unchanged; options documented in USAGE.md. Six policy tests pass and the Debug game logged accepted and rejected overrides correctly. Delayed/lossy loopback, disconnect/reconnect and an actual connect-timeout run are pending (networking.cpp has no standalone test harness; auto-connect stops at pilot selection), plus Windows, so this stays Review. Evidence: docs/code-review/validation/C01.md.",
+      "updated": "2026-11-10T12:26:54.167775+00:00"
     },
     {
       "id": "C02",
@@ -423,10 +423,10 @@
       "confidence": "Design opportunity",
       "checks": [],
       "dependencies": [],
-      "status": "Backlog",
-      "owner": "",
-      "notes": "",
-      "updated": ""
+      "status": "Review",
+      "owner": "Claude",
+      "notes": "D3::HttpClient now accepts D3::HttpTimeouts (connect/read/write, whole seconds; connect 1-60, read/write 1-600; invalid values fall back to the previous defaults of 5/300/5). Mission downloads honor -httpconnecttimeout and -httpreadtimeout (malformed values warned and ignored; effective values logged; documented in USAGE.md, read = inactivity not total time). Fixed a null dereference in the Descent3 Online game-list fetch when a request fails. Nine loopback tests pass: delayed response with short/long read timeouts, invalid fallback, cancellation via progress callback, refused connection and parsing/range cases; the game logged accepted/rejected options. A delayed-connection fixture, a real mission download and Windows remain unverified, so this stays Review. Evidence: docs/code-review/validation/C02.md.",
+      "updated": "2026-11-10T12:29:27.193334+00:00"
     },
     {
       "id": "C03",
@@ -453,10 +453,10 @@
         "clang-analyzer-deadcode.DeadStores"
       ],
       "dependencies": [],
-      "status": "Backlog",
-      "owner": "",
-      "notes": "",
-      "updated": ""
+      "status": "Review",
+      "owner": "Claude",
+      "notes": "-sdlSndSize now requests the device buffer through SDL_HINT_AUDIO_DEVICE_SAMPLE_FRAMES before the device opens (integer 64-8192 device sample frames; malformed/out-of-range values are ignored with a warning; no option keeps SDL's default; the SDL environment variable takes precedence). The obtained buffer size is logged. Three parser tests pass; an SDL probe on PipeWire obtained the requested 256/2048 frames (default 1024); the Debug game logged a 512-frame device for -sdlSndSize 512 and fell back to 1024 with a warning for an invalid value. Audible playback, in-game sound reinit and Windows are not yet verified (user check), so this stays Review. Evidence: docs/code-review/validation/C03.md.",
+      "updated": "2026-11-10T12:22:09.440726+00:00"
     },
     {
       "id": "D01",
@@ -485,10 +485,10 @@
       "confidence": "Source-confirmed",
       "checks": [],
       "dependencies": [],
-      "status": "Backlog",
-      "owner": "",
-      "notes": "",
-      "updated": ""
+      "status": "Done",
+      "owner": "Claude",
+      "notes": "Removed the networking select() and UI focus-box #if 0 blocks; the receive loop comment now states the non-blocking read. Debug preprocessed output of both files is identical apart from __LINE__ values, and #if 0 is configuration-independent. Remaining inventory for separate review: physics 3 blocks in 2 files, editor 56 blocks in 10 files. Evidence: docs/code-review/validation/B03-D01-D03.md.",
+      "updated": "2026-11-10T12:36:00.752237+00:00"
     },
     {
       "id": "D02",
@@ -513,10 +513,10 @@
       "confidence": "Removal candidate",
       "checks": [],
       "dependencies": [],
-      "status": "Backlog",
-      "owner": "",
-      "notes": "Partial work in M01 removed the obsolete empty nw_LoadThreadLibrary helper and commented pthread implementation. MAX_CONNECT_TRIES and the remaining symbol/export audit are still outstanding; this item remains Backlog.",
-      "updated": "2026-10-30T20:23:39.480467+00:00"
+      "status": "Done",
+      "owner": "Claude",
+      "notes": "nw_LoadThreadLibrary was removed in M01; the file-local MAX_CONNECT_TRIES macro had no references in the repository and is removed. A macro defines no symbol, so exports, Windows linking and module loading cannot change. Debug/Release builds and CTest pass. Evidence: docs/code-review/validation/B03-D01-D03.md.",
+      "updated": "2026-11-10T12:36:00.783647+00:00"
     },
     {
       "id": "D03",
@@ -544,10 +544,10 @@
         "readability-redundant-control-flow"
       ],
       "dependencies": [],
-      "status": "Backlog",
-      "owner": "",
-      "notes": "",
-      "updated": ""
+      "status": "Done",
+      "owner": "Claude",
+      "notes": "Removed the use_buffer, rcvaddr and rcode dead stores in networking, two num_write = 0 stores before goto done in the mixer, and a redundant trailing return. Release machine code of networking.cpp and mixer.cpp is identical before and after (line numbers held constant); DeadStores and redundant-control-flow report zero findings in both files; the gate reports 35 findings, zero new; Debug/Release CTest 218/218. Evidence: docs/code-review/validation/B03-D01-D03.md.",
+      "updated": "2026-11-10T12:36:00.817900+00:00"
     },
     {
       "id": "T01",
@@ -576,10 +576,10 @@
         "modernize-use-equals-default"
       ],
       "dependencies": [],
-      "status": "Backlog",
-      "owner": "",
-      "notes": "",
-      "updated": ""
+      "status": "Done",
+      "owner": "Claude",
+      "notes": "Applied file-scoped modernize-use-override fixes to linux/lnxapp.h (7), ddio/sdlcontroller.h and sndlib/sdlsound.h; the named ddio.h/mixer.h nullptr findings were already fixed upstream. No signatures, serialized IDs or pilot formats changed (override is a compile-time check only). Debug/Release builds and CTest 218/218 (12 Control tests) pass. Remaining advisory modernization counts are recorded for later batches. Evidence: docs/code-review/validation/T01-T02.md.",
+      "updated": "2026-11-10T12:39:16.413383+00:00"
     },
     {
       "id": "T02",
@@ -612,10 +612,10 @@
         "clang-analyzer-optin.performance.Padding"
       ],
       "dependencies": [],
-      "status": "Backlog",
-      "owner": "",
-      "notes": "",
-      "updated": ""
+      "status": "Done",
+      "owner": "Claude",
+      "notes": "Replaced 12 fabs(float) calls in SDLControllerCore with std::abs(float). An exhaustive comparison over all 2^32 floats at seven dead-zone thresholds (> and >=) found zero mismatches; a 2.05e8-call microbenchmark showed no measurable difference, so this clears warnings without claiming a speedup. Enum-size and padding advice stays informational; no shared layout changed. Builds and CTest pass. Evidence: docs/code-review/validation/T01-T02.md.",
+      "updated": "2026-11-10T12:39:16.441892+00:00"
     },
     {
       "id": "T03",
@@ -681,10 +681,10 @@
       "confidence": "Source-confirmed",
       "checks": [],
       "dependencies": [],
-      "status": "Review",
-      "owner": "Codex",
-      "notes": "Location-aware comparison maps unchanged source lines against baseline Git revisions in both directions. Real clang-tidy tests verify a line insertion passes and an identical warning replacing another in a different function fails; missing baseline history fails closed. Three newly visible existing diagnostics were reviewed and recorded individually. The optional code_review_gate CMake target runs tests, the pinned 16-file Debug scan and comparison; it passes with 42 findings and zero new. The repository has no CI workflow, so the target is not automatically enforced. Source mapping can misidentify moved identical code or flag ambiguous changes, and requires baseline Git objects. Broader coverage and configuration-specific CTest discovery remain future work. Evidence: docs/code-review/validation/A01.md.",
-      "updated": "2026-11-10T12:14:00.856753+00:00"
+      "status": "Done",
+      "owner": "Codex, Claude",
+      "notes": "Location-aware comparison maps unchanged source lines against baseline Git revisions in both directions. Real clang-tidy tests verify a seeded warning fails, an unchanged baseline and a line insertion pass, an identical warning replacing another in a different function fails, third-party log entries are excluded, compiler errors/timeouts/missing results fail, and missing baseline history fails closed. Three newly visible existing diagnostics were reviewed and recorded individually. Claude removed the tools' hidden rtk dependency (scan/compare/test now call git and clang-tidy directly; --clang-tidy selects the binary); with rtk absent from PATH the end-to-end test ran (not skipped) and the full gate passed with 42 findings, zero new. All acceptance criteria are met, so A01 is Done. Known limits: the repository has no CI workflow, so the optional code_review_gate target is not automatically enforced; moved identical code can be mismatched; baseline Git objects are required. Evidence: docs/code-review/validation/A01.md.",
+      "updated": "2026-11-10T12:19:37.408449+00:00"
     },
     {
       "id": "A02",
@@ -715,10 +715,10 @@
         "M03",
         "B01"
       ],
-      "status": "Backlog",
-      "owner": "",
-      "notes": "",
-      "updated": ""
+      "status": "In progress",
+      "owner": "Claude",
+      "notes": "Batch 1: the baseline clang-tidy 18.1.3 checks ran over all 387 first-party Linux Debug translation units (previously 16); all exited 0. 13,259 unique first-party diagnostics: 8,792 bugprone, 2,809 modernize, 1,483 analyzer, 162 performance. Of the analyzer findings, 1,201 are strcpy and 199 DeadStores; 83 higher-signal candidates (21 NullDereference, 11 Malloc, ...) form the triage queue for batch 2. Coverage per module and every analyzer finding are in docs/code-review/a02-linux-debug.json. Remaining: triage, Release/Windows/editor databases, runtime and gameplay checks; also blocked from Done by M01/M03 (Review). Evidence: docs/code-review/validation/A02.md.",
+      "updated": "2026-11-10T12:55:27.549853+00:00"
     }
   ],
   "history": [
@@ -1050,6 +1050,237 @@
       "field": "notes",
       "from": "Added a local gate command and end-to-end tests using a real clang-tidy null-dereference warning, clean baseline, excluded third-party log entry, compiler failure, recorded timeout, stale results, and external build directory. The scan selects Debug explicitly and invalidates previous results before starting. After regenerating the build database following the upstream merge, all 16 scans pass and comparison reports 42 analyzer findings with zero new. CI integration and the identical-warning replacement limitation remain open; this repository no longer has GitHub workflows. Configuration-specific CTest discovery remains relevant for future automation. Evidence: docs/code-review/validation/A01.md.",
       "to": "Location-aware comparison maps unchanged source lines against baseline Git revisions in both directions. Real clang-tidy tests verify a line insertion passes and an identical warning replacing another in a different function fails; missing baseline history fails closed. Three newly visible existing diagnostics were reviewed and recorded individually. The optional code_review_gate CMake target runs tests, the pinned 16-file Debug scan and comparison; it passes with 42 findings and zero new. The repository has no CI workflow, so the target is not automatically enforced. Source mapping can misidentify moved identical code or flag ambiguous changes, and requires baseline Git objects. Broader coverage and configuration-specific CTest discovery remain future work. Evidence: docs/code-review/validation/A01.md."
+    },
+    {
+      "date": "2026-11-10T12:19:37.408449+00:00",
+      "id": "A01",
+      "field": "status",
+      "from": "Review",
+      "to": "Done"
+    },
+    {
+      "date": "2026-11-10T12:19:37.408449+00:00",
+      "id": "A01",
+      "field": "owner",
+      "from": "Codex",
+      "to": "Codex, Claude"
+    },
+    {
+      "date": "2026-11-10T12:19:37.408449+00:00",
+      "id": "A01",
+      "field": "notes",
+      "from": "Location-aware comparison maps unchanged source lines against baseline Git revisions in both directions. Real clang-tidy tests verify a line insertion passes and an identical warning replacing another in a different function fails; missing baseline history fails closed. Three newly visible existing diagnostics were reviewed and recorded individually. The optional code_review_gate CMake target runs tests, the pinned 16-file Debug scan and comparison; it passes with 42 findings and zero new. The repository has no CI workflow, so the target is not automatically enforced. Source mapping can misidentify moved identical code or flag ambiguous changes, and requires baseline Git objects. Broader coverage and configuration-specific CTest discovery remain future work. Evidence: docs/code-review/validation/A01.md.",
+      "to": "Location-aware comparison maps unchanged source lines against baseline Git revisions in both directions. Real clang-tidy tests verify a seeded warning fails, an unchanged baseline and a line insertion pass, an identical warning replacing another in a different function fails, third-party log entries are excluded, compiler errors/timeouts/missing results fail, and missing baseline history fails closed. Three newly visible existing diagnostics were reviewed and recorded individually. Claude removed the tools' hidden rtk dependency (scan/compare/test now call git and clang-tidy directly; --clang-tidy selects the binary); with rtk absent from PATH the end-to-end test ran (not skipped) and the full gate passed with 42 findings, zero new. All acceptance criteria are met, so A01 is Done. Known limits: the repository has no CI workflow, so the optional code_review_gate target is not automatically enforced; moved identical code can be mismatched; baseline Git objects are required. Evidence: docs/code-review/validation/A01.md."
+    },
+    {
+      "date": "2026-11-10T12:22:09.440726+00:00",
+      "id": "C03",
+      "field": "status",
+      "from": "Backlog",
+      "to": "Review"
+    },
+    {
+      "date": "2026-11-10T12:22:09.440726+00:00",
+      "id": "C03",
+      "field": "owner",
+      "from": "",
+      "to": "Claude"
+    },
+    {
+      "date": "2026-11-10T12:22:09.440726+00:00",
+      "id": "C03",
+      "field": "notes",
+      "from": "",
+      "to": "-sdlSndSize now requests the device buffer through SDL_HINT_AUDIO_DEVICE_SAMPLE_FRAMES before the device opens (integer 64-8192 device sample frames; malformed/out-of-range values are ignored with a warning; no option keeps SDL's default; the SDL environment variable takes precedence). The obtained buffer size is logged. Three parser tests pass; an SDL probe on PipeWire obtained the requested 256/2048 frames (default 1024); the Debug game logged a 512-frame device for -sdlSndSize 512 and fell back to 1024 with a warning for an invalid value. Audible playback, in-game sound reinit and Windows are not yet verified (user check), so this stays Review. Evidence: docs/code-review/validation/C03.md."
+    },
+    {
+      "date": "2026-11-10T12:26:54.167775+00:00",
+      "id": "C01",
+      "field": "status",
+      "from": "Backlog",
+      "to": "Review"
+    },
+    {
+      "date": "2026-11-10T12:26:54.167775+00:00",
+      "id": "C01",
+      "field": "owner",
+      "from": "",
+      "to": "Claude"
+    },
+    {
+      "date": "2026-11-10T12:26:54.167775+00:00",
+      "id": "C01",
+      "field": "notes",
+      "from": "",
+      "to": "Added nw_timing_policy (lib/net_timing.h) with separate connect and idle timeouts plus base/minimum resend intervals, set from -netconnecttimeout, -netidletimeout, -netretrytime and -netminretrytime. Defaults are unchanged (compile-time asserted against NETTIMEOUT/NETRETRYTIME/MIN_NET_RETRYTIME); values must be finite plain decimals within documented ranges (idle >= 3 heartbeats, min retry <= retry); malformed values are ignored and inconsistent combinations keep all defaults, with warnings. The effective policy is logged; packet layouts and heartbeat are unchanged; options documented in USAGE.md. Six policy tests pass and the Debug game logged accepted and rejected overrides correctly. Delayed/lossy loopback, disconnect/reconnect and an actual connect-timeout run are pending (networking.cpp has no standalone test harness; auto-connect stops at pilot selection), plus Windows, so this stays Review. Evidence: docs/code-review/validation/C01.md."
+    },
+    {
+      "date": "2026-11-10T12:29:27.193334+00:00",
+      "id": "C02",
+      "field": "status",
+      "from": "Backlog",
+      "to": "Review"
+    },
+    {
+      "date": "2026-11-10T12:29:27.193334+00:00",
+      "id": "C02",
+      "field": "owner",
+      "from": "",
+      "to": "Claude"
+    },
+    {
+      "date": "2026-11-10T12:29:27.193334+00:00",
+      "id": "C02",
+      "field": "notes",
+      "from": "",
+      "to": "D3::HttpClient now accepts D3::HttpTimeouts (connect/read/write, whole seconds; connect 1-60, read/write 1-600; invalid values fall back to the previous defaults of 5/300/5). Mission downloads honor -httpconnecttimeout and -httpreadtimeout (malformed values warned and ignored; effective values logged; documented in USAGE.md, read = inactivity not total time). Fixed a null dereference in the Descent3 Online game-list fetch when a request fails. Nine loopback tests pass: delayed response with short/long read timeouts, invalid fallback, cancellation via progress callback, refused connection and parsing/range cases; the game logged accepted/rejected options. A delayed-connection fixture, a real mission download and Windows remain unverified, so this stays Review. Evidence: docs/code-review/validation/C02.md."
+    },
+    {
+      "date": "2026-11-10T12:36:00.720493+00:00",
+      "id": "B03",
+      "field": "status",
+      "from": "Backlog",
+      "to": "Done"
+    },
+    {
+      "date": "2026-11-10T12:36:00.720493+00:00",
+      "id": "B03",
+      "field": "owner",
+      "from": "",
+      "to": "Claude"
+    },
+    {
+      "date": "2026-11-10T12:36:00.720493+00:00",
+      "id": "B03",
+      "field": "notes",
+      "from": "",
+      "to": "Preview rotation (pilot.cpp, and the identical TelCom.cpp expression) now converts with 65536.0f / 360.0f. Expected per-frame angle units at 1/60, 1/30, 0.1 and 0.5 s are identical to the old values (91/182/546/2730); 1 s differs by one unit, so the preview cannot look different and no visual check was needed. Debug/Release builds and CTest pass. Evidence: docs/code-review/validation/B03-D01-D03.md."
+    },
+    {
+      "date": "2026-11-10T12:36:00.752237+00:00",
+      "id": "D01",
+      "field": "status",
+      "from": "Backlog",
+      "to": "Done"
+    },
+    {
+      "date": "2026-11-10T12:36:00.752237+00:00",
+      "id": "D01",
+      "field": "owner",
+      "from": "",
+      "to": "Claude"
+    },
+    {
+      "date": "2026-11-10T12:36:00.752237+00:00",
+      "id": "D01",
+      "field": "notes",
+      "from": "",
+      "to": "Removed the networking select() and UI focus-box #if 0 blocks; the receive loop comment now states the non-blocking read. Debug preprocessed output of both files is identical apart from __LINE__ values, and #if 0 is configuration-independent. Remaining inventory for separate review: physics 3 blocks in 2 files, editor 56 blocks in 10 files. Evidence: docs/code-review/validation/B03-D01-D03.md."
+    },
+    {
+      "date": "2026-11-10T12:36:00.783647+00:00",
+      "id": "D02",
+      "field": "status",
+      "from": "Backlog",
+      "to": "Done"
+    },
+    {
+      "date": "2026-11-10T12:36:00.783647+00:00",
+      "id": "D02",
+      "field": "owner",
+      "from": "",
+      "to": "Claude"
+    },
+    {
+      "date": "2026-11-10T12:36:00.783647+00:00",
+      "id": "D02",
+      "field": "notes",
+      "from": "Partial work in M01 removed the obsolete empty nw_LoadThreadLibrary helper and commented pthread implementation. MAX_CONNECT_TRIES and the remaining symbol/export audit are still outstanding; this item remains Backlog.",
+      "to": "nw_LoadThreadLibrary was removed in M01; the file-local MAX_CONNECT_TRIES macro had no references in the repository and is removed. A macro defines no symbol, so exports, Windows linking and module loading cannot change. Debug/Release builds and CTest pass. Evidence: docs/code-review/validation/B03-D01-D03.md."
+    },
+    {
+      "date": "2026-11-10T12:36:00.817900+00:00",
+      "id": "D03",
+      "field": "status",
+      "from": "Backlog",
+      "to": "Done"
+    },
+    {
+      "date": "2026-11-10T12:36:00.817900+00:00",
+      "id": "D03",
+      "field": "owner",
+      "from": "",
+      "to": "Claude"
+    },
+    {
+      "date": "2026-11-10T12:36:00.817900+00:00",
+      "id": "D03",
+      "field": "notes",
+      "from": "",
+      "to": "Removed the use_buffer, rcvaddr and rcode dead stores in networking, two num_write = 0 stores before goto done in the mixer, and a redundant trailing return. Release machine code of networking.cpp and mixer.cpp is identical before and after (line numbers held constant); DeadStores and redundant-control-flow report zero findings in both files; the gate reports 35 findings, zero new; Debug/Release CTest 218/218. Evidence: docs/code-review/validation/B03-D01-D03.md."
+    },
+    {
+      "date": "2026-11-10T12:39:16.413383+00:00",
+      "id": "T01",
+      "field": "status",
+      "from": "Backlog",
+      "to": "Done"
+    },
+    {
+      "date": "2026-11-10T12:39:16.413383+00:00",
+      "id": "T01",
+      "field": "owner",
+      "from": "",
+      "to": "Claude"
+    },
+    {
+      "date": "2026-11-10T12:39:16.413383+00:00",
+      "id": "T01",
+      "field": "notes",
+      "from": "",
+      "to": "Applied file-scoped modernize-use-override fixes to linux/lnxapp.h (7), ddio/sdlcontroller.h and sndlib/sdlsound.h; the named ddio.h/mixer.h nullptr findings were already fixed upstream. No signatures, serialized IDs or pilot formats changed (override is a compile-time check only). Debug/Release builds and CTest 218/218 (12 Control tests) pass. Remaining advisory modernization counts are recorded for later batches. Evidence: docs/code-review/validation/T01-T02.md."
+    },
+    {
+      "date": "2026-11-10T12:39:16.441892+00:00",
+      "id": "T02",
+      "field": "status",
+      "from": "Backlog",
+      "to": "Done"
+    },
+    {
+      "date": "2026-11-10T12:39:16.441892+00:00",
+      "id": "T02",
+      "field": "owner",
+      "from": "",
+      "to": "Claude"
+    },
+    {
+      "date": "2026-11-10T12:39:16.441892+00:00",
+      "id": "T02",
+      "field": "notes",
+      "from": "",
+      "to": "Replaced 12 fabs(float) calls in SDLControllerCore with std::abs(float). An exhaustive comparison over all 2^32 floats at seven dead-zone thresholds (> and >=) found zero mismatches; a 2.05e8-call microbenchmark showed no measurable difference, so this clears warnings without claiming a speedup. Enum-size and padding advice stays informational; no shared layout changed. Builds and CTest pass. Evidence: docs/code-review/validation/T01-T02.md."
+    },
+    {
+      "date": "2026-11-10T12:55:27.549853+00:00",
+      "id": "A02",
+      "field": "status",
+      "from": "Backlog",
+      "to": "In progress"
+    },
+    {
+      "date": "2026-11-10T12:55:27.549853+00:00",
+      "id": "A02",
+      "field": "owner",
+      "from": "",
+      "to": "Claude"
+    },
+    {
+      "date": "2026-11-10T12:55:27.549853+00:00",
+      "id": "A02",
+      "field": "notes",
+      "from": "",
+      "to": "Batch 1: the baseline clang-tidy 18.1.3 checks ran over all 387 first-party Linux Debug translation units (previously 16); all exited 0. 13,259 unique first-party diagnostics: 8,792 bugprone, 2,809 modernize, 1,483 analyzer, 162 performance. Of the analyzer findings, 1,201 are strcpy and 199 DeadStores; 83 higher-signal candidates (21 NullDereference, 11 Malloc, ...) form the triage queue for batch 2. Coverage per module and every analyzer finding are in docs/code-review/a02-linux-debug.json. Remaining: triage, Release/Windows/editor databases, runtime and gameplay checks; also blocked from Done by M01/M03 (Review). Evidence: docs/code-review/validation/A02.md."
     }
   ],
   "snapshots": [
@@ -1062,6 +1293,12 @@
     {
       "date": "2026-10-31",
       "done": 6,
+      "dismissed": 0,
+      "total": 21
+    },
+    {
+      "date": "2026-11-10",
+      "done": 13,
       "dismissed": 0,
       "total": 21
     }

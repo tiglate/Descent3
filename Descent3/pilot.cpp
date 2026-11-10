@@ -2911,7 +2911,8 @@ void UI3DWindow::OnDraw() {
   // move 30 degrees a sec
   float new_time = timer_GetTime();
 
-  vm_AnglesToMatrix(&rot_mat, 0, (new_time - ship_pos.last_time) * (65535 / 360) * 30, 0);
+  // 65536 angle units per revolution; convert in floating point.
+  vm_AnglesToMatrix(&rot_mat, 0, (new_time - ship_pos.last_time) * (65536.0f / 360.0f) * 30.0f, 0);
   vm_MatrixMul(&view_orient, &rot_mat, &ship_pos.last_frame);
   vm_Orthogonalize(&view_orient);
   ship_pos.last_frame = view_orient;

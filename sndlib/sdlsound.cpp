@@ -20,6 +20,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstdarg>
+#include <string>
 
 #include <SDL3/SDL.h>
 
@@ -32,11 +33,11 @@
 #include "mixer.h"
 #include "ddio.h"
 #include "args.h"
+#include "sound_buffer_option.h"
 
 #define SOUNDLIB_SAMPLE_RATE 22050
 #define SOUNDLIB_SAMPLE_SIZE 16
 #define SOUNDLIB_CHANNELS 2
-#define SOUNDLIB_DEFAULT_SAMPLES 1024
 
 // ===============================
 #define MAX_SOUNDS_PLAYING_AT_ONCE 256
@@ -81,15 +82,19 @@ int lnxsound::InitSoundLib([[maybe_unused]] char mixer_type, [[maybe_unused]] oe
     return false;
   } // if
 
-  int sampleCount = SOUNDLIB_DEFAULT_SAMPLES;
+  // -sdlSndSize <frames> requests a device buffer size. Without it SDL chooses
+  // the size. An SDL_AUDIO_DEVICE_SAMPLE_FRAMES environment variable takes
+  // precedence over this normal-priority hint.
   int sampleArgIndex = FindArg("-sdlSndSize");
   if (sampleArgIndex != 0) {
     const char *sampleCountStr = GetArg(sampleArgIndex + 1);
-    if (sampleCountStr) {
-      sampleCount = atoi(sampleCountStr);
-      if (sampleCount <= 0) {
-        sampleCount = SOUNDLIB_DEFAULT_SAMPLES;
-      }
+    if (auto frames = sndlib::ParseSoundBufferFrames(sampleCountStr)) {
+      SDL_SetHint(SDL_HINT_AUDIO_DEVICE_SAMPLE_FRAMES, std::to_string(*frames).c_str());
+      LOG_INFO.printf("Sound: requested device buffer of %d sample frames", *frames);
+    } else {
+      LOG_WARNING.printf("Sound: ignoring -sdlSndSize \"%s\"; expected an integer from %d to %d",
+                         sampleCountStr ? sampleCountStr : "", sndlib::kMinSoundBufferFrames,
+                         sndlib::kMaxSoundBufferFrames);
     }
   }
 
@@ -97,11 +102,18 @@ int lnxsound::InitSoundLib([[maybe_unused]] char mixer_type, [[maybe_unused]] oe
   spec.format = SOUNDLIB_SAMPLE_SIZE == 8 ? SDL_AUDIO_U8 : SDL_AUDIO_S16;
   spec.channels = SOUNDLIB_CHANNELS;
 
-  this->sound_stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, StreamAudio, &m_mixer); 
+  this->sound_stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, StreamAudio, &m_mixer);
   this->sound_device = SDL_GetAudioStreamDevice(sound_stream);
   if (sound_device == 0) {
     strcpy(m_error_text, SDL_GetError());
     return false;
+  }
+
+  SDL_AudioSpec obtained;
+  int device_frames = 0;
+  if (SDL_GetAudioDeviceFormat(sound_device, &obtained, &device_frames)) {
+    LOG_INFO.printf("Sound: device %d Hz, %d channels, buffer %d sample frames", obtained.freq, obtained.channels,
+                    device_frames);
   }
 
   LOG_INFO << "Sound: Hardware configured. Kicking off stream thread...";
@@ -253,8 +265,8 @@ int16_t lnxsound::FindFreeSoundSlot(float volume, int priority)
     if (throw_out_slot > -1) {
       sb = &sound_cache[throw_out_slot];
       StopSound(sb->m_unique_id, SKT_HOLD_UNTIL_STOP);
-      LOG_DEBUG.printf("DDSNDLIB: Replace sound (p:%d) with sound (p:%d) in slot %d",
-                       sb->play_info->priority, priority, throw_out_slot);
+      LOG_DEBUG.printf("DDSNDLIB: Replace sound (p:%d) with sound (p:%d) in slot %d", sb->play_info->priority, priority,
+                       throw_out_slot);
       return throw_out_slot;
     }
   }
@@ -402,7 +414,7 @@ int lnxsound::PlaySound3d(play_information *play_info, int sound_index, pos_stat
                        (Sounds[sound_index].max_distance - Sounds[sound_index].min_distance)));
   }
 
-  pan = (vm_Dot3Product(dir_to_sound,m_emulated_listener.orient.rvec));
+  pan = (vm_Dot3Product(dir_to_sound, m_emulated_listener.orient.rvec));
 
   if (volume < 0.0f)
     volume = 0.0f;
@@ -471,7 +483,7 @@ void lnxsound::AdjustSound(int sound_uid, pos_state *cur_pos, float adjusted_vol
                         Sounds[sound_cache[current_slot].m_sound_index].min_distance)));
   }
 
-  pan = (vm_Dot3Product(dir_to_sound,m_emulated_listener.orient.rvec));
+  pan = (vm_Dot3Product(dir_to_sound, m_emulated_listener.orient.rvec));
 
   if (volume < 0.0f)
     volume = 0.0f;

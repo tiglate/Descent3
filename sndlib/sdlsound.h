@@ -40,7 +40,7 @@ class lnxsound final : public llsSystem {
   // Public functions
 public:
   lnxsound();
-  ~lnxsound();
+  ~lnxsound() override;
 
   // may be called before init (must be to be valid, the card passed here will be initialized in InitSoundLib)
   void SetSoundCard(const char *name) override;

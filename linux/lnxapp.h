@@ -57,23 +57,23 @@ public:
   oeLnxApplication(unsigned flags);
   //	Create object with a premade info
   oeLnxApplication(tLnxAppInfo *appinfo);
-  virtual ~oeLnxApplication();
+  ~oeLnxApplication() override;
   //	initializes the object
-  virtual void init();
+  void init() override;
   //	Function to retrieve information from object through a platform defined structure.
-  virtual void get_info(void *appinfo);
+  void get_info(void *appinfo) override;
   //	defer returns some flags.   essentially this function defers program control to OS.
-  virtual unsigned defer();
+  unsigned defer() override;
   virtual const char *get_window_name(void);
   virtual void clear_window(void);
   //	set a function to run when deferring to OS.
-  virtual void set_defer_handler(void (*func)(bool isactive));
+  void set_defer_handler(void (*func)(bool isactive)) override;
   //	delays app for a certain amount of time
-  virtual void delay(float secs);
+  void delay(float secs) override;
   //	Sizes the displayable region of the app (the window)
   void set_sizepos(int x, int y, int w, int h);
 
-  virtual int flags(void) const;
+  int flags(void) const override;
 
   unsigned m_Flags;
   int m_X, m_Y, m_W, m_H;   // window dimensions.

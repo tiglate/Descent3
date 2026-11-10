@@ -38,7 +38,7 @@ def baseline_locations(diagnostics, default_commit):
         commit = diagnostic.get("commit", default_commit)
         key = (commit, path)
         if key not in mappings:
-            old = subprocess.run(["rtk", "proxy", "git", "show", f"{commit}:{path}"], cwd=ROOT,
+            old = subprocess.run(["git", "show", f"{commit}:{path}"], cwd=ROOT,
                                  capture_output=True, text=True)
             if old.returncode:
                 raise SystemExit(f"Cannot read baseline source {commit}:{path}: {old.stderr.strip()}")

@@ -15,8 +15,8 @@ TOOLS = Path(__file__).resolve().parent
 
 class GateTests(unittest.TestCase):
     def test_real_diagnostics_and_failed_scans(self):
-        if not all(shutil.which(tool) for tool in ("rtk", "clang-tidy", "c++")):
-            self.skipTest("rtk, clang-tidy and a C++ compiler are required")
+        if not all(shutil.which(tool) for tool in ("git", "clang-tidy", "c++")):
+            self.skipTest("git, clang-tidy and a C++ compiler are required")
         version = subprocess.run(["clang-tidy", "--version"], capture_output=True, text=True, check=True)
         if "18.1.3" not in version.stdout:
             self.skipTest("the gate requires clang-tidy 18.1.3")
@@ -77,7 +77,7 @@ class GateTests(unittest.TestCase):
             self.assertIsNotNone(warning)
 
             def git(*args):
-                return subprocess.run(["rtk", "proxy", "git", *args], cwd=root,
+                return subprocess.run(["git", *args], cwd=root,
                                       capture_output=True, text=True, check=True)
 
             git("init", "-q")

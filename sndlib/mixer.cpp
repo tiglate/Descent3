@@ -272,7 +272,6 @@ void software_mixer::StreamMixer(char *ptr, int len) {
         num_write =
             ((num_samples) < (np_sample_length - samples_played)) ? (num_samples) : (np_sample_length - samples_played);
         if (!(num_write > 0 && num_write <= num_samples)) {
-          num_write = 0;
           goto done;
         }
 
@@ -285,7 +284,6 @@ void software_mixer::StreamMixer(char *ptr, int len) {
 
       if ((num_write < 0) || (num_write > num_samples)) // this was an assert
       {
-        num_write = 0;
         goto done;
       }
 

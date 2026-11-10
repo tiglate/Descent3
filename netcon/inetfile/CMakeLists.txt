@@ -22,3 +22,7 @@ target_include_directories(inetfile PUBLIC
 )
 target_include_directories(inetfile PRIVATE ${SDL3_INCLUDE_DIRS})
 
+
+if(BUILD_TESTING)
+  add_subdirectory(tests)
+endif()

@@ -12,10 +12,7 @@ The initial baseline scan did not include engine fixes, game launch, sanitizer e
 
 ## Next implementation priorities
 
-1. [C01](#c01): Expose bounded network timing policy.
-2. [C02](#c02): Make HTTP connection timeout an explicit option.
-3. [C03](#c03): Resolve the ignored SDL sound-buffer option.
-4. [A02](#a02): Extend coverage across modules and platform configurations.
+1. [A02](#a02): Extend coverage across modules and platform configurations.
 
 Items marked Review have implementation or triage evidence but still have an acceptance gate open; see their notes for the remaining work.
 
@@ -55,19 +52,19 @@ flowchart LR
 | [M06](#m06) | P1 | Memory and resources | S | Runtime-confirmed | Done |
 | [B01](#b01) | P1 | Correctness | M | Source-confirmed | Done |
 | [B02](#b02) | P2 | Correctness | M | Source-confirmed | Review |
-| [B03](#b03) | P3 | Correctness | S | Source-confirmed | Backlog |
+| [B03](#b03) | P3 | Correctness | S | Source-confirmed | Done |
 | [B04](#b04) | P1 | Correctness | L | Runtime-confirmed | Review |
-| [C01](#c01) | P2 | Configuration | M | Design opportunity | Backlog |
-| [C02](#c02) | P2 | Configuration | S | Design opportunity | Backlog |
-| [C03](#c03) | P2 | Configuration | M | Source-confirmed | Backlog |
-| [D01](#d01) | P3 | Dead code | M | Source-confirmed | Backlog |
-| [D02](#d02) | P3 | Dead code | S | Removal candidate | Backlog |
-| [D03](#d03) | P3 | Dead code | S | Source-confirmed | Backlog |
-| [T01](#t01) | P3 | Clang-tidy | M | Source-confirmed | Backlog |
-| [T02](#t02) | P3 | Clang-tidy | M | Source-confirmed | Backlog |
+| [C01](#c01) | P2 | Configuration | M | Design opportunity | Review |
+| [C02](#c02) | P2 | Configuration | S | Design opportunity | Review |
+| [C03](#c03) | P2 | Configuration | M | Source-confirmed | Review |
+| [D01](#d01) | P3 | Dead code | M | Source-confirmed | Done |
+| [D02](#d02) | P3 | Dead code | S | Removal candidate | Done |
+| [D03](#d03) | P3 | Dead code | S | Source-confirmed | Done |
+| [T01](#t01) | P3 | Clang-tidy | M | Source-confirmed | Done |
+| [T02](#t02) | P3 | Clang-tidy | M | Source-confirmed | Done |
 | [T03](#t03) | P2 | Clang-tidy | M | Analyzer candidates | Done |
-| [A01](#a01) | P2 | Clang-tidy | M | Source-confirmed | Review |
-| [A02](#a02) | P2 | Clang-tidy | L | Source-confirmed | Backlog |
+| [A01](#a01) | P2 | Clang-tidy | M | Source-confirmed | Done |
+| [A02](#a02) | P2 | Clang-tidy | L | Source-confirmed | In progress |
 
 ## M01
 
@@ -243,7 +240,11 @@ Sources: [Descent3/pilot.cpp, line 2914](../../Descent3/pilot.cpp).
 
 **Dependencies:** None. **Checks:** `bugprone-integer-division`.
 
-- [ ] Implemented and validated (Backlog)
+- [x] Implemented and validated (Done)
+
+Owner: Claude
+
+Progress evidence / disposition: Preview rotation (pilot.cpp, and the identical TelCom.cpp expression) now converts with 65536.0f / 360.0f. Expected per-frame angle units at 1/60, 1/30, 0.1 and 0.5 s are identical to the old values (91/182/546/2730); 1 s differs by one unit, so the preview cannot look different and no visual check was needed. Debug/Release builds and CTest pass. Evidence: docs/code-review/validation/B03-D01-D03.md.
 
 ## B04
 
@@ -279,7 +280,11 @@ Sources: [lib/networking.h, line 430](../../lib/networking.h); [networking/netwo
 
 **Dependencies:** None. **Checks:** Manual review / targeted regression.
 
-- [ ] Implemented and validated (Backlog)
+- [ ] Implemented and validated (Review)
+
+Owner: Claude
+
+Progress evidence / disposition: Added nw_timing_policy (lib/net_timing.h) with separate connect and idle timeouts plus base/minimum resend intervals, set from -netconnecttimeout, -netidletimeout, -netretrytime and -netminretrytime. Defaults are unchanged (compile-time asserted against NETTIMEOUT/NETRETRYTIME/MIN_NET_RETRYTIME); values must be finite plain decimals within documented ranges (idle >= 3 heartbeats, min retry <= retry); malformed values are ignored and inconsistent combinations keep all defaults, with warnings. The effective policy is logged; packet layouts and heartbeat are unchanged; options documented in USAGE.md. Six policy tests pass and the Debug game logged accepted and rejected overrides correctly. Delayed/lossy loopback, disconnect/reconnect and an actual connect-timeout run are pending (networking.cpp has no standalone test harness; auto-connect stops at pilot selection), plus Windows, so this stays Review. Evidence: docs/code-review/validation/C01.md.
 
 ## C02
 
@@ -295,7 +300,11 @@ Sources: [netcon/inetfile/httpclient.cpp, line 23](../../netcon/inetfile/httpcli
 
 **Dependencies:** None. **Checks:** Manual review / targeted regression.
 
-- [ ] Implemented and validated (Backlog)
+- [ ] Implemented and validated (Review)
+
+Owner: Claude
+
+Progress evidence / disposition: D3::HttpClient now accepts D3::HttpTimeouts (connect/read/write, whole seconds; connect 1-60, read/write 1-600; invalid values fall back to the previous defaults of 5/300/5). Mission downloads honor -httpconnecttimeout and -httpreadtimeout (malformed values warned and ignored; effective values logged; documented in USAGE.md, read = inactivity not total time). Fixed a null dereference in the Descent3 Online game-list fetch when a request fails. Nine loopback tests pass: delayed response with short/long read timeouts, invalid fallback, cancellation via progress callback, refused connection and parsing/range cases; the game logged accepted/rejected options. A delayed-connection fixture, a real mission download and Windows remain unverified, so this stays Review. Evidence: docs/code-review/validation/C02.md.
 
 ## C03
 
@@ -311,7 +320,11 @@ Sources: [sndlib/sdlsound.cpp, line 84](../../sndlib/sdlsound.cpp); [sndlib/sdls
 
 **Dependencies:** None. **Checks:** `clang-analyzer-deadcode.DeadStores`.
 
-- [ ] Implemented and validated (Backlog)
+- [ ] Implemented and validated (Review)
+
+Owner: Claude
+
+Progress evidence / disposition: -sdlSndSize now requests the device buffer through SDL_HINT_AUDIO_DEVICE_SAMPLE_FRAMES before the device opens (integer 64-8192 device sample frames; malformed/out-of-range values are ignored with a warning; no option keeps SDL's default; the SDL environment variable takes precedence). The obtained buffer size is logged. Three parser tests pass; an SDL probe on PipeWire obtained the requested 256/2048 frames (default 1024); the Debug game logged a 512-frame device for -sdlSndSize 512 and fell back to 1024 with a warning for an invalid value. Audible playback, in-game sound reinit and Windows are not yet verified (user check), so this stays Review. Evidence: docs/code-review/validation/C03.md.
 
 ## D01
 
@@ -327,7 +340,11 @@ Sources: [networking/networking.cpp, line 2441](../../networking/networking.cpp)
 
 **Dependencies:** None. **Checks:** Manual review / targeted regression.
 
-- [ ] Implemented and validated (Backlog)
+- [x] Implemented and validated (Done)
+
+Owner: Claude
+
+Progress evidence / disposition: Removed the networking select() and UI focus-box #if 0 blocks; the receive loop comment now states the non-blocking read. Debug preprocessed output of both files is identical apart from __LINE__ values, and #if 0 is configuration-independent. Remaining inventory for separate review: physics 3 blocks in 2 files, editor 56 blocks in 10 files. Evidence: docs/code-review/validation/B03-D01-D03.md.
 
 ## D02
 
@@ -343,9 +360,11 @@ Sources: [networking/networking.cpp, line 336](../../networking/networking.cpp);
 
 **Dependencies:** None. **Checks:** Manual review / targeted regression.
 
-- [ ] Implemented and validated (Backlog)
+- [x] Implemented and validated (Done)
 
-Progress evidence / disposition: Partial work in M01 removed the obsolete empty nw_LoadThreadLibrary helper and commented pthread implementation. MAX_CONNECT_TRIES and the remaining symbol/export audit are still outstanding; this item remains Backlog.
+Owner: Claude
+
+Progress evidence / disposition: nw_LoadThreadLibrary was removed in M01; the file-local MAX_CONNECT_TRIES macro had no references in the repository and is removed. A macro defines no symbol, so exports, Windows linking and module loading cannot change. Debug/Release builds and CTest pass. Evidence: docs/code-review/validation/B03-D01-D03.md.
 
 ## D03
 
@@ -361,7 +380,11 @@ Sources: [networking/networking.cpp, line 1175](../../networking/networking.cpp)
 
 **Dependencies:** None. **Checks:** `clang-analyzer-deadcode.DeadStores`, `readability-redundant-control-flow`.
 
-- [ ] Implemented and validated (Backlog)
+- [x] Implemented and validated (Done)
+
+Owner: Claude
+
+Progress evidence / disposition: Removed the use_buffer, rcvaddr and rcode dead stores in networking, two num_write = 0 stores before goto done in the mixer, and a redundant trailing return. Release machine code of networking.cpp and mixer.cpp is identical before and after (line numbers held constant); DeadStores and redundant-control-flow report zero findings in both files; the gate reports 35 findings, zero new; Debug/Release CTest 218/218. Evidence: docs/code-review/validation/B03-D01-D03.md.
 
 ## T01
 
@@ -377,7 +400,11 @@ Sources: [ddio/ddio.h, line 292](../../ddio/ddio.h); [linux/lnxapp.h, line 60](.
 
 **Dependencies:** None. **Checks:** `modernize-use-nullptr`, `modernize-use-override`, `modernize-use-equals-default`.
 
-- [ ] Implemented and validated (Backlog)
+- [x] Implemented and validated (Done)
+
+Owner: Claude
+
+Progress evidence / disposition: Applied file-scoped modernize-use-override fixes to linux/lnxapp.h (7), ddio/sdlcontroller.h and sndlib/sdlsound.h; the named ddio.h/mixer.h nullptr findings were already fixed upstream. No signatures, serialized IDs or pilot formats changed (override is a compile-time check only). Debug/Release builds and CTest 218/218 (12 Control tests) pass. Remaining advisory modernization counts are recorded for later batches. Evidence: docs/code-review/validation/T01-T02.md.
 
 ## T02
 
@@ -393,7 +420,11 @@ Sources: [ddio/sdlcontroller.cpp, line 316](../../ddio/sdlcontroller.cpp); [sndl
 
 **Dependencies:** None. **Checks:** `performance-type-promotion-in-math-fn`, `performance-enum-size`, `clang-analyzer-optin.performance.Padding`.
 
-- [ ] Implemented and validated (Backlog)
+- [x] Implemented and validated (Done)
+
+Owner: Claude
+
+Progress evidence / disposition: Replaced 12 fabs(float) calls in SDLControllerCore with std::abs(float). An exhaustive comparison over all 2^32 floats at seven dead-zone thresholds (> and >=) found zero mismatches; a 2.05e8-call microbenchmark showed no measurable difference, so this clears warnings without claiming a speedup. Enum-size and padding advice stays informational; no shared layout changed. Builds and CTest pass. Evidence: docs/code-review/validation/T01-T02.md.
 
 ## T03
 
@@ -429,11 +460,11 @@ Sources: [CMakeLists.txt, line 67](../../CMakeLists.txt); [.github/workflows/bui
 
 **Dependencies:** None. **Checks:** Manual review / targeted regression.
 
-- [ ] Implemented and validated (Review)
+- [x] Implemented and validated (Done)
 
-Owner: Codex
+Owner: Codex, Claude
 
-Progress evidence / disposition: Location-aware comparison maps unchanged source lines against baseline Git revisions in both directions. Real clang-tidy tests verify a line insertion passes and an identical warning replacing another in a different function fails; missing baseline history fails closed. Three newly visible existing diagnostics were reviewed and recorded individually. The optional code_review_gate CMake target runs tests, the pinned 16-file Debug scan and comparison; it passes with 42 findings and zero new. The repository has no CI workflow, so the target is not automatically enforced. Source mapping can misidentify moved identical code or flag ambiguous changes, and requires baseline Git objects. Broader coverage and configuration-specific CTest discovery remain future work. Evidence: docs/code-review/validation/A01.md.
+Progress evidence / disposition: Location-aware comparison maps unchanged source lines against baseline Git revisions in both directions. Real clang-tidy tests verify a seeded warning fails, an unchanged baseline and a line insertion pass, an identical warning replacing another in a different function fails, third-party log entries are excluded, compiler errors/timeouts/missing results fail, and missing baseline history fails closed. Three newly visible existing diagnostics were reviewed and recorded individually. Claude removed the tools' hidden rtk dependency (scan/compare/test now call git and clang-tidy directly; --clang-tidy selects the binary); with rtk absent from PATH the end-to-end test ran (not skipped) and the full gate passed with 42 findings, zero new. All acceptance criteria are met, so A01 is Done. Known limits: the repository has no CI workflow, so the optional code_review_gate target is not automatically enforced; moved identical code can be mismatched; baseline Git objects are required. Evidence: docs/code-review/validation/A01.md.
 
 ## A02
 
@@ -449,7 +480,11 @@ Sources: [networking/CMakeLists.txt, line 4](../../networking/CMakeLists.txt); [
 
 **Dependencies:** A01, M01, M02, M03, B01. **Checks:** Manual review / targeted regression.
 
-- [ ] Implemented and validated (Backlog)
+- [ ] Implemented and validated (In progress)
+
+Owner: Claude
+
+Progress evidence / disposition: Batch 1: the baseline clang-tidy 18.1.3 checks ran over all 387 first-party Linux Debug translation units (previously 16); all exited 0. 13,259 unique first-party diagnostics: 8,792 bugprone, 2,809 modernize, 1,483 analyzer, 162 performance. Of the analyzer findings, 1,201 are strcpy and 199 DeadStores; 83 higher-signal candidates (21 NullDereference, 11 Malloc, ...) form the triage queue for batch 2. Coverage per module and every analyzer finding are in docs/code-review/a02-linux-debug.json. Remaining: triage, Release/Windows/editor databases, runtime and gameplay checks; also blocked from Done by M01/M03 (Review). Evidence: docs/code-review/validation/A02.md.
 
 ## Configuration boundaries
 
@@ -490,7 +525,7 @@ Use a separate build directory for ASan/LSan/UBSan and another for TSan; instrum
 
 ## Progress tracking
 
-Current: 6 implemented, 0 dismissed, 15 unresolved items.
+Current: 13 implemented, 0 dismissed, 8 unresolved items.
 
 Open [dashboard.html](dashboard.html) for live charts, priority/category breakdowns, roadmap, editable owners/status/notes and actual change history. Changes use browser storage when available. Export progress, replace `progress.json`, and run `rtk proxy python3 tools/code_review/render.py` to update both this plan and the dashboard. Import transfers progress without changing the finding definitions. Dismissal is resolution with a reason, not implementation. Done requires validation evidence and Done dependencies.
 

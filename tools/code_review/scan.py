@@ -46,13 +46,15 @@ def main():
     parser.add_argument("--jobs", type=int, default=3)
     parser.add_argument("--config", default="Debug", choices=["Debug"],
                         help="configuration of the recorded baseline (currently Debug only)")
+    parser.add_argument("--clang-tidy", default="clang-tidy",
+                        help="clang-tidy executable (must report version 18.1.3)")
     args = parser.parse_args()
     build = (ROOT / args.build_dir).resolve()
     out = build / "code-review"
     out.mkdir(parents=True, exist_ok=True)
     # A failed or interrupted run must never leave a previous successful result usable.
     (out / "results.json").unlink(missing_ok=True)
-    version = subprocess.run(["rtk", "proxy", "clang-tidy", "--version"], capture_output=True, text=True, check=True)
+    version = subprocess.run([args.clang_tidy, "--version"], capture_output=True, text=True, check=True)
     if not re.search(r"\b18\.1\.3\b", version.stdout):
         raise SystemExit("The review baseline requires clang-tidy 18.1.3")
     baseline = json.loads((ROOT / "docs/code-review/progress.json").read_text())
@@ -73,7 +75,7 @@ def main():
 
     def run(source):
         log = out / (source.replace("/", "__") + ".log")
-        command = ["rtk", "proxy", "clang-tidy", source, "-p=" + str(out),
+        command = [args.clang_tidy, source, "-p=" + str(out),
                    "--checks=" + scan["checks"],
                    "--header-filter=^" + re.escape(str(ROOT))
                    + "/(Descent3|networking|linux|sndlib|cfile|ddio|mem|ui|renderer)/"]

@@ -18,8 +18,10 @@
 
 #pragma once
 
+#include <chrono>
 #include <istream>
 #include <memory>
+#include <optional>
 #include <string>
 
 // Include httplib.h before windows.h
@@ -30,13 +32,37 @@
 
 namespace D3 {
 
+/**
+ * Socket timeouts for HttpClient, in whole seconds. connect bounds establishing
+ * the TCP connection; read and write bound each individual socket operation
+ * (inactivity), not the total transfer time. Defaults match previous behavior.
+ */
+struct HttpTimeouts {
+  static constexpr int kMinSeconds = 1;
+  static constexpr int kMaxConnectSeconds = 60;
+  static constexpr int kMaxReadWriteSeconds = 600;
+
+  std::chrono::seconds connect{5};
+  std::chrono::seconds read{CPPHTTPLIB_CLIENT_READ_TIMEOUT_SECOND};
+  std::chrono::seconds write{CPPHTTPLIB_CLIENT_WRITE_TIMEOUT_SECOND};
+
+  /// @return nullptr when every timeout is within range, otherwise a reason.
+  const char *Validate() const;
+};
+
+/**
+ * Parses a timeout option value: plain decimal digits only, within
+ * [HttpTimeouts::kMinSeconds, max_seconds]. Returns no value otherwise.
+ */
+std::optional<std::chrono::seconds> ParseHttpTimeoutSeconds(const char *text, int max_seconds);
+
 class HttpClient {
 public:
   using Progress = httplib::DownloadProgress;
   // no way to test with macro; would have to do a cmake-level compile check
-  //#if httplib < 0.23
-  //using Progress = httplib::Progress;
-  //#endif
+  // #if httplib < 0.23
+  // using Progress = httplib::Progress;
+  // #endif
 
   /**
    * Constructor for HttpClient
@@ -44,6 +70,12 @@ public:
    * Port can be specified with ":" (http://example.com:8080)
    */
   explicit HttpClient(const std::string &URL);
+
+  /**
+   * As above, with explicit timeouts. Invalid timeouts are replaced by the
+   * defaults so a request can never wait without bound.
+   */
+  HttpClient(const std::string &URL, const HttpTimeouts &timeouts);
 
   httplib::Result Get(const std::string &URIPath);
 
@@ -65,4 +97,4 @@ private:
   std::unique_ptr<httplib::Client> m_client;
 };
 
-}
+} // namespace D3

@@ -150,6 +150,7 @@ msn_urls Net_msn_URLs;
 
 extern char Proxy_server[200];
 extern int16_t Proxy_port;
+extern D3::HttpTimeouts Http_timeouts;
 
 static int msn_ExtractZipFile(const std::filesystem::path &zipfilename, const std::filesystem::path &mn3name);
 
@@ -391,7 +392,7 @@ bool msn_DownloadWithStatus(const char *url, const std::filesystem::path &filena
 
   std::string download_uri = "/" + StringJoin(std::vector<std::string>(url_parts.begin() + 3, url_parts.end()), "/");
 
-  D3::HttpClient http_client(download_url);
+  D3::HttpClient http_client(download_url, Http_timeouts);
   if (Proxy_server[0]) {
     http_client.SetProxy(Proxy_server, Proxy_port);
   }

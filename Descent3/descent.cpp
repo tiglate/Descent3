@@ -385,6 +385,8 @@
 #include <filesystem>
 #include <vector>
 
+// httplib must precede windows.h (pulled in by networking.h on Windows).
+#include "httpclient.h"
 #include "pserror.h"
 #include "grdefs.h"
 #include "log.h"
@@ -437,6 +439,34 @@ std::filesystem::path Descent3_temp_directory; // temp directory to put temp fil
 
 char Proxy_server[200] = "";
 int16_t Proxy_port = 80;
+D3::HttpTimeouts Http_timeouts;
+
+// Applies -httpconnecttimeout/-httpreadtimeout (whole seconds) over the defaults.
+static void ReadHttpTimeoutOptions() {
+  struct {
+    const char *name;
+    std::chrono::seconds D3::HttpTimeouts::*field;
+    int max_seconds;
+  } const options[] = {
+      {"-httpconnecttimeout", &D3::HttpTimeouts::connect, D3::HttpTimeouts::kMaxConnectSeconds},
+      {"-httpreadtimeout", &D3::HttpTimeouts::read, D3::HttpTimeouts::kMaxReadWriteSeconds},
+  };
+  for (const auto &option : options) {
+    int arg = FindArg(option.name);
+    if (!arg)
+      continue;
+    const char *value = GetArg(arg + 1);
+    if (auto seconds = D3::ParseHttpTimeoutSeconds(value, option.max_seconds)) {
+      Http_timeouts.*option.field = *seconds;
+    } else {
+      LOG_WARNING.printf("Ignoring %s \"%s\"; expected whole seconds from %d to %d", option.name, value ? value : "",
+                         D3::HttpTimeouts::kMinSeconds, option.max_seconds);
+    }
+  }
+  LOG_INFO.printf(
+      "HTTP timeouts: connect %llds, read %llds, write %llds", static_cast<long long>(Http_timeouts.connect.count()),
+      static_cast<long long>(Http_timeouts.read.count()), static_cast<long long>(Http_timeouts.write.count()));
+}
 
 void Descent3() {
   int type;
@@ -474,6 +504,7 @@ void Descent3() {
         Proxy_port = atoi(port);
       }
     }
+    ReadHttpTimeoutOptions();
     // Show intro & loading screens if not dedicated server
     if (!Dedicated_server) {
       ConfigureDisplayResolutions();

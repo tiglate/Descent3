@@ -41,6 +41,7 @@
  * $NoKeywords: $
  */
 
+#include <cmath>
 #include <algorithm>
 #include <cstring>
 
@@ -313,7 +314,7 @@ ct_config_data sdlgameController::get_controller_value(ct_type type_req) {
                 : (m_ControlList[i].sens[CT_V_AXIS - 1] > 1.0f) ? 0.80f
                                                                 : (m_ControlList[i].sens[CT_V_AXIS - 1] / 2);
         pos = get_axis_value(i, CT_V_AXIS, ctAnalog);
-        if (fabs(pos) > limit)
+        if (std::abs(pos) > limit)
           val = MAKE_CONFIG_DATA(ctl, CONTROLLER_CTL_VALUE(CT_V_AXIS, NULL_BINDING));
       }
       if (m_ControlList[i].flags & CTF_U_AXIS) {
@@ -321,7 +322,7 @@ ct_config_data sdlgameController::get_controller_value(ct_type type_req) {
                 : (m_ControlList[i].sens[CT_U_AXIS - 1] > 1.0f) ? 0.80f
                                                                 : (m_ControlList[i].sens[CT_U_AXIS - 1] / 2);
         pos = get_axis_value(i, CT_U_AXIS, ctAnalog);
-        if (fabs(pos) > limit)
+        if (std::abs(pos) > limit)
           val = MAKE_CONFIG_DATA(ctl, CONTROLLER_CTL_VALUE(CT_U_AXIS, NULL_BINDING));
       }
       if (m_ControlList[i].flags & CTF_R_AXIS) {
@@ -329,7 +330,7 @@ ct_config_data sdlgameController::get_controller_value(ct_type type_req) {
                 : (m_ControlList[i].sens[CT_R_AXIS - 1] > 1.0f) ? 0.80f
                                                                 : (m_ControlList[i].sens[CT_R_AXIS - 1] / 2);
         pos = get_axis_value(i, CT_R_AXIS, ctAnalog);
-        if (fabs(pos) > limit)
+        if (std::abs(pos) > limit)
           val = MAKE_CONFIG_DATA(ctl, CONTROLLER_CTL_VALUE(CT_R_AXIS, NULL_BINDING));
       }
       if (m_ControlList[i].flags & CTF_Z_AXIS) {
@@ -337,7 +338,7 @@ ct_config_data sdlgameController::get_controller_value(ct_type type_req) {
                 : (m_ControlList[i].sens[CT_Z_AXIS - 1] > 1.0f) ? 0.80f
                                                                 : (m_ControlList[i].sens[CT_Z_AXIS - 1] / 2);
         pos = get_axis_value(i, CT_Z_AXIS, ctAnalog);
-        if (fabs(pos) > limit)
+        if (std::abs(pos) > limit)
           val = MAKE_CONFIG_DATA(ctl, CONTROLLER_CTL_VALUE(CT_Z_AXIS, NULL_BINDING));
       }
       if (m_ControlList[i].flags & CTF_Y_AXIS) {
@@ -345,7 +346,7 @@ ct_config_data sdlgameController::get_controller_value(ct_type type_req) {
                 : (m_ControlList[i].sens[CT_Y_AXIS - 1] > 1.0f) ? 0.80f
                                                                 : (m_ControlList[i].sens[CT_Y_AXIS - 1] / 2);
         pos = get_axis_value(i, CT_Y_AXIS, ctAnalog);
-        if (fabs(pos) > limit)
+        if (std::abs(pos) > limit)
           val = MAKE_CONFIG_DATA(ctl, CONTROLLER_CTL_VALUE(CT_Y_AXIS, NULL_BINDING));
       }
       if (m_ControlList[i].flags & CTF_X_AXIS) {
@@ -353,7 +354,7 @@ ct_config_data sdlgameController::get_controller_value(ct_type type_req) {
                 : (m_ControlList[i].sens[CT_X_AXIS - 1] > 1.0f) ? 0.80f
                                                                 : (m_ControlList[i].sens[CT_X_AXIS - 1] / 2);
         pos = get_axis_value(i, CT_X_AXIS, ctAnalog);
-        if (fabs(pos) > limit)
+        if (std::abs(pos) > limit)
           val = MAKE_CONFIG_DATA(ctl, CONTROLLER_CTL_VALUE(CT_X_AXIS, NULL_BINDING));
       }
     }
@@ -367,34 +368,34 @@ ct_config_data sdlgameController::get_controller_value(ct_type type_req) {
 
     if (m_ControlList[i].flags & CTF_V_AXIS) {
       pos = get_axis_value(i, CT_V_AXIS, ctAnalog);
-      if (fabs(pos) >= 0.50f)
+      if (std::abs(pos) >= 0.50f)
         val = MAKE_CONFIG_DATA(ctl, CONTROLLER_CTL_VALUE(CT_V_AXIS, NULL_BINDING));
     }
     if (m_ControlList[i].flags & CTF_U_AXIS) {
       pos = get_axis_value(i, CT_U_AXIS, ctAnalog);
-      if (fabs(pos) >= 0.50f)
+      if (std::abs(pos) >= 0.50f)
         val = MAKE_CONFIG_DATA(ctl, CONTROLLER_CTL_VALUE(CT_U_AXIS, NULL_BINDING));
     }
     if (m_ControlList[i].flags & CTF_R_AXIS) {
       pos = get_axis_value(i, CT_R_AXIS, ctAnalog);
-      if (fabs(pos) >= 0.90f)
+      if (std::abs(pos) >= 0.90f)
         val = MAKE_CONFIG_DATA(ctl, CONTROLLER_CTL_VALUE(CT_R_AXIS, NULL_BINDING));
     }
     if (m_ControlList[i].flags & CTF_Z_AXIS) {
       pos = get_axis_value(i, CT_Z_AXIS, ctAnalog);
-      if (fabs(pos) >= 0.50f)
+      if (std::abs(pos) >= 0.50f)
         val = MAKE_CONFIG_DATA(ctl, CONTROLLER_CTL_VALUE(CT_Z_AXIS, NULL_BINDING));
     }
     if (m_ControlList[i].flags & CTF_Y_AXIS) {
       pos = get_axis_value(i, CT_Y_AXIS, ctAnalog);
       //	mprintf(0, "y=%.2f   ", pos);
-      if (fabs(pos) >= 0.90f)
+      if (std::abs(pos) >= 0.90f)
         val = MAKE_CONFIG_DATA(ctl, CONTROLLER_CTL_VALUE(CT_Y_AXIS, NULL_BINDING));
     }
     if (m_ControlList[i].flags & CTF_X_AXIS) {
       pos = get_axis_value(i, CT_X_AXIS, ctAnalog);
       //	mprintf(0, "x=%.2f\n", pos);
-      if (fabs(pos) >= 0.90f)
+      if (std::abs(pos) >= 0.90f)
         val = MAKE_CONFIG_DATA(ctl, CONTROLLER_CTL_VALUE(CT_X_AXIS, NULL_BINDING));
     }
   } break;

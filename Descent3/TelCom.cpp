@@ -3735,7 +3735,7 @@ void TCSSSCallback(void) {
   view_pos = pm->anim_size_offset;
 
   // move 30 degrees a sec
-  vm_AnglesToMatrix(&rot_mat, 0, (last_frametime) * (65535 / 360) * 30, 0);
+  vm_AnglesToMatrix(&rot_mat, 0, (last_frametime) * (65536.0f / 360.0f) * 30.0f, 0);
 
   vm_MatrixMul(&view_orient, &rot_mat, &TCShipSelect.orient);
   vm_Orthogonalize(&view_orient);

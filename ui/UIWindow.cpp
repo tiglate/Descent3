@@ -596,25 +596,6 @@ void UIWindow::Render() {
   }
 
   UITextItem::SetSaturationFactor(0);
-
-// draw ugly looking focus box around current gadget.
-#if 0
-	if (m_GadgetCur && !CHECK_FLAG(m_GadgetCur->m_Flags, UIF_SLAVE) ) {
-		int l = m_X+m_GadgetCur->X();
-		int t = m_Y+m_GadgetCur->Y();
-		int r = l+m_GadgetCur->W();
-		int b = t+m_GadgetCur->H();
-
-		l--; t--; r++;	b++;
-		if (l < 0) l = 0;
-		if (t < 0) t = 0;
-		if (r >(m_X+m_W)) r = m_X+m_W;
-		if (b >(m_Y+m_H)) b = m_Y+m_H;
-		ui_StartDraw(l,t,r,b);
-		ui_DrawBox(GR_RGB(128,128,128),0,0,(r-l),(b-t));
-		ui_EndDraw();
-	}
-#endif
 }
 
 // adds window to ui list.
