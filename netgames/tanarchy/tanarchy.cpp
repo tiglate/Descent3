@@ -76,13 +76,15 @@
  * $NoKeywords: $
  */
 
+#include <cstring>
+
 #include "gamedll_header.h"
-#include <string.h>
 #include "idmfc.h"
+#include "log.h"
 #include "tanDMFC.h"
 #include "tanarchystr.h"
-IDMFC *DMFCBase = NULL;
-static IDmfcStats *dstat = NULL;
+IDMFC *DMFCBase = nullptr;
+static IDmfcStats *dstat = nullptr;
 static player *dPlayers;
 
 #define SPID_NEWPLAYER 0
@@ -184,7 +186,6 @@ void DLLFUNCCALL DLLGameInit(int *api_func, uint8_t *all_ok, [[maybe_unused]] in
 
   DMFCBase->GameInit(NUM_TEAMS);
   DLLCreateStringTable("tanarchy.str", &StringTable, &StringTableSize);
-  DLLmprintf(0, "%d strings loaded from string table\n", StringTableSize);
   if (!StringTableSize) {
     *all_ok = 0;
     return;
@@ -245,13 +246,13 @@ void DLLFUNCCALL DLLGameInit(int *api_func, uint8_t *all_ok, [[maybe_unused]] in
   tsi.flags = DSIF_SHOW_PIC | DSIF_SHOW_OBSERVERICON | DSIF_SEPERATE_BY_TEAM;
   tsi.cColumnCountDetailed = 0;
   tsi.cColumnCountPlayerList = 6;
-  tsi.clbDetailedColumnBMP = NULL;
-  tsi.clbDetailedColumn = NULL;
+  tsi.clbDetailedColumnBMP = nullptr;
+  tsi.clbDetailedColumn = nullptr;
   tsi.clbPlayerColumn = DetermineScore;
-  tsi.clbPlayerColumnBMP = NULL;
-  tsi.DetailedColumns = NULL;
+  tsi.clbPlayerColumnBMP = nullptr;
+  tsi.DetailedColumns = nullptr;
   tsi.GameName = gname;
-  tsi.MaxNumberDisplayed = NULL;
+  tsi.MaxNumberDisplayed = nullptr;
   tsi.PlayerListColumns = pl_col;
   tsi.SortedPlayerRecords = SortedPlayers;
   tsi.clTeamLine = TeamScoreCallback;
@@ -297,14 +298,19 @@ void DLLFUNCCALL DLLGameClose() {
 
   if (dstat) {
     dstat->DestroyPointer();
-    dstat = NULL;
+    dstat = nullptr;
   }
 
   if (DMFCBase) {
     DMFCBase->GameClose();
     DMFCBase->DestroyPointer();
-    DMFCBase = NULL;
+    DMFCBase = nullptr;
   }
+}
+
+void DLLFUNCCALL DLLLoggerInit(plog::Severity severity, plog::IAppender* appender) {
+  plog::init(severity, appender);
+  LOG_DEBUG << "Logger for module initialized";
 }
 
 // The server has just started, so clear out all the stats and game info
@@ -617,11 +623,11 @@ do_disconnected_folk:
 quick_exit:;
 }
 
-void SaveStatsToFile(char *filename) {
+void SaveStatsToFile(const char *filename) {
   CFILE *file;
   DLLOpenCFILE(&file, filename, "wt");
   if (!file) {
-    DLLmprintf(0, "Unable to open output file\n");
+    LOG_ERROR << "Unable to open output file";
     return;
   }
 
@@ -835,7 +841,7 @@ void OnDisconnectSaveStatsToFile(void) {
 // Handles when we get a new player packet
 void GetGameStartPacket(uint8_t *data) {
   // get the team scores
-  DLLmprintf(0, "Receiving Team Scores from server\n");
+  LOG_INFO << "Receiving Team Scores from server";
   int count = 0, i;
   for (i = 0; i < NUM_TEAMS; i++) {
     TeamScore[i] = MultiGetInt(data, &count);
@@ -856,7 +862,7 @@ void SendGameStartPacket(int pnum) {
   }
 
   // we're done
-  DLLmprintf(0, "Sending Team Scores to %s\n", dPlayers[pnum].callsign);
+  LOG_INFO.printf("Sending Team Scores to %s", dPlayers[pnum].callsign);
   DMFCBase->SendPacket(data, count, pnum);
 }
 
@@ -909,7 +915,7 @@ void DisplayHUDScores([[maybe_unused]] struct tHUDItem *hitem) {
         DLLrend_SetAlphaType(AT_CONSTANT_TEXTURE);
 
         DLLrend_DrawScaledBitmap(name_x - 2, y - 2, score_x + score_width + 2, y + height - 1, Highlight_bmp, 0, 0, 1,
-                                 1, 1.0, -1, NULL);
+                                 1, 1.0, -1, nullptr);
         DLLrend_SetZBufferState(1);
       }
     }

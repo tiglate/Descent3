@@ -336,7 +336,7 @@ int AllocTexture(void) {
 
   GameTextures[i].corona_type = 0;
   GameTextures[i].bumpmap = -1;
-  GameTextures[i].procedural = NULL;
+  GameTextures[i].procedural = nullptr;
   GameTextures[i].name[0] = 0;
   GameTextures[i].flags = 0; // default to no type
   GameTextures[i].alpha = 1.0;
@@ -354,7 +354,7 @@ int FindTextureName(const char *name) {
   int i, num_counted = 0;
   ;
 
-  ASSERT(name != NULL);
+  ASSERT(name != nullptr);
 
   for (i = 0; i < MAX_TEXTURES && num_counted < Num_textures; i++) {
     if (GameTextures[i].used) {
@@ -372,7 +372,7 @@ int FindTextureName(const char *name) {
 int FindTextureBitmapName(const char *name) {
   int i;
 
-  ASSERT(name != NULL);
+  ASSERT(name != nullptr);
 
   for (i = 0; i < MAX_TEXTURES; i++) {
     if (GameTextures[i].used) {
@@ -415,8 +415,8 @@ int AllocateProceduralForTexture(int handle) {
   GameTextures[handle].procedural = mem_rmalloc<proc_struct>();
   ASSERT(GameTextures[handle].procedural);
 
-  GameTextures[handle].procedural->proc1 = NULL;
-  GameTextures[handle].procedural->proc2 = NULL;
+  GameTextures[handle].procedural->proc1 = nullptr;
+  GameTextures[handle].procedural->proc2 = nullptr;
 
   GameTextures[handle].procedural->last_evaluation_time = 0;
   GameTextures[handle].procedural->osc_time = 0;
@@ -433,7 +433,7 @@ int AllocateProceduralForTexture(int handle) {
   GameTextures[handle].procedural->heat = 128;
 
   GameTextures[handle].procedural->dynamic_proc_elements = -1;
-  GameTextures[handle].procedural->static_proc_elements = NULL;
+  GameTextures[handle].procedural->static_proc_elements = nullptr;
 
   GameTextures[handle].procedural->num_static_elements = 0;
 
@@ -456,7 +456,7 @@ void AllocateStaticProceduralsForTexture(int handle, int num_elements) {
 void FreeStaticProceduralsForTexture(int handle) {
   if (GameTextures[handle].procedural->static_proc_elements)
     mem_free(GameTextures[handle].procedural->static_proc_elements);
-  GameTextures[handle].procedural->static_proc_elements = NULL;
+  GameTextures[handle].procedural->static_proc_elements = nullptr;
 }
 
 // Given a texture handle, returns that textures bitmap
@@ -507,7 +507,7 @@ int GetTextureBitmap(int handle, int framenum, bool force) {
   {
     int do_eval = 1;
 
-    if (GameTextures[handle].procedural == NULL)
+    if (GameTextures[handle].procedural == nullptr)
       AllocateProceduralForTexture(handle);
 
     if (GameTextures[handle].procedural->last_procedural_frame == FrameCount)
@@ -551,7 +551,7 @@ int LoadTextureImage(const char *filename, int *type, int texture_size, int mipp
   if ((!strnicmp("oaf", extension, 3)) || (!strnicmp("ifl", extension, 3)) || (!strnicmp("abm", extension, 3)))
     anim = 1;
 
-  if (type != NULL)
+  if (type != nullptr)
     *type = anim;
 
   if (anim)
@@ -802,7 +802,7 @@ void BuildTextureBumpmaps(int texhandle) {
 
 // Frees all the procedural memory for a texture
 void FreeProceduralForTexture(int n) {
-  if (GameTextures[n].procedural != NULL) {
+  if (GameTextures[n].procedural != nullptr) {
     FreeStaticProceduralsForTexture(n);
     mem_free(GameTextures[n].procedural->proc1);
     mem_free(GameTextures[n].procedural->proc2);
@@ -810,7 +810,7 @@ void FreeProceduralForTexture(int n) {
     mem_free(GameTextures[n].procedural->palette);
     mem_free(GameTextures[n].procedural);
 
-    GameTextures[n].procedural = NULL;
+    GameTextures[n].procedural = nullptr;
   }
 }
 

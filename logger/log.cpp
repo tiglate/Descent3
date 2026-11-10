@@ -29,6 +29,7 @@
 #endif
 
 #include "log.h"
+#include "pstypes.h"
 
 void InitLog(plog::Severity log_level, bool enable_filelog, [[maybe_unused]] bool enable_win_console) {
   std::filesystem::path log_file = "Descent3.log";

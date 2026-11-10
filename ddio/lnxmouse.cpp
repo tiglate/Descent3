@@ -195,35 +195,33 @@ void ddio_MouseMode(int mode) { Mouse_mode = mode; }
 // virtual coordinate system for mouse (match to video resolution set for optimal mouse usage.
 void ddio_MouseSetVCoords(int width, int height) { ddio_MouseSetLimits(0, 0, width, height); }
 
-bool sdlMouseButtonDownFilter(SDL_Event const *event) {
+void sdlMouseButtonDownEvent(SDL_Event const *event) {
   ASSERT(event->type == SDL_EVENT_MOUSE_BUTTON_DOWN);
   const int button = EngineMouseButtonIndex(event->button.button);
   if (button < 0)
-    return false;
+    return;
   DDIO_mouse_state.btn_mask |= 1 << button;
   DIM_buttons.down_count[button]++;
   DIM_buttons.time_down[button] = timer_GetTime();
   DIM_buttons.is_down[button] = true;
   t_mse_event queued{static_cast<int16_t>(button), true};
   MB_queue.send(queued);
-  return false;
 }
 
-bool sdlMouseButtonUpFilter(SDL_Event const *event) {
+void sdlMouseButtonUpEvent(SDL_Event const *event) {
   ASSERT(event->type == SDL_EVENT_MOUSE_BUTTON_UP);
   const int button = EngineMouseButtonIndex(event->button.button);
   if (button < 0)
-    return false;
+    return;
   DDIO_mouse_state.btn_mask &= ~(1 << button);
   DIM_buttons.up_count[button]++;
   DIM_buttons.is_down[button] = false;
   DIM_buttons.time_up[button] = timer_GetTime();
   t_mse_event queued{static_cast<int16_t>(button), false};
   MB_queue.send(queued);
-  return false;
 }
 
-bool sdlMouseWheelFilter(SDL_Event const *event) {
+void sdlMouseWheelEvent(SDL_Event const *event) {
   ASSERT(event->type == SDL_EVENT_MOUSE_WHEEL);
 
   const SDL_MouseWheelEvent *ev = &event->wheel;
@@ -270,11 +268,9 @@ bool sdlMouseWheelFilter(SDL_Event const *event) {
     MB_queue.send(mevt);
     //		mprintf(0, "MOUSE Scrollwheel: Rolled Down\n");
   }
-
-  return false;
 }
 
-bool sdlMouseMotionFilter(SDL_Event const *event) {
+void sdlMouseMotionEvent(SDL_Event const *event) {
   if (event->type == SDL_EVENT_JOYSTICK_BALL_MOTION) {
     DDIO_mouse_state.dx = event->jball.xrel / 100.0f;
     DDIO_mouse_state.dy = event->jball.yrel / 100.0f;
@@ -299,16 +295,13 @@ bool sdlMouseMotionFilter(SDL_Event const *event) {
     DDIO_mouse_state.y = DDIO_mouse_state.t;
   if (DDIO_mouse_state.y >= DDIO_mouse_state.b)
     DDIO_mouse_state.y = DDIO_mouse_state.b - 1;
-
-  return false;
 }
 
 //	This function will handle all mouse events.
 void ddio_InternalMouseFrame(void) {
-  static unsigned frame_count = 0;
-  SDL_PumpEvents();
+  // Events were already drained by ddio_Frame()'s SDL_PollEvent loop.
   // Window creation, focus changes and fullscreen transitions can change SDL
-  // mouse state. Reconcile it on the main thread after pumping events rather
+  // mouse state. Reconcile it on the main thread after polling events rather
   // than relying solely on the one-time renderer setup.
   extern SDL_Window *GSDLWindow;
   if (GSDLWindow && SDL_GetKeyboardFocus() == GSDLWindow) {
@@ -321,7 +314,6 @@ void ddio_InternalMouseFrame(void) {
     else if (!ddio_mouseGrabbed && !SDL_CursorVisible())
       SDL_ShowCursor();
   }
-  frame_count++;
 }
 
 /*	x, y = absolute mouse position

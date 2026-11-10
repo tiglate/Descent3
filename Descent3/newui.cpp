@@ -577,7 +577,7 @@ void DoWaitPopup(bool enable, const char *message) {
 #define FDWM_HEIGHT 128
 #define FDWM_WIDTH 256
 
-  static newuiTiledWindow *msgbox = NULL;
+  static newuiTiledWindow *msgbox = nullptr;
   static UIText text;
   static bool opened = false;
 
@@ -592,7 +592,7 @@ void DoWaitPopup(bool enable, const char *message) {
 
     if (msgbox) {
 
-      msgbox->Create(NULL, 0, 0, FDWM_WIDTH, FDWM_HEIGHT);
+      msgbox->Create(nullptr, 0, 0, FDWM_WIDTH, FDWM_HEIGHT);
 
       if (message) {
         char msg[512];
@@ -622,7 +622,7 @@ void DoWaitPopup(bool enable, const char *message) {
       msgbox->Destroy();
       delete msgbox;
     }
-    msgbox = NULL;
+    msgbox = nullptr;
   }
 }
 
@@ -644,7 +644,7 @@ int DoMessageBox(const char *title, const char *msg, int type, [[maybe_unused]] 
   mbox.Create(title, type);
 
   sheet = mbox.GetSheet();
-  sheet->NewGroup(NULL, 0, 0);
+  sheet->NewGroup(nullptr, 0, 0);
   sheet->AddText(msgbuf);
 
   mbox.Open();
@@ -693,7 +693,7 @@ int DoMessageBoxAdvanced(const char *title, const char *msg, const char *btn0_ti
 
   // go through all titles.
   va_start(args, key0);
-  while ((curbtntitle = va_arg(args, char *)) != NULL) {
+  while ((curbtntitle = va_arg(args, char *)) != nullptr) {
     int key = va_arg(args, int);
 
     mbox.AddButton(curbtntitle, i, key);
@@ -705,7 +705,7 @@ int DoMessageBoxAdvanced(const char *title, const char *msg, const char *btn0_ti
   va_end(args);
 
   sheet = mbox.GetSheet();
-  sheet->NewGroup(NULL, 0, 0);
+  sheet->NewGroup(nullptr, 0, 0);
   sheet->AddText(msgbuf);
 
   mbox.Open();
@@ -738,11 +738,11 @@ bool DoEditDialog(const char *title, char *buffer, int buflen, bool showcancel) 
   mbox.Create("", showcancel ? MSGBOX_OKCANCEL : MSGBOX_OK);
 
   sheet = mbox.GetSheet();
-  sheet->NewGroup(NULL, 0, 25);
+  sheet->NewGroup(nullptr, 0, 25);
   edit = sheet->AddEditBox("", buflen, 0, DEFAULT_NEWUID, 0, true);
   strcpy(edit, buffer);
 
-  sheet->NewGroup(NULL, 0, 0);
+  sheet->NewGroup(nullptr, 0, 0);
   sheet->AddText(msgbuf);
 
   mbox.Open();
@@ -774,7 +774,7 @@ int LoadLargeBitmap(const char *filename, tLargeBitmap *bmp) {
   chunked_bitmap chunk;
   int bm_handle = bm_AllocLoadFileBitmap(IGNORE_TABLE(filename), 0);
   if (bm_handle == -1) {
-    bmp->bm_array = NULL;
+    bmp->bm_array = nullptr;
     bmp->bmps_w = 0;
     bmp->bmps_h = 0;
     return 0;
@@ -871,7 +871,7 @@ NewUIGameWindow::NewUIGameWindow() {}
 
 //	initializes the window
 void NewUIGameWindow::Create(int x, int y, int w, int h, int flags) {
-  newuiTiledWindow::Create(NULL, x, y, w, h, flags);
+  newuiTiledWindow::Create(nullptr, x, y, w, h, flags);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1128,7 +1128,7 @@ void NewUIButton::SetTitle(UIItem *item) {
 void NewUIButton::OnDraw() {
   //	draw tiles.
   int x, tx;
-  UIBitmapItem *ltile = NULL, *ctile = NULL, *rtile = NULL;
+  UIBitmapItem *ltile = nullptr, *ctile = nullptr, *rtile = nullptr;
 
   tx = x = 0;
 

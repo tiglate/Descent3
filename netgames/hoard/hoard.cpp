@@ -72,10 +72,10 @@
 
 #include <algorithm>
 
-IDMFC *DMFCBase = NULL;
-static IDmfcStats *dstat = NULL;
-static object *dObjects = NULL;
-static player *dPlayers = NULL;
+IDMFC *DMFCBase = nullptr;
+static IDmfcStats *dstat = nullptr;
+static object *dObjects = nullptr;
+static player *dPlayers = nullptr;
 
 #define SPID_INVINFO 1 // packet for hoard inventory info
 #define SPID_GAMECONFIG 2
@@ -130,7 +130,7 @@ static void DisplayWelcomeMessage(int player_num);
 static void DoBallsEffect(int i, int count);
 static void ReceiveHoardInv(uint8_t *data);
 static void SendHoardInv(int playernum);
-static void SaveStatsToFile(char *filename);
+static void SaveStatsToFile(const char *filename);
 static void ReceiveGameConfig(uint8_t *data);
 static void OnClientPlayerEntersGame(int player_num);
 
@@ -309,7 +309,6 @@ void DLLFUNCCALL DLLGameInit(int *api_func, uint8_t *all_ok, [[maybe_unused]] in
   dPlayers = DMFCBase->GetPlayers();
 
   DLLCreateStringTable("Hoard.str", &StringTable, &StringTableSize);
-  DLLmprintf(0, "%d strings loaded from string table\n", StringTableSize);
   if (!StringTableSize) {
     *all_ok = 0;
     return;
@@ -320,8 +319,9 @@ void DLLFUNCCALL DLLGameInit(int *api_func, uint8_t *all_ok, [[maybe_unused]] in
 
   if (DMFCBase->AddInputCommand("mincount",
                                 "[Dedicated Server Only]\nSets the minimum number of hoard orbs needed to score.\n",
-                                DMFCInputCommand_MinCount, true) < 1)
-    mprintf(0, "Hoard Warning: Error Adding Input Command\n");
+                                DMFCInputCommand_MinCount, true) < 1) {
+    LOG_WARNING << "Hoard Warning: Error Adding Input Command";
+  }
 
   HoardGameInit(1);
 
@@ -346,7 +346,7 @@ void DLLFUNCCALL DLLGameInit(int *api_func, uint8_t *all_ok, [[maybe_unused]] in
 
   HoardID = DLLFindObjectIDName("Hoardorb");
   if (HoardID == -1) {
-    DLLmprintf(0, "HOARD: BIG WARNING, COULDN'T FIND HOARD ORB ID...YOUR GAME IS IN JEOPARDY!\n");
+    LOG_WARNING << "HOARD: BIG WARNING, COULDN'T FIND HOARD ORB ID...YOUR GAME IS IN JEOPARDY!";
     *all_ok = 0;
     return;
   }
@@ -393,13 +393,13 @@ void DLLFUNCCALL DLLGameInit(int *api_func, uint8_t *all_ok, [[maybe_unused]] in
   tsi.flags = DSIF_SHOW_PIC | DSIF_SHOW_OBSERVERICON;
   tsi.cColumnCountDetailed = 0;
   tsi.cColumnCountPlayerList = 8;
-  tsi.clbDetailedColumn = NULL;
-  tsi.clbDetailedColumnBMP = NULL;
+  tsi.clbDetailedColumn = nullptr;
+  tsi.clbDetailedColumnBMP = nullptr;
   tsi.clbPlayerColumn = DetermineScore;
   tsi.clbPlayerColumnBMP = ShowStatBitmap;
-  tsi.DetailedColumns = NULL;
+  tsi.DetailedColumns = nullptr;
   tsi.GameName = gname;
-  tsi.MaxNumberDisplayed = NULL;
+  tsi.MaxNumberDisplayed = nullptr;
   tsi.PlayerListColumns = pl_col;
   tsi.SortedPlayerRecords = SortedPlayers;
 
@@ -457,14 +457,19 @@ void DLLFUNCCALL DLLGameClose() {
 
   if (dstat) {
     dstat->DestroyPointer();
-    dstat = NULL;
+    dstat = nullptr;
   }
 
   if (DMFCBase) {
     DMFCBase->GameClose();
     DMFCBase->DestroyPointer();
-    DMFCBase = NULL;
+    DMFCBase = nullptr;
   }
+}
+
+void DLLFUNCCALL DLLLoggerInit(plog::Severity severity, plog::IAppender* appender) {
+  plog::init(severity, appender);
+  LOG_DEBUG << "Logger for module initialized";
 }
 
 // DMFCApp::GameInit
@@ -476,7 +481,7 @@ void ShowGameConfigDialog(int i);
 void SwitchHUDColor(int i);
 void HoardGameInit(int teams) {
   IMenuItem *lev1, *lev2;
-  lev1 = CreateMenuItemWArgs(TXT_GAMENAME, MIT_NORMAL, 0, NULL);
+  lev1 = CreateMenuItemWArgs(TXT_GAMENAME, MIT_NORMAL, 0, nullptr);
 
   lev2 = CreateMenuItemWArgs(TXT_HUDSCORECOLORS, MIT_STATE, 0, SwitchHUDColor);
   lev2->SetStateItemList(2, TXT_PLAYERCOLORS, TXT_NORMAL);
@@ -637,7 +642,7 @@ void OnServerGameCreated(void) {
     if (pr)
       stat = (tPlayerStat *)pr->user_info;
     else
-      stat = NULL;
+      stat = nullptr;
     if (stat) {
       stat->Score[DSTAT_LEVEL] = 0;
       stat->Score[DSTAT_OVERALL] = 0;
@@ -657,7 +662,7 @@ void OnClientLevelStart(void) {
     if (pr)
       stat = (tPlayerStat *)pr->user_info;
     else
-      stat = NULL;
+      stat = nullptr;
 
     if (stat) {
       stat->Score[DSTAT_LEVEL] = 0;
@@ -778,7 +783,7 @@ void OnClientPlayerChangeSegment(int player_num, int newseg, int oldseg) {
   WhoJustScored = player_num;
 
   // remove the balls
-  DLLPlayerSetRotatingBall(player_num, 0, 0, NULL, NULL, NULL);
+  DLLPlayerSetRotatingBall(player_num, 0, 0, nullptr, nullptr, nullptr);
 
   DLLAddHUDMessage(buffer);
 
@@ -786,7 +791,7 @@ void OnClientPlayerChangeSegment(int player_num, int newseg, int oldseg) {
     // check the score to see if we hit the limit
     if (DMFCBase->GetScoreLimit(&score)) {
       if (score <= ((stat) ? stat->Score[DSTAT_LEVEL] : 0)) {
-        DLLmprintf(0, "Score limit reached\n");
+        LOG_INFO << "Score limit reached";
         DMFCBase->EndLevel();
       }
     }
@@ -852,12 +857,12 @@ void OnClientCollide(object *me_obj, object *it_obj) {
     if (sound != -1)
       DLLPlay3dSound(sound, me_obj, 1, 0);
     if (it_obj->type == OBJ_POWERUP) {
-      DLLInvAddTypeID(playernum, it_obj->type, it_obj->id, -1, -1, 0, NULL);
+      DLLInvAddTypeID(playernum, it_obj->type, it_obj->id, -1, -1, 0, nullptr);
       if (DMFCBase->GetLocalRole() == LR_SERVER) {
         DLLSetObjectDeadFlag(it_obj, true, false);
       }
     } else
-      DLLmprintf(0, "HOARD BIG WARNING: TRYING TO ADD NONPOWERUP TO INVENTORY! (%d)\n", it_obj->type);
+      LOG_WARNING.printf("HOARD BIG WARNING: TRYING TO ADD NONPOWERUP TO INVENTORY! (%d)", it_obj->type);
 
     // add rotating balls if necessary
     DoBallsEffect(playernum, count + 1);
@@ -888,11 +893,11 @@ void OnClientPlayerKilled(object *killer_obj, int victim_pnum) {
 
   // add an extra hoard to the inventory if they didn't kill themselves
   if (kpnum != victim_pnum) {
-    DLLInvAddTypeID(victim_pnum, OBJ_POWERUP, HoardID, -1, -1, 0, NULL);
+    DLLInvAddTypeID(victim_pnum, OBJ_POWERUP, HoardID, -1, -1, 0, nullptr);
   }
 
   // remove the balls
-  DLLPlayerSetRotatingBall(victim_pnum, 0, 0, NULL, NULL, NULL);
+  DLLPlayerSetRotatingBall(victim_pnum, 0, 0, nullptr, nullptr, nullptr);
 
   DMFCBase->OnClientPlayerKilled(killer_obj, victim_pnum);
 }
@@ -1025,11 +1030,11 @@ void OnPLRInterval(void) {
 quick_exit:;
 }
 
-void SaveStatsToFile(char *filename) {
+void SaveStatsToFile(const char *filename) {
   CFILE *file;
   DLLOpenCFILE(&file, filename, "wt");
   if (!file) {
-    DLLmprintf(0, "Unable to open output file\n");
+    LOG_WARNING << "Unable to open output file";
     return;
   }
 
@@ -1232,7 +1237,7 @@ void ReceiveHoardInv(uint8_t *data) {
       ASSERT(size >= 0);
       DoBallsEffect(x, size);
       for (i = 0; i < size; i++) {
-        DLLInvAddTypeID(x, OBJ_POWERUP, HoardID, -1, -1, 0, NULL);
+        DLLInvAddTypeID(x, OBJ_POWERUP, HoardID, -1, -1, 0, nullptr);
       } // end for
     }   // end if
   }     // end for
@@ -1322,7 +1327,7 @@ void DisplayHUDScores([[maybe_unused]] struct tHUDItem *hitem) {
             DLLrend_SetAlphaType(AT_CONSTANT_TEXTURE);
 
             DLLrend_DrawScaledBitmap(name_x - 2, y - 2, score_x + score_width + 2, y + height - 1, Highlight_bmp, 0, 0,
-                                     1, 1, 1.0f, -1, NULL);
+                                     1, 1, 1.0f, -1, nullptr);
             DLLrend_SetZBufferState(1);
           }
 
@@ -1374,7 +1379,7 @@ void DisplayHUDScores([[maybe_unused]] struct tHUDItem *hitem) {
   DLLrend_SetTextureType(TT_LINEAR);
   DLLrend_SetLighting(LS_NONE);
   DLLrend_SetAlphaType(AT_CONSTANT_TEXTURE);
-  DLLrend_DrawScaledBitmap(x1, y1, x2, y2, HoardOrbIcon, 0, 0, 1, 1, 1.0f, -1, NULL);
+  DLLrend_DrawScaledBitmap(x1, y1, x2, y2, HoardOrbIcon, 0, 0, 1, 1, 1.0f, -1, nullptr);
   DLLrend_SetZBufferState(1);
 
   x1 += w / 2;

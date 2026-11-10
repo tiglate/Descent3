@@ -59,8 +59,8 @@
 #include "idmfc.h"
 #include "HyperAnarchy.h"
 #include "hyperstr.h"
-IDMFC *DMFCBase = NULL;
-static IDmfcStats *dstat = NULL;
+IDMFC *DMFCBase = nullptr;
+static IDmfcStats *dstat = nullptr;
 static object *dObjects;
 static player *dPlayers;
 
@@ -148,7 +148,7 @@ static int FindHyperObjectNum(void);
 // if no one does.
 static int FindHyperOrbInInventory(void);
 static void ResetTimer(void);
-static void SaveStatsToFile(char *filename);
+static void SaveStatsToFile(const char *filename);
 
 void DetermineScore(int precord_num, [[maybe_unused]] int column_num, char *buffer, int buffer_size) {
   player_record *pr = DMFCBase->GetPlayerRecord(precord_num);
@@ -229,7 +229,6 @@ void DLLFUNCCALL DLLGameInit(int *api_func, uint8_t *all_ok, [[maybe_unused]] in
   DMFCBase->Set_OnClientPlayerEntersGame(OnClientPlayerEntersGame);
 
   DLLCreateStringTable("hyper.str", &StringTable, &StringTableSize);
-  DLLmprintf(0, "%d strings loaded from string table\n", StringTableSize);
   if (!StringTableSize) {
     *all_ok = 0;
     return;
@@ -237,7 +236,7 @@ void DLLFUNCCALL DLLGameInit(int *api_func, uint8_t *all_ok, [[maybe_unused]] in
 
   // add the anarchy menu/submenus
   IMenuItem *lev1, *lev2, *MainMenu;
-  lev1 = CreateMenuItemWArgs(TXT_GAMENAME, MIT_NORMAL, 0, NULL);
+  lev1 = CreateMenuItemWArgs(TXT_GAMENAME, MIT_NORMAL, 0, nullptr);
 
   lev2 = CreateMenuItemWArgs(TXT_HUDSCORECOLORS, MIT_STATE, 0, SwitchHUDColor);
   lev2->SetStateItemList(2, TXT_PLAYERCOLORS, TXT_NORMAL);
@@ -258,7 +257,7 @@ void DLLFUNCCALL DLLGameInit(int *api_func, uint8_t *all_ok, [[maybe_unused]] in
 
   HyperOrbID = DLLFindObjectIDName("Hyperorb");
   if (HyperOrbID == -1) {
-    DLLmprintf(0, "Hyper Anarchy: BIG WARNING, COULDN'T FIND HyperOrb ID...YOUR GAME IS IN JEOPARDY!\n");
+    LOG_WARNING << "Hyper Anarchy: BIG WARNING, COULDN'T FIND HyperOrb ID...YOUR GAME IS IN JEOPARDY!";
     *all_ok = 0;
     return;
   }
@@ -309,13 +308,13 @@ void DLLFUNCCALL DLLGameInit(int *api_func, uint8_t *all_ok, [[maybe_unused]] in
   tsi.flags = DSIF_SHOW_PIC | DSIF_SHOW_OBSERVERICON;
   tsi.cColumnCountDetailed = 0;
   tsi.cColumnCountPlayerList = 7;
-  tsi.clbDetailedColumn = NULL;
-  tsi.clbDetailedColumnBMP = NULL;
+  tsi.clbDetailedColumn = nullptr;
+  tsi.clbDetailedColumnBMP = nullptr;
   tsi.clbPlayerColumn = DetermineScore;
   tsi.clbPlayerColumnBMP = ShowStatBitmap;
-  tsi.DetailedColumns = NULL;
+  tsi.DetailedColumns = nullptr;
   tsi.GameName = gname;
-  tsi.MaxNumberDisplayed = NULL;
+  tsi.MaxNumberDisplayed = nullptr;
   tsi.PlayerListColumns = pl_col;
   tsi.SortedPlayerRecords = SortedPlayers;
 
@@ -368,14 +367,19 @@ void DLLFUNCCALL DLLGameClose() {
 
   if (dstat) {
     dstat->DestroyPointer();
-    dstat = NULL;
+    dstat = nullptr;
   }
 
   if (DMFCBase) {
     DMFCBase->GameClose();
     DMFCBase->DestroyPointer();
-    DMFCBase = NULL;
+    DMFCBase = nullptr;
   }
+}
+
+void DLLFUNCCALL DLLLoggerInit(plog::Severity severity, plog::IAppender* appender) {
+  plog::init(severity, appender);
+  LOG_DEBUG << "Logger for module initialized";
 }
 
 //////////////////////////////////////////////////////////////
@@ -456,7 +460,7 @@ void OnServerGameCreated(void) {
     if (pr)
       stat = (tPlayerStat *)pr->user_info;
     else
-      stat = NULL;
+      stat = nullptr;
     if (stat) {
       stat->Score[DSTAT_LEVEL] = 0;
       stat->Score[DSTAT_OVERALL] = 0;
@@ -467,9 +471,8 @@ void OnServerGameCreated(void) {
 void OnServerLevelStart(void) {
   // Now create a hyper orb in a random room -eek
   if (HyperOrbID != -1) {
-    DLLmprintf(0, "Attempting to create HyperOrb in a random room\n");
     int room = GetRandomValidRoom();
-    DLLmprintf(0, "Room %d selected\n", room);
+    LOG_INFO.printf("Creating HyperOrb in a random room %d", room);
     // We got a good room
     // Safe to create the flag
     CreateHyperOrbInRoom(room);
@@ -496,7 +499,7 @@ void OnClientLevelStart(void) {
     if (pr)
       stat = (tPlayerStat *)pr->user_info;
     else
-      stat = NULL;
+      stat = nullptr;
     if (stat) {
       stat->Score[DSTAT_LEVEL] = 0;
     }
@@ -751,7 +754,6 @@ void OnServerCollide(object *me_obj, object *it_obj) {
   if ((me_obj->type == OBJ_PLAYER) && (DLLInvCheckItem(it_obj->id, OBJ_POWERUP, HyperOrbID))) {
     /*
     //Two Players collided...one had orb
-    DLLmprintf(0,"Player2Player\n");
     DMFCBase->CallClientEvent(EVT_CLIENT_GAMECOLLIDE,DMFCBase->GetMeObjNum(),DMFCBase->GetItObjNum(),-1);
     DMFCBase->CallOnClientCollide(me_obj,it_obj);
     */
@@ -780,7 +782,7 @@ void OnClientCollide(object *me_objp, object *it_objp) {
     KillCount = 0; // reset this variable, since they just picked up the HyperOrb
 
     // add the hyper orb to the players inventory
-    DLLInvAddTypeID(it_objp->id, me_objp->type, me_objp->id, -1, -1, 0, NULL);
+    DLLInvAddTypeID(it_objp->id, me_objp->type, me_objp->id, -1, -1, 0, nullptr);
     // if we are the server, remove the orb from the world and tell the clients to do the same
     if (DMFCBase->GetLocalRole() == LR_SERVER) {
       DLLSetObjectDeadFlag(me_objp, true, 0);
@@ -872,7 +874,7 @@ void OnClientPlayerKilled(object *killer_obj, int victim_pnum) {
     // check the score to see if we hit the limit
     if ((DMFCBase->GetScoreLimit(&score))) {
       if (score <= stat->Score[DSTAT_LEVEL]) {
-        DLLmprintf(0, "Score limit reached\n");
+        LOG_INFO << "Score limit reached";
         DMFCBase->EndLevel();
       }
     }
@@ -900,11 +902,11 @@ void OnClientPlayerDisconnect(int player_num) {
   DMFCBase->OnClientPlayerDisconnect(player_num);
 }
 
-void SaveStatsToFile(char *filename) {
+void SaveStatsToFile(const char *filename) {
   CFILE *file;
   DLLOpenCFILE(&file, filename, "wt");
   if (!file) {
-    DLLmprintf(0, "Unable to open output file\n");
+    LOG_WARNING << "Unable to open output file";
     return;
   }
 
@@ -1100,8 +1102,8 @@ void ReceiveHyperGameState(uint8_t *data) {
   KillCount = MultiGetInt(data, &count);
 
   if (WhoHasOrb != -1) {
-    DLLmprintf(0, "%s has the score orb!\n", dPlayers[WhoHasOrb].callsign);
-    DLLInvAddTypeID(WhoHasOrb, OBJ_POWERUP, HyperOrbID, -1, -1, 0, NULL);
+    LOG_INFO.printf("%s has the score orb!", dPlayers[WhoHasOrb].callsign);
+    DLLInvAddTypeID(WhoHasOrb, OBJ_POWERUP, HyperOrbID, -1, -1, 0, nullptr);
   }
   UpdateEffect();
 }
@@ -1214,7 +1216,7 @@ void DisplayHUDScores([[maybe_unused]] struct tHUDItem *hitem) {
               DLLrend_SetAlphaType(AT_CONSTANT_TEXTURE);
 
               DLLrend_DrawScaledBitmap(icon_x - 2, y - 2, score_x + score_width + 2, y + height - 1, Highlight_bmp, 0,
-                                       0, 1, 1, 1.0f, -1, NULL);
+                                       0, 1, 1, 1.0f, -1, nullptr);
               DLLrend_SetZBufferState(1);
             }
 
@@ -1252,7 +1254,7 @@ void DisplayHUDScores([[maybe_unused]] struct tHUDItem *hitem) {
           DLLrend_SetWrapType(WT_CLAMP);
           DLLrend_SetAlphaType(AT_CONSTANT_TEXTURE);
           DLLrend_DrawScaledBitmap(icon_x, y, icon_x + icon_size, y + icon_size, HyperOrbIcon, 0, 0, 1, 1, 1.0f, -1,
-                                   NULL);
+                                   nullptr);
           DLLrend_SetZBufferState(1);
         }
 
@@ -1283,7 +1285,7 @@ void DisplayHUDScores([[maybe_unused]] struct tHUDItem *hitem) {
       DLLrend_SetLighting(LS_NONE);
       DLLrend_SetWrapType(WT_CLAMP);
       DLLrend_SetAlphaType(AT_CONSTANT_TEXTURE);
-      DLLrend_DrawScaledBitmap(icon_x, y, icon_x + icon_size, y + icon_size, HyperOrbIcon, 0, 0, 1, 1, 1.0f, -1, NULL);
+      DLLrend_DrawScaledBitmap(icon_x, y, icon_x + icon_size, y + icon_size, HyperOrbIcon, 0, 0, 1, 1, 1.0f, -1, nullptr);
       DLLrend_SetZBufferState(1);
     }
   }
@@ -1301,7 +1303,7 @@ void DisplayHUDScores([[maybe_unused]] struct tHUDItem *hitem) {
     y1 = 25;
     x2 = x1 + DLLbm_w(HyperOrbIcon, 0);
     y2 = y1 + DLLbm_h(HyperOrbIcon, 0);
-    DLLrend_DrawScaledBitmap(x1, y1, x2, y2, HyperOrbIcon, 0, 0, 1, 1, 1.0f, -1, NULL);
+    DLLrend_DrawScaledBitmap(x1, y1, x2, y2, HyperOrbIcon, 0, 0, 1, 1, 1.0f, -1, nullptr);
     DLLrend_SetZBufferState(1);
   }
 }
@@ -1327,7 +1329,7 @@ void UpdateEffect(void) {
         DLLPlayerSetRotatingBall(i, 3, 4, redb, greenb, blueb);
       } else {
         // Reset effect on this guy
-        DLLPlayerSetRotatingBall(i, 0, 4, NULL, NULL, NULL);
+        DLLPlayerSetRotatingBall(i, 0, 4, nullptr, nullptr, nullptr);
       }
     }
   }
@@ -1370,12 +1372,11 @@ void SortPlayerScores(int *sortedindex, int size) {
 
 // Generates a valid random room
 int GetRandomValidRoom(void) {
-  while (1) {
+  while (true) {
     int room;
     room = rand() % (DMFCBase->GetHighestRoomIndex() + 1);
     if ((!ROOMNUM_OUTSIDE(room)) && ((DMFCBase->GetRooms())[room].used)) {
       if (!((DMFCBase->GetRooms())[room].flags & RF_EXTERNAL)) {
-        DLLmprintf(0, "Room %d selected\n", room);
         return room;
       }
     }
@@ -1406,7 +1407,7 @@ void CreateHyperOrbInRoom(int room) {
   vector vpos;
   int objnum;
   DLLComputeRoomCenter(&vpos, &((DMFCBase->GetRooms())[room]));
-  objnum = DLLObjCreate(OBJ_POWERUP, HyperOrbID, room, &vpos, NULL, OBJECT_HANDLE_NONE);
+  objnum = DLLObjCreate(OBJ_POWERUP, HyperOrbID, room, &vpos, nullptr, OBJECT_HANDLE_NONE);
   DLLMultiSendObject(&dObjects[objnum], 0, true);
 }
 
@@ -1414,7 +1415,7 @@ void CreateHyperOrbInRoom(int room) {
 void MoveHyperOrbToRoomCenter(int objnum, int room) {
   vector home_pos;
   DLLComputeRoomCenter(&home_pos, &((DMFCBase->GetRooms())[room]));
-  DLLObjSetPos(&dObjects[objnum], &home_pos, room, NULL, false);
+  DLLObjSetPos(&dObjects[objnum], &home_pos, room, nullptr, false);
   if (DMFCBase->GetLocalRole() == LR_SERVER) { // tell the clients to move
     uint8_t data[MAX_GAME_DATA_SIZE];
     int count = 0;

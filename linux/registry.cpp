@@ -83,7 +83,7 @@ char *ParseString(char *p, char *buf, int bufsize, char sdelim, char edelim) {
   p = SkipWhite(p);
 
   if (*p != sdelim) {
-    return NULL;
+    return nullptr;
   } else
     p++; // skip initial quote
 
@@ -93,12 +93,12 @@ char *ParseString(char *p, char *buf, int bufsize, char sdelim, char edelim) {
 
   // Check for buffer overflow
   if (bufsize <= 0) {
-    return NULL;
+    return nullptr;
   }
 
   // Check for missing endquote
   if (!*p) {
-    return NULL;
+    return nullptr;
   }
 
   // Write terminator
@@ -119,7 +119,7 @@ char *ParseToken(char *p, char *buf, int bufsize) {
 
   // Check for buffer overflow
   if (bufsize <= 0) {
-    return NULL;
+    return nullptr;
   }
 
   return p;
@@ -138,7 +138,7 @@ char *ParseToken(char *p, char *buf, int bufsize) {
   } while (0)
 
 CRegistry::CRegistry(const char *str) {
-  currentkey = root = NULL;
+  currentkey = root = nullptr;
   strcpy(name, str);
 }
 
@@ -156,7 +156,7 @@ void CRegistry::Destroy(void) {
     DestroyKey(curr);
     curr = next;
   }
-  currentkey = root = NULL;
+  currentkey = root = nullptr;
 }
 
 void CRegistry::DestroyKey(tKey *key) {
@@ -173,7 +173,7 @@ void CRegistry::DestroyKey(tKey *key) {
 void CRegistry::DestroyRecord(tRecord *record) {
   if (record->data) {
     free(record->data);
-    record->data = NULL;
+    record->data = nullptr;
   }
   free(record);
 }
@@ -278,7 +278,7 @@ bool CRegistry::Import() {
           PARSE_STRING(newbuff);
 
           // rcg06212000 getting a NULL ptr in here...added a check.
-          if (ptr == NULL)
+          if (ptr == nullptr)
             continue;
 
           ptr++; // blow by =
@@ -334,9 +334,9 @@ void CRegistry::CreateKey(const char *name) {
       return;
     curr = curr->next;
   }
-  curr->next = NULL;
+  curr->next = nullptr;
   strcpy(curr->name, name);
-  curr->records = NULL;
+  curr->records = nullptr;
   currentkey = curr;
 }
 
@@ -356,7 +356,7 @@ bool CRegistry::LookupKey(const char *name) {
 
 tRecord *CRegistry::LookupRecord(const char *record, void *data) {
   if (!currentkey)
-    return NULL;
+    return nullptr;
 
   tRecord *curr;
   curr = currentkey->records;
@@ -379,7 +379,7 @@ tRecord *CRegistry::LookupRecord(const char *record, void *data) {
     }
     curr = curr->next;
   }
-  return NULL;
+  return nullptr;
 }
 
 int CRegistry::GetDataSize(const char *record) {

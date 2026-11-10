@@ -59,8 +59,8 @@
 
 #include <algorithm>
 
-IDMFC *DMFCBase = NULL;
-static IDmfcStats *dstat = NULL;
+IDMFC *DMFCBase = nullptr;
+static IDmfcStats *dstat = nullptr;
 
 static int SortedPlayers[MAX_PLAYER_RECORDS]; // sorted player nums
 static bool DisplayScoreScreen;
@@ -77,7 +77,7 @@ static bool display_my_welcome = false;
 
 static void DisplayHUDScores(struct tHUDItem *hitem);
 static void DisplayWelcomeMessage(int player_num);
-static void SaveStatsToFile(char *filename);
+static void SaveStatsToFile(const char *filename);
 static void SwitchHUDColor(int i);
 static void SwitchAnarchyScores(int i);
 static const char *GetString(int d);
@@ -159,7 +159,6 @@ void DLLFUNCCALL DLLGameInit(int *api_func, uint8_t *all_ok, [[maybe_unused]] in
   DMFCBase->Set_OnPrintScores(OnPrintScores);
 
   DLLCreateStringTable("Anarchy.str", &StringTable, &StringTableSize);
-  mprintf(0, "%d strings loaded from string table\n", StringTableSize);
   if (!StringTableSize) {
     *all_ok = 0;
     return;
@@ -217,15 +216,20 @@ void DLLFUNCCALL DLLGameClose() {
 
   if (dstat) {
     dstat->DestroyPointer();
-    dstat = NULL;
+    dstat = nullptr;
   }
 
   if (DMFCBase) {
     AnarchyGameClose();
     DMFCBase->GameClose();
     DMFCBase->DestroyPointer();
-    DMFCBase = NULL;
+    DMFCBase = nullptr;
   }
+}
+
+void DLLFUNCCALL DLLLoggerInit(plog::Severity severity, plog::IAppender* appender) {
+  plog::init(severity, appender);
+  LOG_DEBUG << "Logger for module initialized";
 }
 
 void DetermineScore(int precord_num, [[maybe_unused]] int column_num, char *buffer, int buffer_size) {
@@ -249,7 +253,7 @@ void AnarchyGameInit(int teams) {
   // add the anarchy menu/submenus
   IMenuItem *lev1, *lev2;
 
-  lev1 = CreateMenuItemWArgs("Anarchy", MIT_NORMAL, 0, NULL);
+  lev1 = CreateMenuItemWArgs("Anarchy", MIT_NORMAL, 0, nullptr);
 
   lev2 = CreateMenuItemWArgs(TXT_MNU_HUDSTYLE, MIT_STATE, 0, SwitchAnarchyScores);
   lev2->SetStateItemList(3, TXT_NONE, TXT_SCOREHD, TXT_EFFICIENCY);
@@ -277,13 +281,13 @@ void AnarchyGameInit(int teams) {
   tsi.flags = DSIF_SHOW_PIC | DSIF_SHOW_OBSERVERICON;
   tsi.cColumnCountDetailed = 0;
   tsi.cColumnCountPlayerList = 6;
-  tsi.clbDetailedColumn = NULL;
-  tsi.clbDetailedColumnBMP = NULL;
+  tsi.clbDetailedColumn = nullptr;
+  tsi.clbDetailedColumnBMP = nullptr;
   tsi.clbPlayerColumn = DetermineScore;
-  tsi.clbPlayerColumnBMP = NULL;
-  tsi.DetailedColumns = NULL;
+  tsi.clbPlayerColumnBMP = nullptr;
+  tsi.DetailedColumns = nullptr;
   tsi.GameName = gname;
-  tsi.MaxNumberDisplayed = NULL;
+  tsi.MaxNumberDisplayed = nullptr;
   tsi.PlayerListColumns = pl_col;
   tsi.SortedPlayerRecords = SortedPlayers;
 
@@ -545,11 +549,11 @@ void OnPLRInterval(void) {
 quick_exit:;
 }
 
-void SaveStatsToFile(char *filename) {
+void SaveStatsToFile(const char *filename) {
   CFILE *file;
   DLLOpenCFILE(&file, filename, "wt");
   if (!file) {
-    mprintf(0, "Unable to open output file\n");
+    LOG_ERROR << "Unable to open output file";
     return;
   }
 
@@ -651,7 +655,7 @@ void SaveStatsToFile(char *filename) {
           memset(buffer, ' ', BUFSIZE);
           dpr = DMFCBase->GetPlayerRecord(stat.slot);
 
-          ASSERT(dpr != NULL);
+          ASSERT(dpr != nullptr);
           if (dpr) {
             snprintf(tempbuffer, sizeof(tempbuffer), "%s", dpr->callsign);
             memcpy(buffer, tempbuffer, strlen(tempbuffer));
@@ -920,7 +924,7 @@ void DisplayHUDScores([[maybe_unused]] struct tHUDItem *hitem) {
             DLLrend_SetLighting(LS_NONE);
             DLLrend_SetAlphaType(AT_CONSTANT_TEXTURE);
             DLLrend_DrawScaledBitmap(name_x - 2, y - 2, score_x + score_width + 2, y + height - 1, Highlight_bmp, 0, 0,
-                                     1, 1, 1.0, -1, NULL);
+                                     1, 1, 1.0, -1, nullptr);
             DLLrend_SetZBufferState(1);
           }
 

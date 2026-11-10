@@ -101,7 +101,7 @@ int SpewObjectInRoom(int type, int id, int roomnum) {
   int objnum;
 
   DLLComputeRoomCenter(&vpos, &dRooms[roomnum]);
-  objnum = DLLObjCreate(type, id, roomnum, &vpos, NULL, OBJECT_HANDLE_NONE);
+  objnum = DLLObjCreate(type, id, roomnum, &vpos, nullptr, OBJECT_HANDLE_NONE);
   if (objnum == -1)
     return -1;
 
@@ -167,7 +167,7 @@ void DoServerConfigureDialog(void) {
     case UID_OK: // start game
       exit_menu = true;
       DLLEditGetText(virus_pk_edit, tempbuffer, 20);
-      DLLmprintf(0, "New Virus/Kill = %d\n", atoi(tempbuffer));
+      LOG_INFO.printf("New Virus/Kill = %d", atoi(tempbuffer));
       break;
     };
   }

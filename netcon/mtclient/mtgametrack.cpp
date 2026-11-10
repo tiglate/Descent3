@@ -124,6 +124,7 @@
 #include "networking.h"
 #include "mtgametrack.h"
 #include "byteswap.h"
+#include "log.h"
 #include "mt_net.h"
 
 // extern float DLLtimer_GetTime(void);
@@ -141,16 +142,6 @@ extern nw_DoReceiveCallbacks_fp DLLnw_DoReceiveCallbacks;
 
 typedef int (*nw_SendWithID_fp)(uint8_t id, uint8_t *data, int len, network_address *who_to);
 extern nw_SendWithID_fp DLLnw_SendWithID;
-
-#if (defined(LOGGER) && (!defined(RELEASE)))
-#define DLLmprintf(...) DLLDebug_ConsolePrintf(__VA_ARGS__)
-#else
-#define DLLmprintf(...) ((void)0)
-#endif
-
-typedef void (*Debug_ConsolePrintf_fp)(int n, const char *format, ...);
-
-extern Debug_ConsolePrintf_fp DLLDebug_ConsolePrintf;
 
 // Variables
 
@@ -225,17 +216,14 @@ int InitGameTrackerClient(int gametype) {
 void IdleGameTracker() {
   DLLnw_DoReceiveCallbacks();
   // uint32_t bytesin;
-  // mprintf(0,"IdleGameTracker() entered.\n");
   if ((TrackerGameIsRunning) && ((DLLtimer_GetTime() - LastTrackerUpdate) > TRACKER_UPDATE_INTERVAL)) {
 
-#if defined(LOGGER) && !defined(RELEASE)
     struct tm *newtime;
     time_t aclock;
     time(&aclock); /* Get time in seconds */
     newtime = localtime(&aclock);
     // Time to update the tracker again
-    DLLmprintf(0, "[%.24s] Updating the PXO game tracker!\n", asctime(newtime));
-#endif
+    LOG_INFO.printf("[%.24s] Updating the PXO game tracker!", asctime(newtime));
     SendGameTrackerPacker(&TrackerGameData);
     //		sendto(gamesock,(const char *)&TrackerGameData,TrackerGameData.len,0,(SOCKADDR
     //*)&gtrackaddr,sizeof(SOCKADDR_IN));
@@ -246,14 +234,12 @@ void IdleGameTracker() {
              ((DLLtimer_GetTime() - LastSentToTracker) > TRACKER_RESEND_TIME)) {
     // We still haven't been acked by the last packet and it's time to resend.
 
-#if defined(LOGGER) && !defined(RELEASE)
     struct tm *newtime;
     time_t aclock;
     time(&aclock); /* Get time in seconds */
     newtime = localtime(&aclock);
     // Time to update the tracker again
-    DLLmprintf(0, "[%.24s] (Resending) Updating the PXO game tracker!\n", asctime(newtime));
-#endif
+    LOG_INFO.printf("[%.24s] (Resending) Updating the PXO game tracker!", asctime(newtime));
 
     SendGameTrackerPacker(&TrackerGameData);
     TrackerAckdUs = 0;
@@ -309,11 +295,10 @@ void HandleGamePacket(uint8_t *data, int len, [[maybe_unused]] network_address *
       break;
     case GNT_GAMELIST_LITE_DATA:
       if (static_cast<size_t>(len) < GAME_HEADER_ONLY_SIZE + sizeof(game_list)) {
-        DLLmprintf(0, "(%d) packet is too small!\n", len);
+        LOG_WARNING.printf("(%d) packet is too small!", len);
         return;
       }
       // Woohoo! Game data! put it in the buffer (if one's free)
-      // DLLmprintf(0,"GNT_GAMELIST_LITE_DATA received.\n");
       for (int i = 0; i < MAX_GAME_BUFFERS; i++) {
         if (GameBuffer[i].game_type == GT_UNUSED) {
           memset(&GameBuffer[i], 0, sizeof(game_list));
@@ -337,7 +322,6 @@ void HandleGamePacket(uint8_t *data, int len, [[maybe_unused]] network_address *
       }
       break;
     }
-    // mprintf(0,"Sending ACK.\n");
     AckPacket(inpacket.sig);
   }
 }
@@ -411,14 +395,12 @@ void AckPacket(int sig) {
 
 void StartTrackerGame(void *buffer) {
 
-#if defined(LOGGER) && !defined(RELEASE)
   struct tm *newtime;
   time_t aclock;
   time(&aclock); /* Get time in seconds */
   newtime = localtime(&aclock);
   // Time to update the tracker again
-  DLLmprintf(0, "[%.24s] Updating the PXO game tracker with a new game!\n", asctime(newtime));
-#endif
+  LOG_INFO.printf("[%.24s] Updating the PXO game tracker with a new game!", asctime(newtime));
 
   if (GameType == GT_FREESPACE) {
     //		memcpy(FreeSpaceTrackerGameData,buffer,sizeof(freespace_net_game_data));

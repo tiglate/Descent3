@@ -287,7 +287,7 @@ bool ddio_ffjoy_SupportAutoCenter(tDevice) { return false; }
 //	If it returns NULL, then it couldn't load the project.
 //	Make sure device is aquired before calling.
 FORCEPROJECT ddio_ForceLoadProject([[maybe_unused]] std::filesystem::path &filename, [[maybe_unused]] tDevice dev) {
-  return NULL;
+  return nullptr;
 }
 
 //	Unloads a FORCEPROJECT file

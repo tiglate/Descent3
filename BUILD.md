@@ -24,6 +24,18 @@ The repository stores images and video in Git LFS. Install Git LFS and run
 to download the media files. Builds and installs need the actual files rather
 than the small LFS pointer files.
 
+## Platforms tested in CI
+Every pull request to `main` and every push to `main` is built in Debug and Release on the following platforms. The unit tests run on all of them except the ARM64 cross-compile.
+
+| Platform | CI runner | Compiler |
+|---|---|---|
+| Windows x64 | Windows Server 2025 (`windows-2025-vs2026`) | MSVC from Visual Studio 2026 |
+| macOS, universal arm64 and x86_64 binary | macOS 15 on Apple Silicon (`macos-15`) | Apple Clang 17 from Xcode 16.4 |
+| Linux x64 | Ubuntu 26.04 (`ubuntu-26.04`) | GCC 15 |
+| Linux ARM64, cross-compiled on x64 | Ubuntu 26.04 (`ubuntu-26.04`) | GCC 15 (`aarch64-linux-gnu`) |
+
+The Linux builds use CMake 3.30. The Windows and macOS builds use the CMake version installed on the runner image.
+
 ## Installing and using vcpkg
 
 Set `VCPKG_ROOT` to a bootstrapped vcpkg checkout on every platform. An existing
@@ -40,20 +52,20 @@ Do not embed an individual's game installation path in CMake defaults.
 
 1. **Install the prerequisite build tools.**
 
-    Make sure that you have Git and Visual Studio 2022 with the “Desktop development with C++” workload and the “C++ MFC for latest v143 build tools (x86 & x64)” component. If you don’t already have those installed or you aren’t sure, then open an elevated Command Prompt and run:
+    Make sure that you have Git and Visual Studio 2026 with the “Desktop development with C++” workload and the “C++ MFC for x64/x86 (Latest MSVC)” component. If you don’t already have those installed or you aren’t sure, then open an elevated Command Prompt and run:
     <!--
-    The following code block specifies the full path to the Visual Studio Installer because the Visual Studio Installer doesn’t add itself to the user’s Path. The installer is guaranteed to be in a specific location on 64-bit systems [1]. The installer will be in a different location on 32-bit systems [2], but Visual Studio 2022 doesn’t support 32-bit systems [3] so we can ignore that detail.
+    The following code block specifies the full path to the Visual Studio Installer because the Visual Studio Installer doesn’t add itself to the user’s Path. The installer is guaranteed to be in a specific location on 64-bit systems [1]. The installer will be in a different location on 32-bit systems [2], but Visual Studio 2026 doesn’t support 32-bit systems [3] so we can ignore that detail.
 
-    [1]: <https://learn.microsoft.com/en-us/visualstudio/install/use-command-line-parameters-to-install-visual-studio?view=vs-2022>
+    [1]: <https://learn.microsoft.com/en-us/visualstudio/install/use-command-line-parameters-to-install-visual-studio?view=visualstudio>
     [2]: <https://github.com/microsoft/vswhere/wiki#installing>
-    [3]: <https://learn.microsoft.com/en-us/answers/questions/1689898/does-visual-studio-build-tools-2022-support-32-bit>
+    [3]: <https://learn.microsoft.com/en-us/visualstudio/releases/2026/vs-system-requirements>
     -->
     ```batch
-    winget install Git.Git Microsoft.VisualStudio.2022.Community
+    winget install Git.Git Microsoft.VisualStudio.Community
 
     "%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\setup.exe" modify^
         --passive^
-        --channelId VisualStudio.17.Release^
+        --channelId VisualStudio.18.Stable^
         --productId Microsoft.VisualStudio.Product.Community^
         --add Microsoft.VisualStudio.Workload.NativeDesktop;includeRecommended^
         --add Microsoft.VisualStudio.Component.VC.ATLMFC
@@ -289,6 +301,7 @@ to view or edit cache entries and generate build files.
 | `DEFAULT_ADDITIONAL_DIRS` | Optional semicolon-separated, compiled-in read-only directories for packagers. See [base directories](USAGE.md#base-directories). Prefer runtime asset setup for individual installations. The wrapper clears this value. | Empty |
 | `ENABLE_LOGGER` | Enable the legacy `LOGGER` compile definition. Runtime logging is configured with `-loglevel` and `-logfile`. | `OFF` |
 | `ENABLE_MEM_RTL` | Use real-time-library memory management. | `ON` |
+| `ENABLE_MOCK_CLOCK` | Replace the real-time clock with a mock one for automated testing. Every frame advances the clock by exactly 16 ms (`-framecap` is not allowed) while still pacing to real time. | `OFF` |
 | `FATAL_GL_ERRORS` | Check OpenGL calls and raise exceptions on errors. | `OFF` |
 | `FORCE_COLORED_OUTPUT` | Force colored diagnostics for supported compilers. | `OFF` |
 | `FORCE_PORTABLE_INSTALL` | Put installed engine files together under the prefix. This does not relocate user preferences. | `ON` |

@@ -434,11 +434,11 @@ bool BOA_ComputeMinDist(int start_room, int end_room, float max_check_dist, floa
       return false;
 
     if (BOA_INDEX(last_room) != BOA_INDEX(cur_room)) {
-      last_portal = BOA_DetermineStartRoomPortal(last_room, NULL, cur_room, NULL);
+      last_portal = BOA_DetermineStartRoomPortal(last_room, nullptr, cur_room, nullptr);
     }
 
     if (last_room == end_room) {
-      int this_portal = BOA_DetermineStartRoomPortal(cur_room, NULL, last_room, NULL);
+      int this_portal = BOA_DetermineStartRoomPortal(cur_room, nullptr, last_room, nullptr);
 
       if (cur_room != start_room && this_portal >= 0)
         *dist += BOA_cost_array[cur_room][this_portal];
@@ -449,7 +449,7 @@ bool BOA_ComputeMinDist(int start_room, int end_room, float max_check_dist, floa
       if (max_check_dist > 0.0 && max_check_dist < *dist)
         return false;
     } else if ((cur_room != last_room) && (cur_room != BOA_NO_PATH)) {
-      int this_portal = BOA_DetermineStartRoomPortal(cur_room, NULL, last_room, NULL);
+      int this_portal = BOA_DetermineStartRoomPortal(cur_room, nullptr, last_room, nullptr);
       if (last_portal >= 0 && this_portal >= 0) {
 
         *dist += BOA_cost_array[last_room][last_portal] + BOA_cost_array[cur_room][this_portal];
@@ -1002,7 +1002,7 @@ void FindPath(int i, int j) {
 
         if (BOA_INDEX(next_room) == BOA_INDEX(cur_node->roomnum))
           continue;
-        int next_portal = BOA_DetermineStartRoomPortal(next_room, NULL, cur_node->roomnum, NULL);
+        int next_portal = BOA_DetermineStartRoomPortal(next_room, nullptr, cur_node->roomnum, nullptr);
         if (next_portal < 0)
           continue;
 
@@ -1010,10 +1010,10 @@ void FindPath(int i, int j) {
                    BOA_cost_array[BOA_INDEX(next_room)][next_portal];
 
         list_item = node_list[BOA_INDEX(next_room)];
-        if (list_item != NULL && list_item->cost <= new_cost)
+        if (list_item != nullptr && list_item->cost <= new_cost)
           continue;
 
-        if (list_item == NULL) {
+        if (list_item == nullptr) {
           list_item = new q_item(BOA_INDEX(next_room), cur_node->roomnum, new_cost);
           node_list[BOA_INDEX(next_room)] = list_item;
           PQPath.push(list_item);
@@ -1061,7 +1061,7 @@ void FindPath(int i, int j) {
 
         if (BOA_INDEX(next_room) == BOA_INDEX(cur_node->roomnum))
           continue;
-        int next_portal = BOA_DetermineStartRoomPortal(next_room, NULL, cur_node->roomnum, NULL);
+        int next_portal = BOA_DetermineStartRoomPortal(next_room, nullptr, cur_node->roomnum, nullptr);
         if (next_portal < 0)
           continue;
 
@@ -1069,10 +1069,10 @@ void FindPath(int i, int j) {
                    BOA_cost_array[BOA_INDEX(next_room)][next_portal];
 
         list_item = node_list[BOA_INDEX(next_room)];
-        if (list_item != NULL && list_item->cost <= new_cost)
+        if (list_item != nullptr && list_item->cost <= new_cost)
           continue;
 
-        if (list_item == NULL) {
+        if (list_item == nullptr) {
           list_item = new q_item(BOA_INDEX(next_room), cur_node->roomnum, new_cost);
           node_list[BOA_INDEX(next_room)] = list_item;
           PQPath.push(list_item);
@@ -1185,7 +1185,7 @@ void compute_blockage_info() {
 
           if (last_room != cur_room) {
             BOA_f_making_boa = false;
-            if (BOA_DetermineStartRoomPortal(last_room, NULL, cur_room, NULL, true) == -1) {
+            if (BOA_DetermineStartRoomPortal(last_room, nullptr, cur_room, nullptr, true) == -1) {
               BOA_Array[i][j] |= BOAF_BLOCKAGE;
               BOA_f_making_boa = true;
               break;
@@ -1322,7 +1322,7 @@ bool IsPathPointValid(int room, vector *pos) {
     fq.flags =
         FQ_SOLID_PORTALS | FQ_NO_RELINK; // chrishack -- Might want to make FQ_IGNORE_MOVING_OBJECTS into a passed arg
     fq.thisobjnum = -1;
-    fq.ignore_obj_list = NULL;
+    fq.ignore_obj_list = nullptr;
 
     fate = fvi_FindIntersection(&fq, &hit_info);
 
@@ -1416,7 +1416,7 @@ void ComputeBOAVisFaceUpperLeft(room *rp, face *fp, vector *upper_left, float *x
   // Reverse the normal because we're looking "at" the face, not from it
   fvec = -fp->normal;
 
-  vm_VectorToMatrix(&face_matrix, &fvec, NULL, NULL);
+  vm_VectorToMatrix(&face_matrix, &fvec, nullptr, nullptr);
   // Make the transformation matrix
 
   angvec avec;
@@ -1719,7 +1719,7 @@ void MakeBOAVisTable(bool from_lighting) {
         }
 
         vector fvec = -src_fp->normal;
-        vm_VectorToMatrix(&src_matrix, &fvec, NULL, NULL);
+        vm_VectorToMatrix(&src_matrix, &fvec, nullptr, nullptr);
 
         ComputeBOAVisFaceUpperLeft(rp, src_fp, &src_upper_left, &src_width, &src_height, &src_center);
 
@@ -1752,7 +1752,7 @@ void MakeBOAVisTable(bool from_lighting) {
           }
 
           fvec = -dest_fp->normal;
-          vm_VectorToMatrix(&dest_matrix, &fvec, NULL, NULL);
+          vm_VectorToMatrix(&dest_matrix, &fvec, nullptr, nullptr);
 
           ComputeBOAVisFaceUpperLeft(&Rooms[check_room], dest_fp, &dest_upper_left, &dest_width, &dest_height,
                                      &dest_center);
@@ -1824,7 +1824,7 @@ void MakeBOAVisTable(bool from_lighting) {
                   fq.p1 = &dest_vector;
                   fq.rad = .01f;
                   fq.thisobjnum = -1;
-                  fq.ignore_obj_list = NULL;
+                  fq.ignore_obj_list = nullptr;
                   fq.flags =
                       FQ_BACKFACE |
                       FQ_IGNORE_RENDER_THROUGH_PORTALS; // Gaurentees in weird geometry cases (as the ray will hit as it
@@ -1943,8 +1943,8 @@ void verify_connections() {
       int next_room = BOA_NEXT_ROOM(i, j);
 
       if (next_room != i && next_room != BOA_NO_PATH) {
-        int forward_portal = BOA_DetermineStartRoomPortal(i, NULL, next_room, NULL);
-        int reverse_portal = BOA_DetermineStartRoomPortal(next_room, NULL, i, NULL);
+        int forward_portal = BOA_DetermineStartRoomPortal(i, nullptr, next_room, nullptr);
+        int reverse_portal = BOA_DetermineStartRoomPortal(next_room, nullptr, i, nullptr);
         if (forward_portal < 0 || reverse_portal < 0) {
           LOG_WARNING.printf("Invalid path connection between rooms %d and %d", i, next_room);
         }
@@ -1964,7 +1964,7 @@ void find_small_portals() {
 
         float xdiff;
         float ydiff;
-        ComputeBOAVisFaceUpperLeft(&Rooms[i], fp, NULL, &xdiff, &ydiff, NULL);
+        ComputeBOAVisFaceUpperLeft(&Rooms[i], fp, nullptr, &xdiff, &ydiff, nullptr);
 
         if (xdiff < 6.0f || ydiff < 6.0f) {
           counter++;
@@ -2018,7 +2018,7 @@ void compute_robot_path_info() {
           cur_room = BOA_NEXT_ROOM(cur_room, j);
 
           if (last_room != cur_room) {
-            if (BOA_DetermineStartRoomPortal(last_room, NULL, cur_room, NULL, false, true) == -1) {
+            if (BOA_DetermineStartRoomPortal(last_room, nullptr, cur_room, nullptr, false, true) == -1) {
               BOA_Array[i][j] |= BOAF_TOO_SMALL_FOR_ROBOT;
               break;
             }
@@ -2627,8 +2627,8 @@ void ComputeAABB(bool f_full) {
       }
     }
     mem_free(r_struct_list);
-    num_structs_per_room = NULL;
-    r_struct_list = NULL;
+    num_structs_per_room = nullptr;
+    r_struct_list = nullptr;
 
     // Finds the min/max of each region
     for (i = 0; i <= Highest_room_index; i++) {

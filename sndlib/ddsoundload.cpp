@@ -468,25 +468,25 @@ char SoundLoadWaveFile(const char *filename, float percent_volume, int sound_fil
   // Close the file
   file.reset();
 
-  if (sample_8bit != NULL) {
+  if (sample_8bit != nullptr) {
     LOG_WARNING.printf("Sound file %s is 8bit, please make a 16bit version", filename);
   }
 
   // Make sure we got data and format information
-  if (sample_8bit == NULL && sample_16bit == NULL) {
+  if (sample_8bit == nullptr && sample_16bit == nullptr) {
     LOG_WARNING.printf("SOUND LOADER: Did not find data and/or format in %s.", filename);
     goto error_state;
-  } else if (sample_8bit != NULL && !f_high_quality) {
+  } else if (sample_8bit != nullptr && !f_high_quality) {
     // Doing the volume clipping with the low quality (8 bit) sound requires some tricky math -- see chris
     for (count = 0; count < (int)sample_length; count++) {
       sample_8bit[count] = ((((int)sample_8bit[count]) - 127) * CLIP_ATTENUATION * percent_volume) + 127;
     }
-  } else if (sample_16bit != NULL && f_high_quality) {
+  } else if (sample_16bit != nullptr && f_high_quality) {
     // Do the volume clipping with the high quality sound
     for (count = 0; count < (int)sample_length; count++) {
       sample_16bit[count] *= CLIP_ATTENUATION * percent_volume;
     }
-  } else if (sample_8bit == NULL && !f_high_quality) {
+  } else if (sample_8bit == nullptr && !f_high_quality) {
 
     sample_8bit.reset(mem_rmalloc<uint8_t>(sample_length));
     if (!sample_8bit)
@@ -505,7 +505,7 @@ char SoundLoadWaveFile(const char *filename, float percent_volume, int sound_fil
 
     sample_16bit.reset();
 
-  } else if (sample_16bit == NULL && f_high_quality) {
+  } else if (sample_16bit == nullptr && f_high_quality) {
     if (sample_length > std::numeric_limits<int>::max() / static_cast<int>(sizeof(int16_t)))
       goto error_state;
     sample_16bit.reset(mem_rmalloc<int16_t>(sample_length));
@@ -558,6 +558,6 @@ void SoundLoadFree(int sound_file_index) {
       mem_free(SoundFiles[i].sample_16bit);
   }
 
-  SoundFiles[i].sample_8bit = NULL;
-  SoundFiles[i].sample_16bit = NULL;
+  SoundFiles[i].sample_8bit = nullptr;
+  SoundFiles[i].sample_16bit = nullptr;
 }

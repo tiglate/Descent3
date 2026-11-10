@@ -479,9 +479,9 @@ void lgoal::Reset(bool f_from_editor) {
   if (m_desc)
     mem_free(m_desc);
 
-  m_name = NULL;
-  m_item_name = NULL;
-  m_desc = NULL;
+  m_name = nullptr;
+  m_item_name = nullptr;
+  m_desc = nullptr;
   m_num_items = 0;
   m_priority = 0;
   m_g_list = 0;
@@ -1208,13 +1208,13 @@ void levelgoals::Inform(char type, int comp_type, int handle) {
       }
 
       bool done = true;
-      m_goal[i].ItemInfo(j, LO_SET_SPECIFIED, NULL, NULL, &done);
+      m_goal[i].ItemInfo(j, LO_SET_SPECIFIED, nullptr, nullptr, &done);
 
       int k;
       bool f_done = true;
 
       for (k = 0; k < num_items; k++) {
-        m_goal[i].ItemInfo(j, LO_SET_SPECIFIED, NULL, NULL, &done);
+        m_goal[i].ItemInfo(j, LO_SET_SPECIFIED, nullptr, nullptr, &done);
         if (!done) {
           f_done = false;
           break;

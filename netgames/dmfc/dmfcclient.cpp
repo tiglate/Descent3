@@ -428,25 +428,26 @@ void DMFCBase::OnClientPlayerEntersGame(int player_num) {
     int slot;
 
     if (IsMasterTrackerGame())
-      slot = PRec_FindPlayer(Players[player_num].callsign, NULL, Players[player_num].tracker_id);
+      slot = PRec_FindPlayer(Players[player_num].callsign, nullptr, Players[player_num].tracker_id);
     else
-      slot = PRec_FindPlayer(Players[player_num].callsign, &NetPlayers[player_num].addr, NULL);
+      slot = PRec_FindPlayer(Players[player_num].callsign, &NetPlayers[player_num].addr, nullptr);
 
     if (slot == -1) {
       // we have a new player
       slot = PRec_GetFreeSlot();
       if (!PRec_AssignPlayerToSlot(player_num, slot, Players, NetPlayers))
-        mprintf(0, "Unable to assign New Player (%s) to Player Record slot #%d\n", Players[player_num].callsign, slot);
+        LOG_WARNING.printf("Unable to assign New Player (%s) to Player Record slot #%d",
+                           Players[player_num].callsign, slot);
       else
-        mprintf(0, "(%s) has been assigned to Player Record slot #%d\n", Players[player_num].callsign, slot);
+        LOG_INFO.printf("(%s) has been assigned to Player Record slot #%d", Players[player_num].callsign, slot);
       CallOnPlayerConnect(player_num);
     } else {
       // we have a reconnecting player
       if (!PRec_ReconnectPlayerToSlot(player_num, slot, Players, NetPlayers))
-        mprintf(0, "Unable to reassign reconnecting player (%s) to Player Record slot #%d\n",
+        LOG_WARNING.printf("Unable to reassign reconnecting player (%s) to Player Record slot #%d",
                  Players[player_num].callsign, slot);
       else
-        mprintf(0, "Reconnected player (%s) to Player Record slot #%d\n", Players[player_num].callsign, slot);
+        LOG_INFO.printf("Reconnected player (%s) to Player Record slot #%d", Players[player_num].callsign, slot);
       CallOnPlayerReconnect(player_num);
     }
   }
@@ -462,7 +463,7 @@ void DMFCBase::OnClientPlayerEntersGame(int player_num) {
     }
 
     if (GetNumTeams() < 2 && (!(m_iProtectedFlags & DMFC_PRF_NOWAITFORPLAYERS))) {
-      StartUIWindow(UIID_WAITFORPLAYERS, NULL);
+      StartUIWindow(UIID_WAITFORPLAYERS, nullptr);
     }
   }
 
@@ -477,7 +478,7 @@ void DMFCBase::OnClientPlayerEntersGame(int player_num) {
           PilotPicBmpHandles[w] = BAD_BITMAP_HANDLE;
         }
 
-        mprintf(0, "PPIC ID: %d is %d\n", w, NetPlayers[w].pilot_pic_id);
+        LOG_INFO.printf("PPIC ID: %d is %d", w, NetPlayers[w].pilot_pic_id);
         if (NetPlayers[w].pilot_pic_id != 65535) {
           PilotPicBmpHandles[w] = DLLPPic_GetBitmapHandle(NetPlayers[w].pilot_pic_id);
           if (PilotPicBmpHandles[w] < BAD_BITMAP_HANDLE)
@@ -495,7 +496,7 @@ void DMFCBase::OnClientPlayerEntersGame(int player_num) {
       PilotPicBmpHandles[player_num] = BAD_BITMAP_HANDLE;
     }
 
-    mprintf(0, "PPIC ID: %d is %d\n", player_num, NetPlayers[player_num].pilot_pic_id);
+    LOG_INFO.printf("PPIC ID: %d is %d", player_num, NetPlayers[player_num].pilot_pic_id);
     if (NetPlayers[player_num].pilot_pic_id != 65535) {
       PilotPicBmpHandles[player_num] = DLLPPic_GetBitmapHandle(NetPlayers[player_num].pilot_pic_id);
       if (PilotPicBmpHandles[player_num] < BAD_BITMAP_HANDLE)
@@ -535,9 +536,9 @@ void DMFCBase::OnClientPlayerDisconnect(int player_num) {
   PRec_SetPlayerTeam(player_num, Players[player_num].team);
 
   if (!PRec_DisconnectPlayer(player_num))
-    mprintf(0, "Unable to disconnect player (%s) from Player Records\n", Players[player_num].callsign);
+    LOG_WARNING.printf("Unable to disconnect player (%s) from Player Records", Players[player_num].callsign);
   else
-    mprintf(0, "Disconnected player (%s) from Player Records\n", Players[player_num].callsign);
+    LOG_INFO.printf("Disconnected player (%s) from Player Records", Players[player_num].callsign);
 }
 
 // DMFCBase::OnMeDisconnectFromServer
@@ -607,9 +608,9 @@ void DMFCBase::OnClientLevelEnd(void) {
       PRec_SetPlayerTeam(i, Players[i].team);
 
       if (!PRec_DisconnectPlayer(i))
-        mprintf(0, "Unable to disconnect player (%s) from Player Records\n", Players[i].callsign);
+        LOG_WARNING.printf("Unable to disconnect player (%s) from Player Records", Players[i].callsign);
       else
-        mprintf(0, "Disconnected player (%s) from Player Records\n", Players[i].callsign);
+        LOG_INFO.printf("Disconnected player (%s) from Player Records", Players[i].callsign);
     }
   }
 }
@@ -618,12 +619,12 @@ void DMFCBase::OnClientLevelEnd(void) {
 //
 //	Event handler when a player becomes an observer mode
 //	If they are piggybacking another player than piggy is the object pointer, else it's NULL
-void DMFCBase::OnPlayerEntersObserver(int pnum, [[maybe_unused]] object *piggy) {
-  mprintf(0, "Player %d entering observermode %s\n", pnum, (piggy) ? "Piggyback" : "Roam");
+void DMFCBase::OnPlayerEntersObserver(int pnum, object *piggy) {
+  LOG_INFO.printf("Player %d entering observermode %s", pnum, (piggy) ? "Piggyback" : "Roam");
   player_record *pr = PRec_GetPRecordByPnum(pnum);
   if (pr && pr->state == STATE_INGAME) {
     PInfo *pi = pr->pinfo;
-    ASSERT(pi != NULL);
+    ASSERT(pi != nullptr);
     pi->EnterObserverMode();
   } else {
     Int3();
@@ -634,11 +635,11 @@ void DMFCBase::OnPlayerEntersObserver(int pnum, [[maybe_unused]] object *piggy) 
 //
 //	Event handler when a player is leaving observer mode
 void DMFCBase::OnPlayerExitsObserver(int pnum) {
-  mprintf(0, "Player %d leaving observer mode\n", pnum);
+  LOG_INFO.printf("Player %d leaving observer mode", pnum);
   player_record *pr = PRec_GetPRecordByPnum(pnum);
   if (pr && pr->state == STATE_INGAME) {
     PInfo *pi = pr->pinfo;
-    ASSERT(pi != NULL);
+    ASSERT(pi != nullptr);
     pi->ExitObserverMode();
   } else {
     Int3();
@@ -662,7 +663,7 @@ bool DMFCBase::OnCanChangeTeam(int pnum, [[maybe_unused]] int newteam) {
 //
 //		The user is requesting the game stats to be saved to file, you must handle this completly on
 //	the game's side, nothing is done in DMFC
-void DMFCBase::OnSaveStatsToFile(void) { mprintf(0, "User requested stats to be saved!\n"); }
+void DMFCBase::OnSaveStatsToFile(void) { LOG_INFO.printf("User requested stats to be saved!"); }
 
 // DMFCBase::OnLevelEndSaveStatsToFile
 //
@@ -781,7 +782,7 @@ void DMFCBase::OnInterval(void) {
   if (GetLocalRole() == LR_SERVER && IAmDedicatedServer() && m_bMakeClientsWait) {
     if (DedicatedLevelWait > 0 && DedicatedLevelWait <= (*Gametime)) {
       // time to stop waiting!
-      mprintf(0, "Telling clients that they can play!\n");
+      LOG_INFO << "Telling clients that they can play!";
       DPrintf("Allowing Clients To Play\n");
       PauseRealGameTime(false);
       MakeClientsWait(false);
@@ -863,7 +864,7 @@ void DMFCBase::OnKeypress(int key) {
 void DMFCBase::OnInputString(char *input_string) {
   if (!InputCommandHandle(input_string)) {
     // The input command wasn't handled!
-    mprintf(0, "DMFC Warning: Input Command '%s' wasn't handled\n", input_string);
+    LOG_WARNING.printf("Input Command '%s' wasn't handled", input_string);
   }
 }
 
@@ -910,7 +911,7 @@ void DMFCBase::OnPlayerReconnect(int player_num) {
     SendTeamAssignment(player_num, team, false);
     Players[player_num].team = team;
     CallOnPlayerChangeTeam(player_num, team, false, false);
-    mprintf(0, "Reassigning (%s) to %s team\n", Players[player_num].callsign, GetTeamString(team));
+    LOG_INFO.printf("Reassigning (%s) to %s team", Players[player_num].callsign, GetTeamString(team));
   }
 }
 
@@ -935,7 +936,7 @@ void DMFCBase::OnPlayerConnect(int player_num) {
       SendTeamAssignment(player_num, team, false);
       //@@Players[player_num].team = team;
       CallOnPlayerChangeTeam(player_num, team, false, false);
-      mprintf(0, "Assigning (%s) to %s team\n", Players[player_num].callsign, GetTeamString(team));
+      LOG_INFO.printf("Assigning (%s) to %s team", Players[player_num].callsign, GetTeamString(team));
     }
   }
 }
@@ -1091,7 +1092,7 @@ void DMFCBase::OnClientObjectDestroyed([[maybe_unused]] object *obj) {}
 //
 //	This event occurs when a player plays an audio taunt
 void DMFCBase::OnPlayAudioTaunt(int pnum) {
-  mprintf(0, "%s plays an audio taunt\n", Players[pnum].callsign);
+  LOG_INFO.printf("%s plays an audio taunt", Players[pnum].callsign);
   SetPlayerTauntIndicator(pnum);
 }
 

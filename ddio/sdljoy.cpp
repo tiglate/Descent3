@@ -209,7 +209,7 @@ static bool joy_InitStick(tJoystick joy, char *server_adr) {
     LOG_DEBUG.printf("JOYSTICK: (%d) axes, (%d) hats, and (%d) buttons.", axes, hats, caps.num_btns);
   }
 
-  return (Joysticks[joy].handle != NULL);
+  return (Joysticks[joy].handle != nullptr);
 }
 
 //  closes connection with controller.
@@ -225,7 +225,7 @@ bool joy_IsValid(tJoystick joy) {
       return false;
     }
   }
-  return (Joysticks[joy].handle != NULL);
+  return (Joysticks[joy].handle != nullptr);
 }
 
 //	retreive information about joystick.
@@ -349,6 +349,4 @@ static int joyGetNumDevs(void) {
   return found;
 }
 
-void ddio_InternalJoyFrame(void) {
-  // All the work is done already in SDL_PumpEvents()
-}
+void ddio_InternalJoyFrame(void) {}

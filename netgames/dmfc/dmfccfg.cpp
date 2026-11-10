@@ -53,7 +53,7 @@
 #include "dmfcinternal.h"
 
 
-CRegistry *reg = NULL;
+CRegistry *reg = nullptr;
 
 // DMFCBase::CFGOpen
 //
@@ -81,7 +81,7 @@ void DMFCBase::CFGClose(void) {
   if (reg) {
     reg->Export();
     delete reg;
-    reg = NULL;
+    reg = nullptr;
   }
 }
 
@@ -177,7 +177,7 @@ char *CRegistry::ParseString(char *p, char *buf, int bufsize, char sdelim, char 
   p = SkipWhite(p);
 
   if (*p != sdelim) {
-    return NULL;
+    return nullptr;
   } else {
     p++; // skip initial quote
   }
@@ -188,12 +188,12 @@ char *CRegistry::ParseString(char *p, char *buf, int bufsize, char sdelim, char 
 
   // Check for buffer overflow
   if (bufsize <= 0) {
-    return NULL;
+    return nullptr;
   }
 
   // Check for missing endquote
   if (!*p) {
-    return NULL;
+    return nullptr;
   }
 
   // Write terminator
@@ -214,7 +214,7 @@ char *CRegistry::ParseToken(char *p, char *buf, int bufsize) {
 
   // Check for buffer overflow
   if (bufsize <= 0) {
-    return NULL;
+    return nullptr;
   }
 
   return p;
@@ -234,7 +234,7 @@ char *CRegistry::ParseToken(char *p, char *buf, int bufsize) {
   } while (0)
 
 CRegistry::CRegistry(const char *str) {
-  currentkey = root = NULL;
+  currentkey = root = nullptr;
   strcpy(name, str);
 }
 
@@ -249,7 +249,7 @@ void CRegistry::Destroy(void) {
     DestroyKey(curr);
     curr = next;
   }
-  root = NULL;
+  root = nullptr;
 }
 
 void CRegistry::DestroyKey(tKey *key) {
@@ -268,7 +268,7 @@ void CRegistry::DestroyKey(tKey *key) {
 void CRegistry::DestroyRecord(tRecord *record) {
   if (record->data) {
     free(record->data);
-    record->data = NULL;
+    record->data = nullptr;
   }
   free(record);
 }
@@ -331,10 +331,10 @@ bool CRegistry::Import() {
   DLLOpenCFILE(&file, name, "rt");
 
   if (!file) {
-    mprintf(0, "Unable to import %s\n", name);
+    LOG_WARNING.printf("Unable to import %s", name);
     return false;
   }
-  mprintf(0, "Importing %s\n", name);
+  LOG_INFO.printf("Importing %s", name);
   Destroy();
 
   bool oktocreate;
@@ -357,7 +357,7 @@ bool CRegistry::Import() {
       if (buffer[0] == '[') {
         // Create a key!
         PARSE_KEY(newbuff);
-        mprintf(0, "Found Key: |%s|\n", newbuff);
+        LOG_INFO.printf("Found Key: |%s|", newbuff);
         CreateKey(newbuff);
       } else if (buffer[0] == '\"') {
         // Create a record
@@ -389,9 +389,9 @@ bool CRegistry::Import() {
           ptr++; // blow by =
           PARSE_STRING(data);
           if (!CreateRecord(newbuff, REGT_STRING, data)) {
-            mprintf(0, "Unable to create String record: %s\n", newbuff);
+            LOG_DEBUG.printf("Unable to create String record: %s", newbuff);
           } else {
-            mprintf(0, "Created String record %s = %s\n", newbuff, data);
+            LOG_DEBUG.printf("Created String record %s = %s", newbuff, data);
           }
           break;
         case REGT_DWORD:
@@ -401,14 +401,14 @@ bool CRegistry::Import() {
           idata = axtoi(data);
 
           if (!CreateRecord(newbuff, REGT_DWORD, &idata)) {
-            mprintf(0, "Unable to create dword record: %s\n", newbuff);
+            LOG_DEBUG.printf("Unable to create dword record: %s", newbuff);
           } else {
-            mprintf(0, "Created dword record %s = %X\n", newbuff, idata);
+            LOG_DEBUG.printf("Created dword record %s = %X", newbuff, idata);
           }
           break;
         }
       } else {
-        mprintf(0, "Expected [ or \"\n");
+        LOG_DEBUG.printf("Expected [ or \"");
       }
     }
   }
@@ -419,7 +419,7 @@ bool CRegistry::Import() {
 void CRegistry::CreateKey(const char *name) {
   tKey *curr;
   if (LookupKey(name)) {
-    mprintf(0, "Key: %s already exists\n", name);
+    LOG_DEBUG.printf("Key: %s already exists", name);
     return;
   }
 
@@ -440,9 +440,9 @@ void CRegistry::CreateKey(const char *name) {
     curr = curr->next;
   }
 
-  curr->next = NULL;
+  curr->next = nullptr;
   strcpy(curr->name, name);
-  curr->records = NULL;
+  curr->records = nullptr;
   currentkey = curr;
 }
 
@@ -462,7 +462,7 @@ bool CRegistry::LookupKey(const char *name) {
 
 tRecord *CRegistry::LookupRecord(const char *record, void *data) {
   if (!currentkey)
-    return NULL;
+    return nullptr;
 
   tRecord *curr;
   curr = currentkey->records;
@@ -485,7 +485,7 @@ tRecord *CRegistry::LookupRecord(const char *record, void *data) {
     }
     curr = curr->next;
   }
-  return NULL;
+  return nullptr;
 }
 
 int CRegistry::GetDataSize(const char *record) {
@@ -524,7 +524,7 @@ bool CRegistry::CreateRecord(const char *name, char type, void *data) {
       curr = LookupRecord(name, olddata);
       if (curr) {
         // ok we have an old value, replace it!
-        mprintf(0, "Replacing %s\n", name);
+        LOG_DEBUG.printf("Replacing %s", name);
         if (curr->data)
           free(curr->data);
         free(olddata);
@@ -562,7 +562,7 @@ bool CRegistry::CreateRecord(const char *name, char type, void *data) {
     curr = currentkey->records;
   }
 
-  curr->next = NULL;
+  curr->next = nullptr;
   strcpy(curr->name, name);
   switch (type) {
   case REGT_STRING:

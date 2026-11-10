@@ -1093,7 +1093,7 @@ public:
   void SetBackItem(UIItem *item) { // sets the background drawing item.
     if (m_BackItem)
       delete m_BackItem;
-    m_BackItem = NULL;
+    m_BackItem = nullptr;
     if (item)
       m_BackItem = item->CopyUIItem();
   };                                  //

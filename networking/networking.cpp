@@ -343,10 +343,10 @@ bool Use_DirectPlay = false;
 int iMaxReceiveBufsize = MAX_RECEIVE_BUFSIZE;
 
 #ifdef WIN32
-DWORD(DLLFUNCCALL *pRasEnumConnections)(LPRASCONN lprasconn, LPDWORD lpcb, LPDWORD lpcConnections) = NULL;
-DWORD(DLLFUNCCALL *pRasGetConnectStatus)(HRASCONN hrasconn, LPRASCONNSTATUS lprasconnstatus) = NULL;
+DWORD(DLLFUNCCALL *pRasEnumConnections)(LPRASCONN lprasconn, LPDWORD lpcb, LPDWORD lpcConnections) = nullptr;
+DWORD(DLLFUNCCALL *pRasGetConnectStatus)(HRASCONN hrasconn, LPRASCONNSTATUS lprasconnstatus) = nullptr;
 DWORD(DLLFUNCCALL *pRasGetProjectionInfo)
-(HRASCONN hrasconn, RASPROJECTION rasprojection, LPVOID lpprojection, LPDWORD lpcb) = NULL;
+(HRASCONN hrasconn, RASPROJECTION rasprojection, LPVOID lpprojection, LPDWORD lpcb) = nullptr;
 #endif
 
 int Dialup_connection = 0;
@@ -414,7 +414,7 @@ static int Largest_packet_index = 0;
 int Next_packet_id;
 int Last_packet_id;
 
-static CFILE *NetDebugFile = NULL;
+static CFILE *NetDebugFile = nullptr;
 
 // An array of callbacks
 static NetworkReceiveCallback Netcallbacks[16];
@@ -542,7 +542,7 @@ void CloseNetworking() {
   if (NetDebugFile) {
     cfprintf(NetDebugFile, "NetDebug.log closed at %f seconds.\n", timer_GetTime());
     cfclose(NetDebugFile);
-    NetDebugFile = NULL;
+    NetDebugFile = nullptr;
   }
 
   LOG_DEBUG << "Shutting down networking...";
@@ -581,7 +581,7 @@ void nw_InitNetworking(int iReadBufSizeOverride) {
   }
 
   // reset our stats so we are ready to use them
-  nw_GetNetworkStats(NULL);
+  nw_GetNetworkStats(nullptr);
 
 #ifdef WIN32
   WSADATA ws_data;
@@ -640,7 +640,7 @@ void nw_InitNetworking(int iReadBufSizeOverride) {
       strcpy(ourargs, "");
     }
     strncpy(exewithpath, p, a);
-    exewithpath[a] = NULL;
+    exewithpath[a] = '\0';
     ddio_SplitPath(exewithpath, exedir, exefile, exeext);
     if (exedir[0] == '\"') {
       fixdir = exedir + 1;
@@ -648,7 +648,7 @@ void nw_InitNetworking(int iReadBufSizeOverride) {
       fixdir = exedir;
     }
     if (exeext[strlen(exeext) - 1] == '\"') {
-      exeext[strlen(exeext) - 1] = NULL;
+      exeext[strlen(exeext) - 1] = '\0';
     }
     strcat(exefile, exeext);
     // dp_RegisterLobbyApplication("Descent 3",exefile,fixdir,ourargs,Base_directory,"Descent 3");
@@ -984,7 +984,7 @@ int nw_ReceiveReliable(SOCKET socketid, uint8_t *buffer, [[maybe_unused]] int ma
     return 0;
 #endif
   }
-  reliable_socket *rsocket = NULL;
+  reliable_socket *rsocket = nullptr;
   // nw_WorkReliable();
   nw_DoReceiveCallbacks();
   if (socketid >= MAXRELIABLESOCKETS) {
@@ -1003,7 +1003,7 @@ int nw_ReceiveReliable(SOCKET socketid, uint8_t *buffer, [[maybe_unused]] int ma
     if ((rsocket->rsequence[i] == rsocket->oursequence) && (rsocket->rbuffers[i])) {
       memcpy(buffer, rsocket->rbuffers[i]->buffer, rsocket->recv_len[i]);
       mem_free(rsocket->rbuffers[i]);
-      rsocket->rbuffers[i] = NULL;
+      rsocket->rbuffers[i] = nullptr;
       rsocket->rsequence[i] = 0;
 /*
       mprintf(0,"Found packet for upper layer in nw_ReceiveReliable() %d bytes. seq:%d.\n",
@@ -1178,7 +1178,7 @@ int nw_SendReliable(uint32_t socketid, uint8_t *data, int length, bool urgent) {
   // Add the new packet to the sending list and send it.
   for (i = 0; i < MAXNETBUFFERS; i++) {
     use_buffer = -1;
-    if (NULL == rsocket->sbuffers[i]) {
+    if (nullptr == rsocket->sbuffers[i]) {
       // mprintf(0,"Sending in nw_SendReliable() %d bytes seq=%d.\n",length,rsocket->theirsequence);
 
       rsocket->send_len[i] = length;
@@ -1279,7 +1279,7 @@ void nw_WorkReliable(uint8_t *data, int len, network_address *naddr) {
   }
   // Check for incoming data
 
-  reliable_socket *rsocket = NULL;
+  reliable_socket *rsocket = nullptr;
   // Check to see if we need to send a packet out.
   if ((serverconn != UINT32_MAX) && (reliable_sockets[serverconn].status == RNF_LIMBO) &&
       ((timer_GetTime() - last_sent_iamhere) > NETRETRYTIME)) {
@@ -1316,7 +1316,7 @@ void nw_WorkReliable(uint8_t *data, int len, network_address *naddr) {
 
   do {
 
-    rsocket = NULL;
+    rsocket = nullptr;
     if (len) {
       // Someone wants to connect, so find a slot
       if (rcv_buff.type == RNT_REQ_CONN) {
@@ -1375,7 +1375,7 @@ void nw_WorkReliable(uint8_t *data, int len, network_address *naddr) {
           break;
         }
       }
-      if (NULL == rsocket) {
+      if (nullptr == rsocket) {
         LOG_WARNING << "Received reliable data from unconnected client.";
         char addrstr[200];
         nw_GetNumbersFromHostAddress(&d3_rcv_addr, addrstr);
@@ -1445,7 +1445,7 @@ void nw_WorkReliable(uint8_t *data, int len, network_address *naddr) {
               if (rsocket->ssequence[i] == *acksig) {
                 // mprintf(0,"Received ACK %d\n",*acksig);
                 mem_free(rsocket->sbuffers[i]);
-                rsocket->sbuffers[i] = NULL;
+                rsocket->sbuffers[i] = nullptr;
                 rsocket->ssequence[i] = 0;
               }
         }
@@ -1489,7 +1489,7 @@ void nw_WorkReliable(uint8_t *data, int len, network_address *naddr) {
         }
 
         for (i = 0; i < MAXNETBUFFERS; i++) {
-          if ((NULL != rsocket->rbuffers[i]) && (rsocket->rsequence[i] == INTEL_SHORT(rcv_buff.seq))) {
+          if ((nullptr != rsocket->rbuffers[i]) && (rsocket->rsequence[i] == INTEL_SHORT(rcv_buff.seq))) {
             // Received duplicate packet!
             LOG_WARNING << "Received duplicate packet!";
             savepacket = 0;
@@ -1497,7 +1497,7 @@ void nw_WorkReliable(uint8_t *data, int len, network_address *naddr) {
         }
         if (savepacket) {
           for (i = 0; i < MAXNETBUFFERS; i++) {
-            if (NULL == rsocket->rbuffers[i]) {
+            if (nullptr == rsocket->rbuffers[i]) {
               // mprintf(0,"Got good data seq: %d\n",rcv_buff.seq);
               if (INTEL_SHORT(rcv_buff.data_len) > max_len)
                 rsocket->recv_len[i] = max_len; // INTEL_SHORT(rcv_buff.data_len);
@@ -1689,12 +1689,12 @@ void nw_CloseSocket(SOCKET *sockp) {
   for (i = 0; i < MAXNETBUFFERS; i++) {
     if (reliable_sockets[*sockp].rbuffers[i]) {
       mem_free(reliable_sockets[*sockp].rbuffers[i]);
-      reliable_sockets[*sockp].rbuffers[i] = NULL;
+      reliable_sockets[*sockp].rbuffers[i] = nullptr;
       reliable_sockets[*sockp].rsequence[i] = 0;
     }
     if (reliable_sockets[*sockp].sbuffers[i]) {
       mem_free(reliable_sockets[*sockp].sbuffers[i]);
-      reliable_sockets[*sockp].sbuffers[i] = NULL;
+      reliable_sockets[*sockp].sbuffers[i] = nullptr;
       reliable_sockets[*sockp].rsequence[i] = 0;
     }
   }
@@ -1967,7 +1967,7 @@ uint32_t psnet_ras_status() {
 
   // first, call a LoadLibrary to load the RAS api
   ras_handle = LoadLibrary("rasapi32.dll");
-  if (ras_handle == NULL) {
+  if (ras_handle == nullptr) {
     return INADDR_ANY;
   }
 
@@ -2093,7 +2093,7 @@ NetworkReceiveCallback nw_UnRegisterCallback(uint8_t id) {
   NetworkReceiveCallback nfp;
   ASSERT(id < 16);
   nfp = Netcallbacks[id];
-  Netcallbacks[id] = NULL;
+  Netcallbacks[id] = nullptr;
   return nfp;
 }
 
@@ -2189,7 +2189,7 @@ int nw_SendWithID(uint8_t id, uint8_t *data, int len, network_address *who_to) {
   FD_ZERO(&wfds);
   FD_SET(send_sock, &wfds);
 
-  int sock_writable = select(send_sock + 1, NULL, &wfds, NULL, &timeout);
+  int sock_writable = select(send_sock + 1, nullptr, &wfds, nullptr, &timeout);
   if (sock_writable == SOCKET_ERROR) {
     LOG_ERROR.printf("Error on blocking select for write %d", WSAGetLastError());
     return 0;
@@ -2305,7 +2305,7 @@ int nw_DoReceiveCallbacks(void) {
 void nw_ReliableResend(void) {
   int i, j;
   int rcode = -1;
-  reliable_socket *rsocket = NULL;
+  reliable_socket *rsocket = nullptr;
   // Go through each reliable socket that is connected and do any needed work.
   for (j = 0; j < MAXRELIABLESOCKETS; j++) {
     rsocket = &reliable_sockets[j];
