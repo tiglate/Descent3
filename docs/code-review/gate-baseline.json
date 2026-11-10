@@ -1,0 +1,29 @@
+[
+  {
+    "file": "cfile/inffile.cpp",
+    "line": 50,
+    "column": 3,
+    "check": "clang-analyzer-security.insecureAPI.strcpy",
+    "message": "Call to function 'strcpy' is insecure as it does not provide bounding of the memory buffer. Replace unbounded copy functions with analogous functions that support length arguments such as 'strlcpy'. CWE-119",
+    "commit": "22a05938157117d656b7a45032dfb5b0e8b8372a",
+    "reason": "Symbol names come from a 32-byte command buffer; the destination is _MAX_PATH (260)."
+  },
+  {
+    "file": "cfile/inffile.cpp",
+    "line": 61,
+    "column": 11,
+    "check": "clang-analyzer-deadcode.DeadStores",
+    "message": "Although the value stored to 'sym' is used in the enclosing expression, the value is never actually read from 'sym'",
+    "commit": "22a05938157117d656b7a45032dfb5b0e8b8372a",
+    "reason": "The assignment in the loop condition is redundant; unlink still supplies the node used below."
+  },
+  {
+    "file": "linux/registry.cpp",
+    "line": 434,
+    "column": 3,
+    "check": "clang-analyzer-security.insecureAPI.strcpy",
+    "message": "Call to function 'strcpy' is insecure as it does not provide bounding of the memory buffer. Replace unbounded copy functions with analogous functions that support length arguments such as 'strlcpy'. CWE-119",
+    "commit": "22a05938157117d656b7a45032dfb5b0e8b8372a",
+    "reason": "CreateRecord rejects names at least MAX_RECORD_NAME bytes before copying into a buffer of that size."
+  }
+]

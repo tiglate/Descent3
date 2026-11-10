@@ -39,6 +39,11 @@ That command writes new evidence under `build/code-review/`; it does not overwri
 the committed review baseline or any implementation status. Compare and triage
 new diagnostics before deliberately updating the baseline. Source links and line
 numbers describe the reviewed commit and may move during implementation.
+The baseline covers Debug only: the scan selects Debug entries explicitly from a
+multi-config database, or requires a single-config build with `CMAKE_BUILD_TYPE=Debug`.
+It removes the previous results before starting, so an interrupted or failed scan
+cannot be compared as if it had succeeded. Run the configuration-selection tests
+with `rtk proxy python3 -m unittest discover -s tools/code_review -p 'test_*.py'`.
 
 For a preliminary analyzer comparison, run:
 
@@ -46,11 +51,24 @@ For a preliminary analyzer comparison, run:
 rtk proxy python3 tools/code_review/compare.py --build-dir build
 ```
 
-This compares message counts by first-party file and analyzer check, ignoring line
-shifts and deduplicating repeated header reports. A newly introduced warning that
-is identical to a removed warning in the same file may be missed. The comparison
-is not yet a CI gate; expand its coverage and review that limitation before
-enforcing it. Missing, failed or timed-out scan invocations fail the comparison.
+For a single local gate command that runs the regression tests, scans, and
+compares in order, run `rtk proxy python3 tools/code_review/gate.py --build-dir build`.
+After configuring CMake, automation can invoke the optional target
+`rtk proxy cmake --build build --config Debug --target code_review_gate`.
+The end-to-end test creates an isolated temporary source tree: it verifies a real
+clang-tidy null-dereference warning fails comparison, a clean scan passes, and
+third-party log entries, compiler failures, timeouts, and stale results are handled.
+The real-tool test skips if its prerequisites are unavailable; the gate itself
+still requires the pinned clang-tidy and a configured Debug compilation database.
+
+The comparison maps baseline warning locations through unchanged source lines,
+then checks file, location, analyzer check and message, deduplicating repeated
+header reports. It requires the baseline Git revisions to be available; shallow
+clones must fetch them. Changed or ambiguously mapped lines can produce findings
+that need review, and identical moved code can still be matched incorrectly. The
+three separately reviewed post-baseline findings are in `gate-baseline.json`.
+Missing, failed or timed-out scan invocations fail the comparison. The target is
+available for CI, but no CI workflow is installed by this project.
 
 Artifact validation performed during creation: both Python tools passed syntax
 checks; the dashboard was exercised in headless Chrome for search, status/evidence
@@ -61,5 +79,6 @@ from `progress.json`; see [M01 validation](validation/M01.md),
 [M02/M03 validation](validation/M02-M03.md),
 [M04/B01 validation](validation/M04-B01.md),
 [M05/B02 validation](validation/M05-B02.md),
-[M06/T03 validation](validation/M06-T03.md), and
-[B04/T03 validation](validation/B04-T03.md) for implementation evidence.
+[M06/T03 validation](validation/M06-T03.md),
+[B04/T03 validation](validation/B04-T03.md), and
+[A01 validation](validation/A01.md) for implementation evidence.

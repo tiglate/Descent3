@@ -160,6 +160,17 @@ if(BUILD_TESTING)
   add_subdirectory(tests)
 endif()
 
+# Optional local/CI entry point; it is not part of the normal engine build.
+find_package(Python3 COMPONENTS Interpreter QUIET)
+if(Python3_Interpreter_FOUND)
+  add_custom_target(code_review_gate
+    COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/code_review/gate.py"
+      --build-dir "${PROJECT_BINARY_DIR}"
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    USES_TERMINAL
+    VERBATIM)
+endif()
+
 # Define names for HOG files
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux" OR CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
   set(HOG_NAME "linux")

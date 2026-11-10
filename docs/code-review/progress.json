@@ -681,10 +681,10 @@
       "confidence": "Source-confirmed",
       "checks": [],
       "dependencies": [],
-      "status": "In progress",
+      "status": "Review",
       "owner": "Codex",
-      "notes": "Pinned scan now rejects clang-tidy versions other than 18.1.3. Added a preliminary analyzer baseline comparison that rejects incomplete/failed scans, deduplicates header locations and compares per-file/check/message counts without depending on line numbers. Synthetic baseline and excluded third-party warnings pass; a seeded finding and timeout fail. The current 16-file Linux scan completed successfully and compares 42 analyzer findings with zero new. Identical warning replacement within one file can evade counts; CI integration, robust configuration selection, broader coverage and a real seeded clang-tidy warning remain open. CTest PRE_TEST discovery is also needed for configuration-specific CI. See docs/code-review/README.md.",
-      "updated": "2026-10-31T15:11:39.076926+00:00"
+      "notes": "Location-aware comparison maps unchanged source lines against baseline Git revisions in both directions. Real clang-tidy tests verify a line insertion passes and an identical warning replacing another in a different function fails; missing baseline history fails closed. Three newly visible existing diagnostics were reviewed and recorded individually. The optional code_review_gate CMake target runs tests, the pinned 16-file Debug scan and comparison; it passes with 42 findings and zero new. The repository has no CI workflow, so the target is not automatically enforced. Source mapping can misidentify moved identical code or flag ambiguous changes, and requires baseline Git objects. Broader coverage and configuration-specific CTest discovery remain future work. Evidence: docs/code-review/validation/A01.md.",
+      "updated": "2026-11-10T12:14:00.856753+00:00"
     },
     {
       "id": "A02",
@@ -1022,6 +1022,34 @@
       "field": "notes",
       "from": "B04 validation found that CMake post-build GTest discovery shares files across configurations and can run the last-linked Release binary under ctest -C Debug. The new renderer target uses PRE_TEST; local full-suite validation sets CMAKE_GTEST_DISCOVER_TESTS_DISCOVERY_MODE=PRE_TEST and audits executable paths. Carry this configuration-specific discovery policy into the reproducible CI/developer gate. Evidence: docs/code-review/validation/B04-T03.md.",
       "to": "Pinned scan now rejects clang-tidy versions other than 18.1.3. Added a preliminary analyzer baseline comparison that rejects incomplete/failed scans, deduplicates header locations and compares per-file/check/message counts without depending on line numbers. Synthetic baseline and excluded third-party warnings pass; a seeded finding and timeout fail. The current 16-file Linux scan completed successfully and compares 42 analyzer findings with zero new. Identical warning replacement within one file can evade counts; CI integration, robust configuration selection, broader coverage and a real seeded clang-tidy warning remain open. CTest PRE_TEST discovery is also needed for configuration-specific CI. See docs/code-review/README.md."
+    },
+    {
+      "date": "2026-11-10T04:56:50.169547+00:00",
+      "id": "A01",
+      "field": "notes",
+      "from": "Pinned scan now rejects clang-tidy versions other than 18.1.3. Added a preliminary analyzer baseline comparison that rejects incomplete/failed scans, deduplicates header locations and compares per-file/check/message counts without depending on line numbers. Synthetic baseline and excluded third-party warnings pass; a seeded finding and timeout fail. The current 16-file Linux scan completed successfully and compares 42 analyzer findings with zero new. Identical warning replacement within one file can evade counts; CI integration, robust configuration selection, broader coverage and a real seeded clang-tidy warning remain open. CTest PRE_TEST discovery is also needed for configuration-specific CI. See docs/code-review/README.md.",
+      "to": "Pinned clang-tidy 18.1.3 scan explicitly selects the Debug configuration and invalidates stale results before starting; configuration selection has unit tests. After the upstream merge, all 16 selected scans completed and the baseline comparison found zero new analyzer findings among 42 current findings. Identical warning replacement within one file can evade counts; CI integration, broader coverage and an end-to-end seeded clang-tidy warning remain open. The repository no longer has GitHub workflows. CTest PRE_TEST discovery is also needed for configuration-specific automation. See docs/code-review/README.md."
+    },
+    {
+      "date": "2026-11-10T05:10:06.692281+00:00",
+      "id": "A01",
+      "field": "notes",
+      "from": "Pinned clang-tidy 18.1.3 scan explicitly selects the Debug configuration and invalidates stale results before starting; configuration selection has unit tests. After the upstream merge, all 16 selected scans completed and the baseline comparison found zero new analyzer findings among 42 current findings. Identical warning replacement within one file can evade counts; CI integration, broader coverage and an end-to-end seeded clang-tidy warning remain open. The repository no longer has GitHub workflows. CTest PRE_TEST discovery is also needed for configuration-specific automation. See docs/code-review/README.md.",
+      "to": "Added a local gate command and end-to-end tests using a real clang-tidy null-dereference warning, clean baseline, excluded third-party log entry, compiler failure, recorded timeout, stale results, and external build directory. The scan selects Debug explicitly and invalidates previous results before starting. After regenerating the build database following the upstream merge, all 16 scans pass and comparison reports 42 analyzer findings with zero new. CI integration and the identical-warning replacement limitation remain open; this repository no longer has GitHub workflows. Configuration-specific CTest discovery remains relevant for future automation. Evidence: docs/code-review/validation/A01.md."
+    },
+    {
+      "date": "2026-11-10T12:14:00.856753+00:00",
+      "id": "A01",
+      "field": "status",
+      "from": "In progress",
+      "to": "Review"
+    },
+    {
+      "date": "2026-11-10T12:14:00.856753+00:00",
+      "id": "A01",
+      "field": "notes",
+      "from": "Added a local gate command and end-to-end tests using a real clang-tidy null-dereference warning, clean baseline, excluded third-party log entry, compiler failure, recorded timeout, stale results, and external build directory. The scan selects Debug explicitly and invalidates previous results before starting. After regenerating the build database following the upstream merge, all 16 scans pass and comparison reports 42 analyzer findings with zero new. CI integration and the identical-warning replacement limitation remain open; this repository no longer has GitHub workflows. Configuration-specific CTest discovery remains relevant for future automation. Evidence: docs/code-review/validation/A01.md.",
+      "to": "Location-aware comparison maps unchanged source lines against baseline Git revisions in both directions. Real clang-tidy tests verify a line insertion passes and an identical warning replacing another in a different function fails; missing baseline history fails closed. Three newly visible existing diagnostics were reviewed and recorded individually. The optional code_review_gate CMake target runs tests, the pinned 16-file Debug scan and comparison; it passes with 42 findings and zero new. The repository has no CI workflow, so the target is not automatically enforced. Source mapping can misidentify moved identical code or flag ambiguous changes, and requires baseline Git objects. Broader coverage and configuration-specific CTest discovery remain future work. Evidence: docs/code-review/validation/A01.md."
     }
   ],
   "snapshots": [

@@ -12,10 +12,10 @@ The initial baseline scan did not include engine fixes, game launch, sanitizer e
 
 ## Next implementation priorities
 
-1. [A01](#a01): Establish a reproducible incremental clang-tidy gate.
-2. [C01](#c01): Expose bounded network timing policy.
-3. [C02](#c02): Make HTTP connection timeout an explicit option.
-4. [C03](#c03): Resolve the ignored SDL sound-buffer option.
+1. [C01](#c01): Expose bounded network timing policy.
+2. [C02](#c02): Make HTTP connection timeout an explicit option.
+3. [C03](#c03): Resolve the ignored SDL sound-buffer option.
+4. [A02](#a02): Extend coverage across modules and platform configurations.
 
 Items marked Review have implementation or triage evidence but still have an acceptance gate open; see their notes for the remaining work.
 
@@ -66,7 +66,7 @@ flowchart LR
 | [T01](#t01) | P3 | Clang-tidy | M | Source-confirmed | Backlog |
 | [T02](#t02) | P3 | Clang-tidy | M | Source-confirmed | Backlog |
 | [T03](#t03) | P2 | Clang-tidy | M | Analyzer candidates | Done |
-| [A01](#a01) | P2 | Clang-tidy | M | Source-confirmed | In progress |
+| [A01](#a01) | P2 | Clang-tidy | M | Source-confirmed | Review |
 | [A02](#a02) | P2 | Clang-tidy | L | Source-confirmed | Backlog |
 
 ## M01
@@ -429,11 +429,11 @@ Sources: [CMakeLists.txt, line 67](../../CMakeLists.txt); [.github/workflows/bui
 
 **Dependencies:** None. **Checks:** Manual review / targeted regression.
 
-- [ ] Implemented and validated (In progress)
+- [ ] Implemented and validated (Review)
 
 Owner: Codex
 
-Progress evidence / disposition: Pinned scan now rejects clang-tidy versions other than 18.1.3. Added a preliminary analyzer baseline comparison that rejects incomplete/failed scans, deduplicates header locations and compares per-file/check/message counts without depending on line numbers. Synthetic baseline and excluded third-party warnings pass; a seeded finding and timeout fail. The current 16-file Linux scan completed successfully and compares 42 analyzer findings with zero new. Identical warning replacement within one file can evade counts; CI integration, robust configuration selection, broader coverage and a real seeded clang-tidy warning remain open. CTest PRE_TEST discovery is also needed for configuration-specific CI. See docs/code-review/README.md.
+Progress evidence / disposition: Location-aware comparison maps unchanged source lines against baseline Git revisions in both directions. Real clang-tidy tests verify a line insertion passes and an identical warning replacing another in a different function fails; missing baseline history fails closed. Three newly visible existing diagnostics were reviewed and recorded individually. The optional code_review_gate CMake target runs tests, the pinned 16-file Debug scan and comparison; it passes with 42 findings and zero new. The repository has no CI workflow, so the target is not automatically enforced. Source mapping can misidentify moved identical code or flag ambiguous changes, and requires baseline Git objects. Broader coverage and configuration-specific CTest discovery remain future work. Evidence: docs/code-review/validation/A01.md.
 
 ## A02
 
