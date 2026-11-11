@@ -131,6 +131,8 @@ class UITextItem : public UIItem {
 protected:
   char *m_Text = nullptr;
 
+  void AssignText(const char *text);
+
 public:
   static void SetDefaultFont(int font) { UITextItem::m_DefaultFont = font; }
   static void SetSaturationFactor(int sat) { UITextItem::m_Sat = sat; }

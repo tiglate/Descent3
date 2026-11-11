@@ -542,6 +542,7 @@ bool CRegistry::CreateRecord(const char *name, char type, void *data) {
         }
         return true;
       }
+      free(olddata); // no existing record under this name
     }
   }
 

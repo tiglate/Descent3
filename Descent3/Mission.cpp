@@ -1890,6 +1890,7 @@ int MissionGetKeywords(const std::filesystem::path &mission, char *keywords) {
   memset(mod_keywords, 0, sizeof(mod_keywords));
   LOG_DEBUG << "MissionGetKeywords(" << mission << ", " << keywords << ")";
   if (!GetMissionInfo(mission, &msn_info)) {
+    mem_free(parse_keys);
     return -1;
   }
 

@@ -886,7 +886,7 @@ uint8_t CodeTerrainPoint(g3Point *p) {
 int IsTerrainDynamicChecked(int seg, int bit) {
   if (seg < 0 || seg >= (TERRAIN_WIDTH * TERRAIN_DEPTH))
     return 1;
-  if (bit >= 8)
+  if (bit < 0 || bit >= 8)
     return 1;
   uint8_t val = Terrain_dynamic_table[seg] & (1 << bit);
   if (val)

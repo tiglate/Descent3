@@ -2800,7 +2800,7 @@ bool AIDetermineAimPoint(object *robot, object *target, vector *aim_pt, float we
   // chrishack -- add stuff so that rebels get better as DIFF lowers and
   // ptmc gets better as DIFF increases
   if (target->type != OBJ_PLAYER ||
-      (DIFF_LEVEL < DIFFICULTY_HOTSHOT && ((robot->ai_info->flags & AIF_TEAM_MASK) != AIF_TEAM_REBEL)) ||
+      (DIFF_LEVEL < DIFFICULTY_HOTSHOT && (!ai_info || (ai_info->flags & AIF_TEAM_MASK) != AIF_TEAM_REBEL)) ||
       scale < 0.4f || vl <= AIVIS_MOSTLY)
     *aim_pt = target->pos + (target->mtype.phys_info.velocity * dt) * scale;
   else
@@ -3511,7 +3511,9 @@ int AIFindRandomRoom(object *obj, ai_frame *ai_info, goal *goal_ptr, int avoid_r
   }
 
   do {
-    random_room = mine_rooms[ps_rand() % num_mine_rooms];
+    // With no candidate rooms, consider the current room; the checks below and
+    // the neighbor fallback then apply as usual.
+    random_room = num_mine_rooms ? mine_rooms[ps_rand() % num_mine_rooms] : obj->roomnum;
     valid = true;
 
     if (random_room == avoid_room || ((!f_cur_room_ok) && (random_room == obj->roomnum)) || (!Rooms[random_room].used))

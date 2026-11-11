@@ -1967,8 +1967,10 @@ void TelcomLoadHiLites(const char *filelist[], int monitor, int xoff, int yoff) 
   while (filelist[TelcomHiLiteCount[monitor]])
     TelcomHiLiteCount[monitor]++;
 
-  if (!TelcomHiLiteCount[monitor])
+  if (!TelcomHiLiteCount[monitor]) {
     TelcomHiLites[monitor] = nullptr;
+    return;
+  }
 
   TelcomHiLites[monitor] = mem_rmalloc<int>(TelcomHiLiteCount[monitor]);
   if (!TelcomHiLites[monitor]) {

@@ -3302,6 +3302,9 @@ void Osiris_SaveOMMS(CFILE *file) {
     // write out the info about this hash node
     int length;
     length = (currhash->script_name) ? strlen(currhash->script_name) : 0;
+    // The length is stored in one byte; keep the byte count consistent with it.
+    if (length > 255)
+      length = 255;
     cf_WriteByte(file, length);
     if (length)
       cf_WriteBytes((uint8_t *)currhash->script_name, length, file);
@@ -3364,14 +3367,17 @@ void Osiris_RestoreOMMS(CFILE *file) {
 
     currhash->base_id = (uint16_t)cf_ReadShort(file);
 
-    // read length of string
-    int length = cf_ReadByte(file);
+    // read length of string (an unsigned byte)
+    int length = (uint8_t)cf_ReadByte(file);
     if (length) {
       currhash->script_name = (char *)mem_malloc(length + 1);
-      if (!currhash->script_name)
+      if (!currhash->script_name) {
         Error("Out of Memory");
-      else
+      } else {
         cf_ReadBytes((uint8_t *)currhash->script_name, length, file);
+        // The name is saved without a terminator; it is compared with stricmp.
+        currhash->script_name[length] = '\0';
+      }
     }
 
     node = nullptr;

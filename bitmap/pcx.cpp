@@ -1,5 +1,5 @@
 /*
-* Descent 3 
+* Descent 3
 * Copyright (C) 2024 Parallax Software
 *
 * This program is free software: you can redistribute it and/or modify
@@ -55,6 +55,7 @@
  */
 
 #include <cstdlib>
+#include <vector>
 
 #include "bitmap.h"
 #include "cfile.h"
@@ -62,10 +63,43 @@
 #include "log.h"
 #include "mem.h"
 
+// Largest accepted image dimension; PCX coordinates are 16-bit.
+static constexpr int PCX_MAX_DIMENSION = 4096;
+
 // load an 8bit pcx image
 static int bm_pcx_8bit_alloc_file(CFILE *infile);
 // load a 24bit pcx image
 static int bm_pcx_24bit_alloc_file(CFILE *infile);
+
+// Decodes PCX run-length data until `count` bytes have been produced. Runs that
+// would extend past `count` are truncated instead of writing out of bounds.
+// Returns false if the file ends first (CFILE reads do not throw at EOF).
+static bool pcx_DecodeRun(CFILE *infile, uint8_t *dest, int count) {
+  int run = 0;
+  while (run < count) {
+    if (cfeof(infile))
+      return false;
+    uint8_t buf = cf_ReadByte(infile);
+    if (buf >= 192) {
+      if (cfeof(infile))
+        return false;
+      uint8_t tb = cf_ReadByte(infile);
+      for (int i = 0; i < (buf - 192) && run < count; i++, run++)
+        dest[run] = tb;
+    } else {
+      dest[run++] = buf;
+    }
+  }
+  return true;
+}
+
+static bool pcx_ValidDimensions(int width, int height) {
+  if (width <= 0 || height <= 0 || width > PCX_MAX_DIMENSION || height > PCX_MAX_DIMENSION) {
+    LOG_ERROR.printf("PCXLoad: invalid image size %dx%d", width, height);
+    return false;
+  }
+  return true;
+}
 
 // Loads a pcx file and converts it to 16 bit.  Returns bitmap handle or -1 on error
 int bm_pcx_alloc_file(CFILE *infile) {
@@ -92,11 +126,9 @@ int bm_pcx_alloc_file(CFILE *infile) {
 int bm_pcx_8bit_alloc_file(CFILE *infile) {
   int xmin, ymin, xmax, ymax;
   int width, height;
-  int total, run = 0;
   int i, t;
   int src_bm;
   uint8_t pred[256], pgreen[256], pblue[256];
-  uint8_t buf;
   uint8_t temp[128];
 
   cf_ReadBytes(temp, 4, infile);
@@ -116,24 +148,14 @@ int bm_pcx_8bit_alloc_file(CFILE *infile) {
 
   width = 1 + xmax - xmin;
   height = 1 + ymax - ymin;
-  total = width * height;
+  if (!pcx_ValidDimensions(width, height))
+    return -1;
 
-  uint8_t *rawdata = (uint8_t *)mem_malloc(width * height);
-  if (!rawdata)
-    return -1; // no memory!
-
-  run = 0;
-  while (run < total) {
-    buf = cf_ReadByte(infile);
-    if (buf >= 192) {
-      uint8_t tb;
-      tb = cf_ReadByte(infile);
-      for (i = 0; i < (buf - 192); i++, run++)
-        rawdata[run] = tb;
-    } else {
-      rawdata[run] = buf;
-      run++;
-    }
+  // Owned by the vector so read exceptions and failures cannot leak it.
+  std::vector<uint8_t> rawdata(static_cast<size_t>(width) * height);
+  if (!pcx_DecodeRun(infile, rawdata.data(), width * height)) {
+    LOG_ERROR << "PCXLoad: image data is truncated";
+    return -1;
   }
 
   cf_ReadByte(infile); // ignore pad
@@ -172,7 +194,6 @@ int bm_pcx_8bit_alloc_file(CFILE *infile) {
       data[i * width + t] = pixel;
     }
   }
-  mem_free(rawdata);
 
   return src_bm; // success!
 }
@@ -181,10 +202,9 @@ int bm_pcx_8bit_alloc_file(CFILE *infile) {
 int bm_pcx_24bit_alloc_file(CFILE *infile) {
   int xmin, ymin, xmax, ymax;
   int width, height;
-  int total, run = 0;
+  int total;
   int i, t;
   int src_bm;
-  uint8_t buf;
   uint8_t temp[128];
 
   cf_ReadBytes(temp, 4, infile);
@@ -218,20 +238,22 @@ int bm_pcx_24bit_alloc_file(CFILE *infile) {
 
   width = 1 + xmax - xmin;
   height = 1 + ymax - ymin;
+  if (!pcx_ValidDimensions(width, height))
+    return -1;
 
   // Determine BytesPerLine
   cfseek(infile, 66, SEEK_SET);
   int BytesPerLine = cf_ReadShort(infile);
   cfseek(infile, 128, SEEK_SET);
 
+  // Each plane's scanline must hold at least one byte per pixel.
+  if (BytesPerLine < width || BytesPerLine > 2 * PCX_MAX_DIMENSION) {
+    LOG_ERROR.printf("PCXLoad: invalid bytes per line %d for width %d", BytesPerLine, width);
+    return -1;
+  }
+
   // scanline length
   total = 3 * BytesPerLine;
-
-  uint8_t *rawdata = (uint8_t *)mem_malloc(total * height);
-  if (!rawdata) {
-    LOG_ERROR << "PCXLoad: Out of memory";
-    return -1; // no memory!
-  }
 
   // Load in the data
   // the data is divided into scanlines
@@ -240,53 +262,13 @@ int bm_pcx_24bit_alloc_file(CFILE *infile) {
   // the third scanline is line 0's blue
   // the fourth scanline is line 1's red
   // etc.
-  int data_index = 0;
+  // Owned by the vector so read exceptions and failures cannot leak it.
+  std::vector<uint8_t> rawdata(static_cast<size_t>(total) * height);
   for (int line = 0; line < height; line++) {
-    // Read red scanline
-    run = 0;
-    while (run < BytesPerLine) {
-      buf = cf_ReadByte(infile);
-      if (buf >= 192) {
-        uint8_t tb;
-        tb = cf_ReadByte(infile);
-        for (i = 0; i < (buf - 192); i++, run++, data_index++)
-          rawdata[data_index] = tb;
-      } else {
-        rawdata[data_index] = buf;
-        run++;
-        data_index++;
-      }
-    }
-
-    // Read green scanline
-    run = 0;
-    while (run < BytesPerLine) {
-      buf = cf_ReadByte(infile);
-      if (buf >= 192) {
-        uint8_t tb;
-        tb = cf_ReadByte(infile);
-        for (i = 0; i < (buf - 192); i++, run++, data_index++)
-          rawdata[data_index] = tb;
-      } else {
-        rawdata[data_index] = buf;
-        run++;
-        data_index++;
-      }
-    }
-
-    // Read blue scanline
-    run = 0;
-    while (run < BytesPerLine) {
-      buf = cf_ReadByte(infile);
-      if (buf >= 192) {
-        uint8_t tb;
-        tb = cf_ReadByte(infile);
-        for (i = 0; i < (buf - 192); i++, run++, data_index++)
-          rawdata[data_index] = tb;
-      } else {
-        rawdata[data_index] = buf;
-        run++;
-        data_index++;
+    for (int plane = 0; plane < 3; plane++) {
+      if (!pcx_DecodeRun(infile, &rawdata[static_cast<size_t>(line) * total + plane * BytesPerLine], BytesPerLine)) {
+        LOG_ERROR << "PCXLoad: image data is truncated";
+        return -1;
       }
     }
   }
@@ -311,7 +293,6 @@ int bm_pcx_24bit_alloc_file(CFILE *infile) {
       data[i * width + t] = pixel;
     }
   }
-  mem_free(rawdata);
 
   return src_bm; // success!
 }

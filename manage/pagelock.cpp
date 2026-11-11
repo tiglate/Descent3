@@ -665,6 +665,7 @@ int mng_DeleteDuplicatePagelocks() {
   infile = (CFILE *)cfopen(TableLockFilename, "rb");
   if (!infile) {
     strcpy(ErrorString, "Couldn't open Table lock file!");
+    mem_free(already_read);
     return 0;
   }
   /*	outfile=(CFILE *)cfopen (TempTableLockFilename,"wb");

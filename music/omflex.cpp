@@ -225,6 +225,11 @@ bool OutrageMusicSeq::LoadTheme(const char *file) {
   // reopen for SECOND PASS (actual code read)
   if (!inf.Open(file, "[theme file]", OMFLex)) {
     LOG_WARNING.printf("Unable to find requested theme %s or bad file.", file);
+    // free the labels collected by the first pass
+    while (n_labels) {
+      mem_free(labels[n_labels - 1].name);
+      n_labels--;
+    }
     return false;
   }
 

@@ -189,10 +189,10 @@ bool DSGetFirstRoomObject(int n, int *first) {
     int cell;
 
     cell = CELLNUM(n);
-    if (cell < 0 && cell >= TERRAIN_WIDTH * TERRAIN_DEPTH)
+    if (cell < 0 || cell >= TERRAIN_WIDTH * TERRAIN_DEPTH)
       return false;
 
-    *first = Terrain_seg[n].objects;
+    *first = Terrain_seg[cell].objects;
   }
 
   return true;

@@ -4997,7 +4997,8 @@ bool GuideBot::DoExternalCommands(int me, gb_com *command, int it) {
         }
       }
 
-      if (num_items == 0) {
+      // All items done: fall back to the first one, if the goal has any items.
+      if (num_items == 0 && rnum_items > 0) {
         num_items = 1;
         handle[0] = rhandle[0];
       }
@@ -5006,6 +5007,9 @@ bool GuideBot::DoExternalCommands(int me, gb_com *command, int it) {
         DoMessage(TXT_GB_NOTLOCATION, true, "GBotConcern1");
       } else if (flags & LGF_GB_DOESNT_KNOW_LOC) {
         DoMessage(TXT_GB_NONAV, true, "GBotConcern1");
+      } else if (num_items == 0) {
+        // The goal has no items, so there is nothing to go to.
+        DoMessage(TXT_GB_NOTREACH, true, "GBotConcern1");
       } else if (type == LIT_OBJECT) {
         bool f_ok = false;
 

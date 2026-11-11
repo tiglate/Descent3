@@ -1254,8 +1254,10 @@ int mng_GetGuaranteedTexturePage(char *name, CFILE *infile) {
   // Not in memory.  Load it from the table file.  Start searching from the
   // current spot in the open table file
   int ret = mng_FindSpecificTexPage(name, texpage, infile ? infile->position : 0);
-  if (!ret)
+  if (!ret) {
+    mem_free(texpage);
     return -1;
+  }
 
   // We've found it in the table file, now load it.
   ret = mng_SetAndLoadTexture(texpage, infile);

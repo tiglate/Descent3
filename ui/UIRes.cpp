@@ -141,23 +141,30 @@ UIItem *UITextItem::CopyUIItem() {
   return newitem;
 }
 
-const UITextItem &UITextItem::operator=(const UITextItem &item) {
+// Replaces m_Text with a copy of text. A null source (a default-constructed
+// item) copies as empty text. The new copy is made before the old text is
+// released, so assigning an item to itself is safe.
+void UITextItem::AssignText(const char *text) {
+  if (text == m_Text)
+    return;
+  char *copy = &UITextItem::dummy_str[0];
+  if (text && text[0]) {
+    copy = mem_strdup(text);
+    if (!copy) {
+      Error("Memory allocation failed in UITextItem.");
+      return; // Error can return in debug builds; keep the current text.
+    }
+  } else {
+    dummy_str[0] = 0;
+  }
   if (m_Text && m_Text != (&UITextItem::dummy_str[0])) {
     mem_free(m_Text);
   }
+  m_Text = copy;
+}
 
-  if (strlen(item.m_Text) > 0) {
-    m_Text = mem_strdup(item.m_Text);
-    if (!m_Text)
-      Error("Memory allocation failed in UITextItem.");
-  } else {
-    m_Text = &UITextItem::dummy_str[0];
-    dummy_str[0] = 0;
-  }
-
-  if (m_Text != item.m_Text) {
-    strcpy(m_Text, item.m_Text);
-  }
+const UITextItem &UITextItem::operator=(const UITextItem &item) {
+  AssignText(item.m_Text);
   m_Color = item.m_Color;
   m_Alpha = item.m_Alpha;
   m_Font = item.m_Font;
@@ -249,21 +256,7 @@ UIItem *UISnazzyTextItem::CopyUIItem() {
 }
 
 const UISnazzyTextItem &UISnazzyTextItem::operator=(const UISnazzyTextItem &item) {
-  // reproduce UITextItem's = operator
-  if (m_Text && m_Text != (&UITextItem::dummy_str[0])) {
-    mem_free(m_Text);
-  }
-
-  if (strlen(item.m_Text) > 0) {
-    m_Text = mem_strdup(item.m_Text);
-    if (!m_Text)
-      Error("Memory allocation failed in UITextItem.");
-  } else {
-    m_Text = &UITextItem::dummy_str[0];
-    dummy_str[0] = 0;
-  }
-
-  strcpy(m_Text, item.m_Text);
+  AssignText(item.m_Text);
 
   set_color(item.get_color());
   set_alpha(item.get_alpha());

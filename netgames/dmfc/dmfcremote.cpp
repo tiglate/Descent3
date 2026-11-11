@@ -53,6 +53,7 @@
 #include "dmfcinternal.h"
 #include "encryption.h"
 
+#include <algorithm>
 #include <stdlib.h>
 #include <memory.h>
 
@@ -483,6 +484,11 @@ void Remote_SendStringToServer(const char *string) {
 
   MultiAddByte(prec, data, &count);
   MultiAddInt(new_strlen, data, &count);
+  if (new_strlen > MAX_GAME_DATA_SIZE - count) {
+    LOG_ERROR << "Remote command too long to send";
+    free(packet_data);
+    return;
+  }
   memcpy(&data[count], packet_data, new_strlen);
   count += new_strlen;
 
@@ -519,11 +525,14 @@ void Remote_RecieveStringFromServer(uint8_t *data, char *buffer, int size) {
   }
 
   ASSERT(len > 0);
-  if (len <= 0)
+  // len comes from the network: it must fit inside the received packet.
+  if (len <= 0 || len > MAX_GAME_DATA_SIZE - count)
     return;
 
   uint8_t *packet;
   packet = (uint8_t *)malloc(len);
+  if (!packet)
+    return;
   memcpy(packet, &data[count], len);
   count += len;
 
@@ -531,8 +540,10 @@ void Remote_RecieveStringFromServer(uint8_t *data, char *buffer, int size) {
   uint8_t *new_buffer;
   Remote_decrypt(Authorized_players[prec].curr_key, len, packet, &new_size, &new_buffer);
   if (new_buffer) {
-    strncpy(buffer, (char *)new_buffer, size - 1);
-    buffer[size - 1] = '\0';
+    // The decrypted block need not be terminated; copy at most its size.
+    int n = std::min(new_size, size - 1);
+    strncpy(buffer, (char *)new_buffer, n);
+    buffer[n] = '\0';
     free(new_buffer);
   } else {
     *buffer = '\0';
@@ -582,6 +593,11 @@ void Remote_SendStringToClient(int client, const char *string) {
   basethis->StartPacket(data, SPID_REMOTETOCLIENT, &count);
 
   MultiAddInt(new_strlen, data, &count);
+  if (new_strlen > MAX_GAME_DATA_SIZE - count) {
+    LOG_ERROR << "Remote reply too long to send";
+    free(packet_data);
+    return;
+  }
   memcpy(&data[count], packet_data, new_strlen);
   count += new_strlen;
 
@@ -609,11 +625,14 @@ int Remote_RecieveStringFromClient(uint8_t *data, char *buffer, int size) {
   ASSERT(prec >= 0 && prec < MAX_PLAYER_RECORDS);
   if (prec < 0 || prec >= MAX_PLAYER_RECORDS)
     return -1;
-  if (len <= 0)
+  // len comes from the network: it must fit inside the received packet.
+  if (len <= 0 || len > MAX_GAME_DATA_SIZE - count)
     return -1;
 
   uint8_t *packet;
   packet = (uint8_t *)malloc(len);
+  if (!packet)
+    return -1;
   memcpy(packet, &data[count], len);
   count += len;
 
@@ -621,9 +640,10 @@ int Remote_RecieveStringFromClient(uint8_t *data, char *buffer, int size) {
   uint8_t *new_buffer;
   Remote_decrypt(Authorized_players[prec].curr_key, len, packet, &new_size, &new_buffer);
   if (new_buffer) {
-    size = (len < size) ? len + 1 : size;
-    strncpy(buffer, (char *)new_buffer, size - 1);
-    buffer[size - 1] = '\0';
+    // The decrypted block need not be terminated; copy at most its size.
+    int n = std::min(new_size, size - 1);
+    strncpy(buffer, (char *)new_buffer, n);
+    buffer[n] = '\0';
     free(new_buffer);
   } else {
     *buffer = '\0';
@@ -667,8 +687,11 @@ static void Remote_encrypt(uint8_t key[8], int size_buffer, uint8_t *buffer, int
   int chunk_offset = 0;
   uint8_t *cipher;
   cipher = (uint8_t *)malloc(*new_size);
-  if (!cipher)
+  if (!cipher) {
+    free(buff);
+    *new_size = 0;
     return;
+  }
 
   num_chunks = (*new_size) / 8;
   for (i = 0; i < num_chunks; i++) {
@@ -696,8 +719,11 @@ static void Remote_decrypt(uint8_t key[8], int size_buffer, uint8_t *buffer, int
   int chunk_offset = 0;
   uint8_t *cipher;
   cipher = (uint8_t *)malloc(*new_size);
-  if (!cipher)
+  if (!cipher) {
+    free(buff);
+    *new_size = 0;
     return;
+  }
 
   num_chunks = (*new_size) / 8;
   for (i = 0; i < num_chunks; i++) {

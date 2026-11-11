@@ -768,35 +768,35 @@ int cf_ReadBytes(uint8_t *buf, int count, CFILE *cfp) {
 // Read and return an integer (32 bits)
 // Throws an exception of type (cfile_error *) if the OS returns an error on read
 int32_t cf_ReadInt(CFILE *cfp, bool little_endian) {
-  int32_t i;
+  int32_t i = 0; // a failed read returns 0, not uninitialized memory
   cf_ReadBytes((uint8_t *)&i, sizeof(i), cfp);
   return little_endian ? D3::convert_le(i) : D3::convert_be(i);
 }
 // Read and return a int16_t (16 bits)
 // Throws an exception of type (cfile_error *) if the OS returns an error on read
 int16_t cf_ReadShort(CFILE *cfp, bool little_endian) {
-  int16_t i;
+  int16_t i = 0;
   cf_ReadBytes((uint8_t *)&i, sizeof(i), cfp);
   return little_endian ? D3::convert_le(i) : D3::convert_be(i);
 }
 // Read and return a byte (8 bits)
 // Throws an exception of type (cfile_error *) if the OS returns an error on read
 int8_t cf_ReadByte(CFILE *cfp) {
-  int8_t i;
+  int8_t i = 0;
   cf_ReadBytes((uint8_t *)&i, sizeof(i), cfp);
   return i;
 }
 // Read and return a float (32 bits)
 // Throws an exception of type (cfile_error *) if the OS returns an error on read
 float cf_ReadFloat(CFILE *cfp) {
-  float f;
+  float f = 0;
   cf_ReadBytes((uint8_t *)&f, sizeof(f), cfp);
   return INTEL_FLOAT(f);
 }
 // Read and return a double (64 bits)
 // Throws an exception of type (cfile_error *) if the OS returns an error on read
 double cf_ReadDouble(CFILE *cfp) {
-  double f;
+  double f = 0;
   cf_ReadBytes((uint8_t *)&f, sizeof(f), cfp);
   return D3::convert_le<double>(f);
 }

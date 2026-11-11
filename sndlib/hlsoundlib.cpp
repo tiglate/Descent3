@@ -923,14 +923,12 @@ bool hlsSystem::ComputePlayInfo(int sound_obj_index, vector *virtual_pos, vector
         }
       }
       cur_room = BOA_NEXT_ROOM(cur_room, ear_seg);
-      int last_portal;
       if (BOA_INDEX(last_room) == BOA_INDEX(cur_room) || cur_room == BOA_NO_PATH)
         return false;
-      if (BOA_INDEX(last_room) != BOA_INDEX(cur_room)) {
-        last_portal = BOA_DetermineStartRoomPortal(last_room, nullptr, cur_room, nullptr);
-        if (last_portal == -1) {
-          return false;
-        }
+      // The rooms differ here, so there is always a portal to look up.
+      const int last_portal = BOA_DetermineStartRoomPortal(last_room, nullptr, cur_room, nullptr);
+      if (last_portal == -1) {
+        return false;
       }
       if (last_room == sound_seg) {
         if (cur_room == ear_seg) {

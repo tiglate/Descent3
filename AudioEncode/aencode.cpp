@@ -657,7 +657,8 @@ int SetupEncoder(Encoder &enc, int someVal, float std_lo_filter[], float std_hi_
 
   int adjustedSomeVal = (((someVal < -1) ? (someVal + 1) : (someVal)) + 1) >> 1;
   enc.m_adjustedSamplesTimeNumColumns = adjustedSomeVal * (enc.m_numColumns - 1);
-  enc.m_levelSlots = reinterpret_cast<float **>(malloc(sizeof(float *) * (levels + 1)));
+  // Zeroed so DestroyEncoder can release a partially set up encoder.
+  enc.m_levelSlots = reinterpret_cast<float **>(calloc(levels + 1, sizeof(float *)));
   if (enc.m_levelSlots == nullptr)
     return 0;
 

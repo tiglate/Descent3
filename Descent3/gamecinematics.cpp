@@ -1099,7 +1099,8 @@ void Cinematic_Frame(void) {
   }
 
   // adjust view to target
-  if (Gametime >= GameCinema.track_start && Gametime <= GameCinema.track_stop && target) {
+  // The camera object can disappear mid-cinematic (ObjGet returns null).
+  if (Gametime >= GameCinema.track_start && Gametime <= GameCinema.track_stop && target && camera) {
     // track target
 
     vector u_axis;
@@ -1127,7 +1128,7 @@ void Cinematic_Frame(void) {
     vm_Orthogonalize(&camera->orient);
     ObjSetOrient(camera, &camera->orient);
 
-  } else if ((GameCinema.flags & GCF_CAMERAPLACEMENT) == GCF_USEPATH) {
+  } else if (camera && camera->ai_info && (GameCinema.flags & GCF_CAMERAPLACEMENT) == GCF_USEPATH) {
     // adjust to path node orientation (if we are on a path)
     int cur_path = camera->ai_info->path.cur_path;
     int cur_node = camera->ai_info->path.cur_node;
