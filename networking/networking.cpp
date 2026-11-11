@@ -1507,14 +1507,19 @@ void nw_WorkReliable(uint8_t *data, int len, network_address *naddr) {
             savepacket = 0;
           }
         }
+        // data_len comes from the network: it must be non-negative and cover
+        // only bytes actually received (and fit the receive buffer).
+        const int data_len = INTEL_SHORT(rcv_buff.data_len);
+        const int received = len - static_cast<int>(RELIABLE_PACKET_HEADER_ONLY_SIZE);
+        if (data_len < 0 || data_len > received || data_len > max_len) {
+          LOG_WARNING.printf("Dropping reliable packet with invalid data length %d (%d received)", data_len, received);
+          continue;
+        }
         if (savepacket) {
           for (i = 0; i < MAXNETBUFFERS; i++) {
             if (nullptr == rsocket->rbuffers[i]) {
               // mprintf(0,"Got good data seq: %d\n",rcv_buff.seq);
-              if (INTEL_SHORT(rcv_buff.data_len) > max_len)
-                rsocket->recv_len[i] = max_len; // INTEL_SHORT(rcv_buff.data_len);
-              else
-                rsocket->recv_len[i] = INTEL_SHORT(rcv_buff.data_len);
+              rsocket->recv_len[i] = data_len;
               rsocket->rbuffers[i] = mem_rmalloc<reliable_net_rcvbuffer>();
               memcpy(rsocket->rbuffers[i]->buffer, rcv_buff.data, rsocket->recv_len[i]);
               rsocket->rsequence[i] = INTEL_SHORT(rcv_buff.seq);
@@ -1858,6 +1863,13 @@ void nw_psnet_buffer_init() {
 // buffer a packet (maintain order!)
 void nw_psnet_buffer_packet(uint8_t *data, int length, network_address *from) {
   int idx;
+
+  // Datagrams are read into a larger buffer than a packet slot; anything that
+  // does not fit a slot did not come from the game and is dropped.
+  if (length < 0 || length > MAX_PACKET_SIZE) {
+    LOG_WARNING.printf("Dropping unreliable packet of %d bytes (max %d)", length, MAX_PACKET_SIZE);
+    return;
+  }
 
   // find the first empty packet
   for (idx = 0; idx < MAX_PACKET_BUFFERS; idx++) {

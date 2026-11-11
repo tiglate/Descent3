@@ -1749,7 +1749,7 @@ void ShowNetgameInfo(network_game *game) {
   sheet->NewGroup(nullptr, (GAME_INFO_MENU_W - 140), GAME_INFO_MENU_H - 95, NEWUI_ALIGN_HORIZ);
   sheet->AddButton(TXT_DONE, UID_CANCEL);
   // Get players
-  Multi_recieved_player_list = (char *)mem_malloc(((CALLSIGN_LEN + 1) * MAX_NET_PLAYERS) + 1);
+  Multi_recieved_player_list = (char *)mem_malloc(MULTI_PLAYER_LIST_SIZE);
   memset(Multi_recieved_player_list, 0, ((CALLSIGN_LEN + 1) * MAX_NET_PLAYERS) + 1);
 
   Multi_got_player_list = false;

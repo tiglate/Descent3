@@ -82,6 +82,7 @@
  * $NoKeywords: $
  */
 
+#include <algorithm>
 #include "gamedll_header.h"
 #include "DMFC.h"
 #include "dmfcinternal.h"
@@ -583,13 +584,17 @@ void PRec_ReceivePRecFromServer(uint8_t *data) {
   int pinfo_size;
   player_record *pr;
   ASSERT((slot >= 0) && (slot < MAX_PLAYER_RECORDS));
+  if (slot < 0 || slot >= MAX_PLAYER_RECORDS)
+    return; // invalid record number from the network
   pr = &Player_records[slot];
 
   pr->state = (slot_state)MultiGetByte(data, &count); // unpack byte (state)
-  callsignlen = MultiGetByte(data, &count);           // unpack byte (callsign length)
-  memcpy(pr->callsign, &data[count], callsignlen);
-  count += callsignlen; // unpack bytes (callsign)
-  pr->callsign[callsignlen] = '\0';
+  // unpack the length-prefixed callsign, bounded to the field and terminated
+  callsignlen = MultiGetByte(data, &count);
+  int copylen = std::min(callsignlen, (int)sizeof(pr->callsign) - 1);
+  memcpy(pr->callsign, &data[count], copylen);
+  count += callsignlen;
+  pr->callsign[copylen] = '\0';
   MultiUnpackNetworkAddress(&pr->net_addr, data, &count); // unpack bytes (network address)
   pr->pnum = MultiGetByte(data, &count);                  // unpack byte (pnum)
   pr->team = (int8_t)MultiGetByte(data, &count); // unpack byte (team); 255 becomes -1

@@ -666,6 +666,8 @@ int ObjInitPlayer(object *objp) {
   ship *ship;
   int ret = 1;
   ASSERT(objp->type == OBJ_PLAYER);
+  if (objp->id >= MAX_PLAYERS) // ids can come from network or level data
+    return 0;
   objp->shields = INITIAL_SHIELDS;
   ship = &Ships[Players[objp->id].ship_index];
   if (!ship->used) { // this ship doesn't exist
@@ -1036,6 +1038,8 @@ int ObjInitWeapon(object *objp) {
 int ObjInitFireball(object *objp) {
   int ret = 1;
   ASSERT(objp->type == OBJ_FIREBALL);
+  if (objp->id >= NUM_FIREBALLS) // ids can come from network or level data
+    return 0;
   // Set size & shields
   objp->shields = 0;
   objp->size = 0;
@@ -1070,6 +1074,8 @@ int ObjInitMarker(object *objp) {
   return ret;
 }
 int ObjInitDoor(object *objp, bool reinit) {
+  if (objp->id >= MAX_DOORS) // ids can come from network or level data
+    return 0;
   // Set up movement info
   objp->movement_type = MT_NONE;
   SetObjectControlType(objp, CT_NONE);

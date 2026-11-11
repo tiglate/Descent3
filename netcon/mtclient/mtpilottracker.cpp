@@ -108,6 +108,7 @@
 #include <windows.h>
 #endif
 
+#include <algorithm>
 #include <cstdlib>
 #include <cstring>
 
@@ -455,19 +456,27 @@ void PollPTrackNet() {
 int Motd_version = 0;
 
 void HandlePilotData(uint8_t *data, int len, [[maybe_unused]] network_address *from) {
-  udp_packet_header inpacket;
+  udp_packet_header inpacket{};
   vmt_descent3_struct *d3_pilot;
-  memcpy(&inpacket, data, sizeof(inpacket));
+  // Copy only what was received (zero-filling the rest), and require a header.
+  if (len < static_cast<int>(PACKED_HEADER_ONLY_SIZE))
+    return;
+  const int received = std::min(len, static_cast<int>(sizeof(inpacket)));
+  memcpy(&inpacket, data, received);
   inpacket.len = INTEL_SHORT(inpacket.len) - 1;
   if (len) {
     switch (inpacket.type) {
     case UNT_MOTD_RESPONSE:
       if (MOTDState == STATE_WAITING_MOTD) {
-        if (Motdptr) {
-          if ((inpacket.len - PACKED_HEADER_ONLY_SIZE) > Motd_maxlen)
-            inpacket.len = PACKED_HEADER_ONLY_SIZE + Motd_maxlen - 1;
-          strncpy(Motdptr, (char *)inpacket.data, inpacket.len - PACKED_HEADER_ONLY_SIZE);
-          Motdptr[inpacket.len - PACKED_HEADER_ONLY_SIZE] = '\0';
+        if (Motdptr && Motd_maxlen > 0) {
+          // The packet's length field is untrusted: bound the text by the
+          // bytes received and by the destination.
+          int text_len = static_cast<int>(inpacket.len) - static_cast<int>(PACKED_HEADER_ONLY_SIZE);
+          text_len = std::clamp(
+              text_len, 0,
+              std::min(received - static_cast<int>(PACKED_HEADER_ONLY_SIZE), static_cast<int>(Motd_maxlen) - 1));
+          strncpy(Motdptr, (char *)inpacket.data, text_len);
+          Motdptr[text_len] = '\0';
         }
         MOTDState = STATE_HAVE_MOTD;
       }

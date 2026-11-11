@@ -671,6 +671,9 @@ extern uint16_t Server_object_list[];
 extern uint16_t Server_spew_list[];
 
 #define MAX_RECEIVE_SIZE 4096
+
+// Buffer for a server's player list (callsigns plus terminators).
+#define MULTI_PLAYER_LIST_SIZE (((CALLSIGN_LEN + 1) * MAX_NET_PLAYERS) + 1)
 #define MAX_NETWORK_GAMES 100
 
 // The size of the packet_number and guaranteed fields of game_packet_data:

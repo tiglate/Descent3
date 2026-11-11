@@ -401,6 +401,25 @@ template <size_t N> inline void MultiGetString(char (&str)[N], uint8_t *data, in
   MultiGetString(str, N, data, count);
 }
 
+// As MultiGetString, for fields encoded with a 16-bit length (file names,
+// URLs). The copy is bounded by str_size and always terminated; the read
+// position advances by the full encoded length.
+inline void MultiGetString16(char *str, size_t str_size, uint8_t *data, int *count) {
+  uint16_t len = MultiGetUshort(data, count);
+  if (str_size == 0) {
+    *count += len;
+    return;
+  }
+  size_t copy = (len < str_size - 1) ? len : str_size - 1;
+  memcpy(str, &data[*count], copy);
+  str[copy] = '\0';
+  *count += len;
+}
+
+template <size_t N> inline void MultiGetString16(char (&str)[N], uint8_t *data, int *count) {
+  MultiGetString16(str, N, data, count);
+}
+
 inline void MultiAddVector(vector v, uint8_t *data, int *count) {
   MultiAddFloat(v.x(), data, count);
   MultiAddFloat(v.y(), data, count);

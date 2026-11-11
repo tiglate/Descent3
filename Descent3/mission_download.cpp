@@ -576,15 +576,16 @@ void msn_DoCurrMsnURLs(uint8_t *data, [[maybe_unused]] network_address *net_addr
 
   SKIP_HEADER(data, &count);
   // Get the mission name
-  int msnlen = MultiGetByte(data, &count);
-  memcpy(&msn_URL.msnname, data + count, msnlen);
-  count += msnlen;
+  MultiGetString(msn_URL.msnname, data, &count);
   num_urls = MultiGetByte(data, &count);
 
+  // Lengths and counts come from the network: keep at most
+  // MAX_MISSION_URL_COUNT URLs, each bounded and terminated.
   for (i = 0; i < num_urls; i++) {
-    uint16_t urllen = MultiGetUshort(data, &count);
-    memcpy(msn_URL.URL[i], data + count, urllen);
-    count += urllen;
+    char url[MAX_MISSION_URL_LEN];
+    MultiGetString16(url, data, &count);
+    if (i < MAX_MISSION_URL_COUNT)
+      strcpy(msn_URL.URL[i], url);
   }
   Got_url = 1;
 }

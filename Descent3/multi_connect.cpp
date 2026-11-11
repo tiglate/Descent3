@@ -436,29 +436,25 @@ void MultiDoConnectionAccepted(uint8_t *data) {
     LOG_DEBUG << "Client/server versions match.";
 
     // Check if we have the mission needed
-    uint8_t len = MultiGetByte(data, &count);
-    memcpy(Netgame.mission, &data[count], len);
-    count += len;
+    MultiGetString(Netgame.mission, data, &count);
 
     if (!LoadMission(Netgame.mission)) {
       LOG_DEBUG.printf("We don't have this mission: %s!", Netgame.mission);
     } else
       LOG_DEBUG.printf("Using mission %s...", Netgame.mission);
 
-    len = MultiGetByte(data, &count);
-    memcpy(Netgame.name, &data[count], len);
-    count += len;
+    MultiGetString(Netgame.name, data, &count);
 
     // Do script name stuff
-    len = MultiGetByte(data, &count);
-    memcpy(Netgame.scriptname, &data[count], len);
-    count += len;
+    MultiGetString(Netgame.scriptname, data, &count);
 
     SetGamemodeScript(Netgame.scriptname);
 
     // Get my player num and copy my name over
     uint8_t player_num = MultiGetByte(data, &count);
-    char name[CALLSIGN_LEN];
+    if (player_num >= MAX_NET_PLAYERS)
+      return;                    // invalid player number from the network
+    char name[CALLSIGN_LEN + 1]; // same size as player::callsign
     netplayer tempplayer;
     strcpy(name, Players[Player_num].callsign);
     memcpy(&tempplayer, &NetPlayers[Player_num], sizeof(netplayer));
@@ -784,13 +780,13 @@ void MultiDoReadyForLevel(uint8_t *data) {
   // Skip header stuff
   SKIP_HEADER(data, &count);
 
-  // Get slot number
+  // Get slot number (from the network: must be a valid player slot)
   slot = MultiGetByte(data, &count);
+  if (slot >= MAX_NET_PLAYERS)
+    return;
 
-  // Copy the ship name out
-  int len = MultiGetByte(data, &count);
-  memcpy(ship_name, &data[count], len);
-  count += len;
+  // Copy the ship name out (bounded and terminated)
+  MultiGetString(ship_name, data, &count);
 
   int ship_index = FindShipName(ship_name);
   if (ship_index < 0)

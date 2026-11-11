@@ -1711,6 +1711,46 @@ uint32_t Netgame_curr_handle = 1;
 
 uint16_t Local_object_list[MAX_OBJECTS];
 uint16_t Server_object_list[MAX_OBJECTS];
+
+// Range checks for indexes read from network packets. Handlers return (drop
+// the rest of the packet) when one fails; packet-supplied values must never
+// index these arrays unchecked.
+static inline bool MultiValidSlot(int slot) { return slot >= 0 && slot < MAX_NET_PLAYERS; }
+static inline bool MultiValidObjnum(int objnum) { return objnum >= 0 && objnum < MAX_OBJECTS; }
+static inline bool MultiValidRoom(int roomnum) { return roomnum >= 0 && roomnum <= Highest_room_index; }
+static inline bool MultiValidWB(int wb_index) { return wb_index >= 0 && wb_index < MAX_WBS_PER_OBJ; }
+static inline bool MultiValidSpew(int spewnum) { return spewnum >= 0 && spewnum < MAX_SPEW_EFFECTS; }
+// A room number decoded from a packet: a terrain cell or an existing room.
+static inline bool MultiValidPacketRoom(int roomnum) {
+  if (ROOMNUM_OUTSIDE(roomnum))
+    return CELLNUM(roomnum) < TERRAIN_WIDTH * TERRAIN_DEPTH;
+  return MultiValidRoom(roomnum) && Rooms[roomnum].used;
+}
+
+// Custom file names (ship logo, voice taunts) come from other players and are
+// later joined into paths under custom/. Only a bare file name is accepted;
+// anything that could leave that directory clears the name (no custom file).
+static void MultiSanitizeCustomFileName(char *name) {
+  if (strpbrk(name, "/\\:") || strcmp(name, ".") == 0 || strcmp(name, "..") == 0)
+    name[0] = '\0';
+}
+
+// Reads a marker message into the marker's row; an out-of-range marker id
+// (from the network) is read into a discard buffer so later fields stay aligned.
+static void MultiGetMarkerMessage(int id, uint8_t *data, int *count) {
+  if (id >= 0 && id < MAX_PLAYERS * 2) {
+    MultiGetString(MarkerMessages[id], data, count);
+  } else {
+    char discard[MAX_MARKER_MESSAGE_LENGTH];
+    MultiGetString(discard, data, count);
+  }
+}
+
+// Maps a server object number from a packet to the local object number, or
+// 65535 (the "no object" sentinel) when the number is out of range.
+static inline uint16_t MultiServerToLocal(int server_objnum) {
+  return MultiValidObjnum(server_objnum) ? Server_object_list[server_objnum] : 65535;
+}
 uint16_t Server_spew_list[MAX_SPEW_EFFECTS];
 
 #ifndef RELEASE
@@ -2088,6 +2128,8 @@ void MultiDoRobotFire(uint8_t *data) {
 
   SKIP_HEADER(data, &count);
   int serv_objnum = MultiGetUshort(data, &count);
+  if (!MultiValidObjnum(serv_objnum))
+    return; // invalid index from the network
   obj_num = Server_object_list[serv_objnum];
 
   if (obj_num == 65535 || !(Objects[obj_num].flags & OF_SERVER_OBJECT)) {
@@ -2265,12 +2307,13 @@ bool AINotify(object *obj, uint8_t notify_type, void *info);
 void MultiDoMyInfo(uint8_t *data) {
   int count = 0;
   char ship_name[PAGENAME_LEN];
-  int length;
 
   // Skip header stuff
   SKIP_HEADER(data, &count);
 
   uint8_t slot = MultiGetByte(data, &count);
+  if (!MultiValidSlot(slot))
+    return; // invalid index from the network
   if (!(NetPlayers[slot].flags & NPF_CONNECTED)) {
     LOG_FATAL << "ERROR!  We got a MY_INFO packet from a disconnected player!";
     Int3(); // Get Jason
@@ -2278,19 +2321,10 @@ void MultiDoMyInfo(uint8_t *data) {
   }
 
   // Copy the name out
-  uint8_t len = MultiGetByte(data, &count);
-  if (len > CALLSIGN_LEN)
-    length = CALLSIGN_LEN;
-  else
-    length = len;
-
-  memcpy(Players[slot].callsign, &data[count], length);
-  count += len;
+  MultiGetString(Players[slot].callsign, data, &count);
 
   // Copy the ship name out
-  len = MultiGetByte(data, &count);
-  memcpy(ship_name, &data[count], len);
-  count += len;
+  MultiGetString(ship_name, data, &count);
 
   int ship_index = FindShipName(ship_name);
   if (ship_index < 0)
@@ -2333,9 +2367,7 @@ void MultiDoMyInfo(uint8_t *data) {
                   << "Someone tried to join a master tracker game through the local net screen!";
     }
     NetPlayers[slot].flags |= NPF_MT_READING_PILOT;
-    len = MultiGetByte(data, &count);
-    memcpy(Players[slot].tracker_id, &data[count], len);
-    count += len;
+    MultiGetString(Players[slot].tracker_id, data, &count);
     strcpy(MTPilotinfo[slot].tracker_id, Players[slot].tracker_id);
     strcpy(MTPilotinfo[slot].pilot_name, Players[slot].callsign);
   }
@@ -2363,10 +2395,7 @@ void MultiDoMyInfo(uint8_t *data) {
   // Copy the guidebot name out
   char guidebot_name[32];
   memset(guidebot_name, 0, 32);
-  len = MultiGetByte(data, &count);
-  ASSERT(len < 32);
-  memcpy(guidebot_name, &data[count], len);
-  count += len;
+  MultiGetString(guidebot_name, data, &count);
 
   // Set the guidebot name
   if (Netgame.flags & NF_ALLOWGUIDEBOT) {
@@ -2381,7 +2410,7 @@ void MultiDoMyInfo(uint8_t *data) {
 
   NetPlayers[slot].sequence = NETSEQ_NEED_GAMETIME;
 
-  LOG_DEBUG.printf("Got a myinfo packet from %s len=%d!", Players[slot].callsign, len);
+  LOG_DEBUG.printf("Got a myinfo packet from %s!", Players[slot].callsign);
 }
 
 // Tell a client about the players connected
@@ -2393,6 +2422,8 @@ void MultiDoRequestPlayers(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   uint8_t slot = MultiGetByte(data, &count);
+  if (!MultiValidSlot(slot))
+    return; // invalid index from the network
   if (!(NetPlayers[slot].flags & NPF_CONNECTED)) {
     LOG_FATAL << "ERROR!  We got a MY_INFO packet from a disconnected player!";
     Int3(); // Get Jason
@@ -2411,6 +2442,8 @@ void MultiDoRequestBuildings(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   uint8_t slot = MultiGetByte(data, &count);
+  if (!MultiValidSlot(slot))
+    return; // invalid index from the network
   if (!(NetPlayers[slot].flags & NPF_CONNECTED)) {
     LOG_FATAL << "ERROR!  We got a request buildings packet from a disconnected player!";
     Int3(); // Get Jason
@@ -2429,6 +2462,8 @@ void MultiDoRequestObjects(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   uint8_t slot = MultiGetByte(data, &count);
+  if (!MultiValidSlot(slot))
+    return; // invalid index from the network
   if (!(NetPlayers[slot].flags & NPF_CONNECTED)) {
     LOG_FATAL << "ERROR!  We got a request object packet from a disconnected player!";
     Int3(); // Get Jason
@@ -2446,6 +2481,8 @@ void MultiDoRequestWorldStates(uint8_t *data) {
   // Skip header stuff
   SKIP_HEADER(data, &count);
   uint8_t slot = MultiGetByte(data, &count);
+  if (!MultiValidSlot(slot))
+    return; // invalid index from the network
 
   uint8_t rxdigest[16];
   for (int i = 0; i < 16; i++) {
@@ -2498,6 +2535,8 @@ void MultiDoPlayer(uint8_t *data) {
 
   // Get slotnumber
   uint8_t slot = MultiGetByte(data, &count);
+  if (!MultiValidSlot(slot))
+    return; // invalid index from the network
 
   // Reset some local stuff for this player
   if (slot != Player_num) {
@@ -2509,14 +2548,10 @@ void MultiDoPlayer(uint8_t *data) {
   }
 
   // Get name
-  uint8_t len = MultiGetByte(data, &count);
-  memcpy(Players[slot].callsign, &data[count], len);
-  count += len;
+  MultiGetString(Players[slot].callsign, data, &count);
 
   // Get ship name
-  len = MultiGetByte(data, &count);
-  memcpy(ship_name, &data[count], len);
-  count += len;
+  MultiGetString(ship_name, data, &count);
 
   int ship_index = FindShipName(ship_name);
   if (ship_index < 0) {
@@ -2540,6 +2575,8 @@ void MultiDoPlayer(uint8_t *data) {
 
   // Get object number, just to verify
   int objnum = MultiGetShort(data, &count);
+  if (!MultiValidObjnum(objnum))
+    return; // invalid index from the network
 
   // Make sure we have the right object number
   if (objnum != Players[slot].objnum) {
@@ -2554,6 +2591,8 @@ void MultiDoPlayer(uint8_t *data) {
   // Get team start
   if (slot == Player_num) {
     Players[slot].start_index = MultiGetShort(data, &count);
+    if (Players[slot].start_index >= MAX_PLAYERS)
+      return; // start position (< 0 is an auto-waypoint) out of range
     PlayerMoveToStartPos(slot, Players[slot].start_index);
   }
 
@@ -2579,9 +2618,7 @@ void MultiDoPlayer(uint8_t *data) {
 
   // Get tracker id
   if (Game_is_master_tracker_game) {
-    int len = MultiGetByte(data, &count);
-    memcpy(Players[slot].tracker_id, &data[count], len);
-    count += len;
+    MultiGetString(Players[slot].tracker_id, data, &count);
   }
 
   object *obj = &Objects[objnum];
@@ -2626,7 +2663,6 @@ void MultiSendNewPlayer([[maybe_unused]] int slot) {}
 void MultiDoPlayerEnteredGame(uint8_t *data) {
   int count = 0;
   char ship_name[PAGENAME_LEN];
-  int length;
 
   LOG_DEBUG << "Got player entered game packet!";
 
@@ -2636,25 +2672,15 @@ void MultiDoPlayerEnteredGame(uint8_t *data) {
   // Get slot number for this player
   uint8_t slot = MultiGetByte(data, &count);
 
-  if (slot > MAX_PLAYERS)
+  if (slot >= MAX_PLAYERS)
     return;
 
   ScoreAPIPlayerJoin(slot);
   // get name
-  uint8_t len = MultiGetByte(data, &count);
-
-  if (len > CALLSIGN_LEN)
-    length = CALLSIGN_LEN;
-  else
-    length = len;
-
-  memcpy(Players[slot].callsign, &data[count], length);
-  count += len;
+  MultiGetString(Players[slot].callsign, data, &count);
 
   // get ship name
-  len = MultiGetByte(data, &count);
-  memcpy(ship_name, &data[count], len);
-  count += len;
+  MultiGetString(ship_name, data, &count);
 
   int ship_index = FindShipName(ship_name);
   if (ship_index < 0)
@@ -2666,6 +2692,8 @@ void MultiDoPlayerEnteredGame(uint8_t *data) {
 
   // Verify object number
   int objnum = MultiGetShort(data, &count);
+  if (!MultiValidObjnum(objnum))
+    return; // invalid index from the network
 
   MULTI_ASSERT(objnum == Players[slot].objnum, nullptr);
   MULTI_ASSERT(Objects[objnum].id == slot, nullptr);
@@ -2681,15 +2709,15 @@ void MultiDoPlayerEnteredGame(uint8_t *data) {
   NetPlayers[slot].pilot_pic_id = MultiGetUshort(data, &count);
 
   Players[slot].start_index = MultiGetShort(data, &count);
+  if (Players[slot].start_index >= MAX_PLAYERS)
+    return; // start position (< 0 is an auto-waypoint) out of range
 
   // Get ranking
   Players[slot].rank = MultiGetFloat(data, &count);
 
   // Get tracker id
   if (Game_is_master_tracker_game) {
-    int len = MultiGetByte(data, &count);
-    memcpy(Players[slot].tracker_id, &data[count], len);
-    count += len;
+    MultiGetString(Players[slot].tracker_id, data, &count);
 
     NetPlayers[slot].flags &= ~NPF_WROTE_RANK;
   }
@@ -2789,6 +2817,8 @@ void MultiDoEnteringGame(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   uint8_t slot = MultiGetByte(data, &count);
+  if (!MultiValidSlot(slot))
+    return; // invalid index from the network
 
   if (!(NetPlayers[slot].flags & NPF_CONNECTED)) {
     Int3(); // Get Jason
@@ -2870,7 +2900,11 @@ void MultiDoDamagePlayer(uint8_t *data) {
 
   SKIP_HEADER(data, &count);
   uint8_t slot = MultiGetByte(data, &count);
+  if (!MultiValidSlot(slot))
+    return; // invalid index from the network
   uint8_t weapon_id = MultiGetByte(data, &count);
+  if (weapon_id != 255 && weapon_id >= MAX_WEAPONS)
+    return; // invalid weapon from the network
   uint8_t type = MultiGetByte(data, &count);
   float amount = MultiGetFloat(data, &count);
 
@@ -3044,6 +3078,8 @@ void MultiDoPlayerPos(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   uint8_t slot = MultiGetByte(data, &count);
+  if (!MultiValidSlot(slot))
+    return; // invalid index from the network
 
   // Make sure it is not out of order
   float packet_time = MultiGetFloat(data, &count);
@@ -3221,6 +3257,8 @@ void MultiDoRobotPos(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   uint16_t server_objnum = MultiGetUshort(data, &count);
+  if (!MultiValidObjnum(server_objnum))
+    return; // invalid index from the network
   uint16_t objectnum = Server_object_list[server_objnum];
   if (objectnum == 65535 || !(Objects[objectnum].flags & OF_SERVER_OBJECT)) {
     LOG_WARNING << "Bad robotposition object number!";
@@ -3250,6 +3288,8 @@ void MultiDoRobotPos(uint8_t *data) {
   roomnum = short_roomnum;
   if (terrain)
     roomnum = MAKE_ROOMNUM(roomnum);
+  if (!MultiValidPacketRoom(roomnum))
+    return; // invalid room from the network
   vector vel = {0, 0, 0};
 
   // Get velocity
@@ -3340,6 +3380,8 @@ void MultiDoFirePlayerWB(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   int pnum = MultiGetByte(data, &count);
+  if (!MultiValidSlot(pnum))
+    return; // invalid index from the network
   Player_fire_packet[pnum].wb_index = MultiGetByte(data, &count);
   Player_fire_packet[pnum].fire_mask = MultiGetByte(data, &count);
   Player_fire_packet[pnum].damage_scalar = MultiGetByte(data, &count);
@@ -3349,6 +3391,8 @@ void MultiDoFirePlayerWB(uint8_t *data) {
   int wb_index = Player_fire_packet[pnum].wb_index;
   int quaded = wb_index & MPFF_QUADED;
   wb_index &= ~MPFF_QUADED;
+  if (!MultiValidWB(wb_index))
+    return; // invalid index from the network
 
   // Fire!
   float scalar = (float)Player_fire_packet[pnum].damage_scalar / 64.0;
@@ -3459,6 +3503,8 @@ void MultiDoReleaseTimeoutMissile(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   int pnum = MultiGetByte(data, &count);
+  if (!MultiValidSlot(pnum))
+    return; // invalid index from the network
 
   if (Players[pnum].user_timeout_obj != nullptr) {
     ReleaseUserTimeoutMissile(pnum);
@@ -3623,6 +3669,8 @@ void MultiDoLeaveGame(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   uint8_t slot = MultiGetByte(data, &count);
+  if (!MultiValidSlot(slot))
+    return; // invalid index from the network
 
   if (NetPlayers[slot].flags & NPF_CONNECTED) {
     if (NetPlayers[slot].sequence == NETSEQ_PLAYING) {
@@ -3702,6 +3750,8 @@ void MultiDoDisconnect(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   uint8_t slot = MultiGetByte(data, &count);
+  if (!MultiValidSlot(slot))
+    return; // invalid index from the network
 
   if (NetPlayers[slot].flags & NPF_CONNECTED) {
     if (NetPlayers[slot].file_xfer_flags != NETFILE_NONE) {
@@ -3989,10 +4039,8 @@ void MultiDoGameInfo(uint8_t *data, network_address *from_addr) {
   int maxplayers;
   int currplayers;
   network_address incoming_addr;
-  int len, mission_len, script_len, mission_name_len;
   float ping_time;
   int i;
-  int fixed_len;
 
   if (Num_network_games_known >= MAX_NETWORK_GAMES)
     return;
@@ -4005,37 +4053,14 @@ void MultiDoGameInfo(uint8_t *data, network_address *from_addr) {
   memcpy(&incoming_addr, from_addr, sizeof(network_address));
   count += sizeof(network_address);
 
-  len = MultiGetByte(data, &count);
+  // A zero length used to write name[-1]; the helper bounds and terminates.
+  MultiGetString(name, data, &count);
 
-  fixed_len = std::min(NETGAME_NAME_LEN, len);
+  MultiGetString(mission, data, &count);
 
-  memcpy(name, &data[count], fixed_len);
-  name[fixed_len - 1] = 0;
-  count += len;
+  MultiGetString(mission_name, data, &count);
 
-  mission_len = MultiGetByte(data, &count);
-
-  fixed_len = std::min(MSN_NAMELEN, mission_len);
-
-  memcpy(mission, &data[count], fixed_len);
-  mission[fixed_len - 1] = 0;
-  count += mission_len;
-
-  mission_name_len = MultiGetByte(data, &count);
-
-  fixed_len = std::min(MISSION_NAME_LEN, mission_name_len);
-
-  memcpy(mission_name, &data[count], fixed_len);
-  mission_name[fixed_len - 1] = 0;
-  count += mission_name_len;
-
-  script_len = MultiGetByte(data, &count);
-
-  fixed_len = std::min(NETGAME_SCRIPT_LEN, script_len);
-
-  memcpy(scriptname, &data[count], fixed_len);
-  scriptname[fixed_len - 1] = 0;
-  count += script_len;
+  MultiGetString(scriptname, data, &count);
 
   level = MultiGetShort(data, &count);
   currplayers = MultiGetShort(data, &count);
@@ -4117,7 +4142,11 @@ void MultiDoBlowupBuilding(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   uint16_t hit_objnum = MultiGetUshort(data, &count);
+  if (!MultiValidObjnum(hit_objnum))
+    return; // invalid index from the network
   uint16_t killer_objnum = MultiGetUshort(data, &count);
+  if (!MultiValidObjnum(killer_objnum))
+    return; // invalid index from the network
   uint16_t damage = MultiGetUshort(data, &count);
   uint16_t seed = MultiGetUshort(data, &count);
 
@@ -4144,6 +4173,8 @@ void MultiDoBuilding(uint8_t *data) {
   uint8_t num = MultiGetByte(data, &count);
   for (int i = 0; i < num; i++) {
     uint16_t objnum = MultiGetUshort(data, &count);
+    if (!MultiValidObjnum(objnum))
+      return; // invalid index from the network
     if (Objects[objnum].type != OBJ_BUILDING) {
       LOG_WARNING.printf("Error! Server says objnum %d is a building and it is not!", objnum);
     } else {
@@ -4181,6 +4212,8 @@ void MultiDoWorldStates(uint8_t *data) {
       // Room wind
 
       int16_t roomnum = MultiGetShort(data, &count);
+      if (!MultiValidRoom(roomnum))
+        return; // invalid index from the network
       Rooms[roomnum].wind.x() = MultiGetFloat(data, &count);
       Rooms[roomnum].wind.y() = MultiGetFloat(data, &count);
       Rooms[roomnum].wind.z() = MultiGetFloat(data, &count);
@@ -4195,6 +4228,8 @@ void MultiDoWorldStates(uint8_t *data) {
     case WS_ROOM_FOG: {
       // Room wind
       int16_t roomnum = MultiGetShort(data, &count);
+      if (!MultiValidRoom(roomnum))
+        return; // invalid index from the network
       Rooms[roomnum].fog_depth = MultiGetFloat(data, &count);
       Rooms[roomnum].fog_r = ((float)MultiGetUbyte(data, &count)) / 255.0;
       Rooms[roomnum].fog_g = ((float)MultiGetUbyte(data, &count)) / 255.0;
@@ -4212,6 +4247,8 @@ void MultiDoWorldStates(uint8_t *data) {
       // Room lighting
       uint8_t state;
       int16_t roomnum = MultiGetShort(data, &count);
+      if (!MultiValidRoom(roomnum))
+        return; // invalid index from the network
       Rooms[roomnum].pulse_time = MultiGetUbyte(data, &count);
       Rooms[roomnum].pulse_offset = MultiGetUbyte(data, &count);
       state = MultiGetUbyte(data, &count);
@@ -4231,6 +4268,8 @@ void MultiDoWorldStates(uint8_t *data) {
     case WS_ROOM_REFUEL: {
       // Room fueling
       int16_t roomnum = MultiGetShort(data, &count);
+      if (!MultiValidRoom(roomnum))
+        return; // invalid index from the network
       uint8_t state = MultiGetUbyte(data, &count);
       if (state)
         Rooms[roomnum].flags |= RF_FUELCEN;
@@ -4241,28 +4280,44 @@ void MultiDoWorldStates(uint8_t *data) {
     }
     case WS_ROOM_TEXTURE: {
       int16_t roomnum = MultiGetShort(data, &count);
+      if (!MultiValidRoom(roomnum))
+        return; // invalid index from the network
       int16_t facenum = MultiGetShort(data, &count);
       char str[255];
       MultiGetString(str, data, &count);
+      if (facenum < 0 || facenum >= Rooms[roomnum].num_faces)
+        return; // invalid face from the network
       ChangeRoomFaceTexture(roomnum, facenum, FindTextureName(IGNORE_TABLE(str)));
       break;
     }
     case WS_ROOM_GLASS: {
       int16_t roomnum = MultiGetShort(data, &count);
+      if (!MultiValidRoom(roomnum))
+        return; // invalid index from the network
       int16_t facenum = MultiGetShort(data, &count);
+      if (facenum < 0 || facenum >= Rooms[roomnum].num_faces)
+        return; // invalid face from the network
       BreakGlassFace(&Rooms[roomnum], facenum);
       break;
     }
     case WS_ROOM_PORTAL_RENDER: {
       int16_t roomnum = MultiGetShort(data, &count);
+      if (!MultiValidRoom(roomnum))
+        return; // invalid index from the network
       int16_t portalnum = MultiGetShort(data, &count);
+      if (portalnum < 0 || portalnum >= Rooms[roomnum].num_portals)
+        return; // invalid index from the network
       uint8_t flags = MultiGetByte(data, &count);
       Rooms[roomnum].portals[portalnum].flags = flags;
       break;
     }
     case WS_ROOM_PORTAL_BLOCK: {
       int16_t roomnum = MultiGetShort(data, &count);
+      if (!MultiValidRoom(roomnum))
+        return; // invalid index from the network
       int16_t portalnum = MultiGetShort(data, &count);
+      if (portalnum < 0 || portalnum >= Rooms[roomnum].num_portals)
+        return; // invalid index from the network
       uint8_t flags = MultiGetByte(data, &count);
       Rooms[roomnum].portals[portalnum].flags = flags;
       break;
@@ -4270,6 +4325,8 @@ void MultiDoWorldStates(uint8_t *data) {
     case WS_ROOM_DAMAGE: {
       // Room wind
       int16_t roomnum = MultiGetShort(data, &count);
+      if (!MultiValidRoom(roomnum))
+        return; // invalid index from the network
       Rooms[roomnum].damage = MultiGetFloat(data, &count);
       Rooms[roomnum].damage_type = MultiGetUbyte(data, &count);
       break;
@@ -4277,6 +4334,8 @@ void MultiDoWorldStates(uint8_t *data) {
     case WS_ROOM_GOALSPECFLAG: {
       // goals & special flags
       int16_t roomnum = MultiGetShort(data, &count);
+      if (!MultiValidRoom(roomnum))
+        return; // invalid index from the network
       int mask = (RF_SPECIAL1 | RF_SPECIAL2 | RF_SPECIAL3 | RF_SPECIAL4 | RF_SPECIAL5 | RF_SPECIAL6 | RF_GOAL1 |
                   RF_GOAL2 | RF_GOAL3 | RF_GOAL4);
       int change_mask = MultiGetInt(data, &count);
@@ -4292,7 +4351,11 @@ void MultiDoWorldStates(uint8_t *data) {
     }
     case WS_BUDDYBOTS: {
       int b_index = MultiGetByte(data, &count);
+      if (!MultiValidSlot(b_index))
+        return; // invalid index from the network
       uint16_t serv_objnum = MultiGetUshort(data, &count);
+      if (!MultiValidObjnum(serv_objnum))
+        return; // invalid index from the network
       int local_objnum = Server_object_list[serv_objnum];
 
       ASSERT(Objects[local_objnum].type != OBJ_NONE);
@@ -4307,7 +4370,11 @@ void MultiDoWorldStates(uint8_t *data) {
     }
     case WS_BUDDYBOTUPDATE: {
       int b_index = MultiGetByte(data, &count);
+      if (!MultiValidSlot(b_index))
+        return; // invalid index from the network
       uint16_t serv_objnum = MultiGetUshort(data, &count);
+      if (!MultiValidObjnum(serv_objnum))
+        return; // invalid index from the network
       int local_objnum = Server_object_list[serv_objnum];
 
       ASSERT(Objects[local_objnum].type != OBJ_NONE);
@@ -4338,6 +4405,8 @@ void MultiDoWorldStates(uint8_t *data) {
     case WS_DOOR: {
       doorway *dp;
       int objnum = MultiGetShort(data, &count);
+      if (objnum != 65535 && !MultiValidObjnum(objnum))
+        return; // invalid index from the network
       objnum = Server_object_list[objnum];
       ASSERT(Objects[objnum].type == OBJ_DOOR);
       dp = GetDoorwayFromObject(Objects[objnum].handle);
@@ -4358,6 +4427,8 @@ void MultiDoWorldStates(uint8_t *data) {
     }
     case WS_LIGHT_DISTANCE: {
       int objnum = MultiGetShort(data, &count);
+      if (objnum != 65535 && !MultiValidObjnum(objnum))
+        return; // invalid index from the network
       float val = MultiGetFloat(data, &count);
       objnum = Server_object_list[objnum];
 
@@ -4372,6 +4443,8 @@ void MultiDoWorldStates(uint8_t *data) {
     }
     case WS_LIGHT_COLOR: {
       int objnum = MultiGetShort(data, &count);
+      if (objnum != 65535 && !MultiValidObjnum(objnum))
+        return; // invalid index from the network
       objnum = Server_object_list[objnum];
 
       if (objnum == 65535)
@@ -4395,9 +4468,7 @@ void MultiDoWorldStates(uint8_t *data) {
       int goal_index = MultiGetUshort(data, &count);
       int priority = MultiGetInt(data, &count);
 
-      uint8_t len = MultiGetByte(data, &count);
-      memcpy(name, &data[count], len);
-      count += len;
+      MultiGetString(name, data, &count);
 
       int flags = MultiGetInt(data, &count);
       int temp = 0xFFFFFFFF;
@@ -4415,6 +4486,8 @@ void MultiDoWorldStates(uint8_t *data) {
       LOG_DEBUG << "Got a spew packet!";
 
       uint16_t spewnum = MultiGetShort(data, &count);
+      if (!MultiValidSpew(spewnum))
+        return; // invalid index from the network
 
       if (MultiGetByte(data, &count))
         spew.use_gunpoint = true;
@@ -4423,6 +4496,8 @@ void MultiDoWorldStates(uint8_t *data) {
 
       if (spew.use_gunpoint) {
         int objnum = MultiGetUshort(data, &count);
+        if (objnum != 65535 && !MultiValidObjnum(objnum))
+          return; // invalid index from the network
         objnum = Server_object_list[objnum];
         ASSERT(objnum != 65535);
         ASSERT(Objects[objnum].flags & OF_SERVER_OBJECT);
@@ -4467,6 +4542,8 @@ void MultiDoWorldStates(uint8_t *data) {
     }
     case WS_NO_RENDER: {
       int objnum = MultiGetShort(data, &count);
+      if (objnum != 65535 && !MultiValidObjnum(objnum))
+        return; // invalid index from the network
       objnum = Server_object_list[objnum];
 
       if (objnum == 65535)
@@ -4478,6 +4555,8 @@ void MultiDoWorldStates(uint8_t *data) {
 
     case WS_OBJECT_PHYS_FLAGS: {
       int objnum = MultiGetShort(data, &count);
+      if (objnum != 65535 && !MultiValidObjnum(objnum))
+        return; // invalid index from the network
       int flags = MultiGetInt(data, &count);
       objnum = Server_object_list[objnum];
 
@@ -4489,10 +4568,14 @@ void MultiDoWorldStates(uint8_t *data) {
 
     case WS_OBJECT_ATTACH: {
       int parent_objnum = MultiGetUshort(data, &count);
+      if (!MultiValidObjnum(parent_objnum))
+        return; // invalid index from the network
       int n_attach = MultiGetByte(data, &count);
 
       for (int i = 0; i < n_attach; i++) {
         int child_objnum = MultiGetUshort(data, &count);
+        if (child_objnum != 65535 && !MultiValidObjnum(child_objnum))
+          return; // invalid index from the network
         if (child_objnum != 65535) {
           float rad;
 
@@ -4564,6 +4647,8 @@ void MultiDoJoinObjects(uint8_t *data) {
 
     // Extract info about this object
     uint16_t server_objnum = MultiGetUshort(data, &count);
+    if (!MultiValidObjnum(server_objnum))
+      return; // invalid index from the network
     uint8_t type = MultiGetByte(data, &count);
 
     if (type == OBJ_DUMMY) {
@@ -4629,15 +4714,20 @@ void MultiDoJoinObjects(uint8_t *data) {
 
     if (type == OBJ_MARKER) {
       // Get message if marker
-      uint8_t len = MultiGetByte(data, &count);
-      memcpy(MarkerMessages[id], &data[count], len);
-      count += len;
+      MultiGetMarkerMessage(id, data, &count);
     }
 
     if (terrain)
       roomnum = MAKE_ROOMNUM(roomnum);
+    // Doors carry no room number (roomnum is not read for them).
+    if (type != OBJ_DOOR && !MultiValidPacketRoom(roomnum))
+      return; // invalid room from the network
 
     int local_objnum;
+
+    // Object_info is indexed by id for the remaining (generic) types.
+    if (type != OBJ_DOOR && type != OBJ_CAMERA && type != OBJ_MARKER && id >= MAX_OBJECT_IDS)
+      return; // invalid object id from the network
 
     // Don't recreate lightmap objects
     if (type != OBJ_DOOR && (type == OBJ_CAMERA || type == OBJ_MARKER ||
@@ -4688,6 +4778,8 @@ void MultiDoPlayerDead(uint8_t *data) {
 
   SKIP_HEADER(data, &count);
   int slot = MultiGetByte(data, &count);
+  if (!MultiValidSlot(slot))
+    return; // invalid index from the network
   int fate = MultiGetByte(data, &count);
 
   Players[slot].damage_magnitude = 0;
@@ -4740,7 +4832,11 @@ void MultiDoRenewPlayer(uint8_t *data) {
 
   SKIP_HEADER(data, &count);
   uint8_t slot = MultiGetByte(data, &count);
+  if (!MultiValidSlot(slot))
+    return; // invalid index from the network
   int start_slot = MultiGetShort(data, &count);
+  if (start_slot >= MAX_PLAYERS)
+    return; // start position (< 0 is an auto-waypoint) out of range
 
   if (MultiGetByte(data, &count)) {
     add_guidebot = true;
@@ -4814,6 +4910,8 @@ void MultiDoEndPlayerDeath(uint8_t *data) {
 
   SKIP_HEADER(data, &count);
   uint8_t slot = MultiGetByte(data, &count);
+  if (!MultiValidSlot(slot))
+    return; // invalid index from the network
 
   if (Players[slot].flags & PLAYER_FLAGS_DEAD || Players[slot].flags & PLAYER_FLAGS_DYING)
     MultiSendRenewPlayer(slot);
@@ -4900,10 +4998,7 @@ void MultiDoMessageFromServer(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   ddgr_color color = MultiGetInt(data, &count);
-  uint8_t len = MultiGetByte(data, &count);
-
-  memcpy(message, &data[count], len);
-  count += len;
+  MultiGetString(message, data, &count);
 
   // Play the player hud message sound
   if (sound_id == -2) {
@@ -4993,10 +5088,7 @@ void MultiDoMessageToServer(uint8_t *data) {
 
   /* uint8_t slot = */ MultiGetByte(data, &count);
   int towho = (int8_t)MultiGetByte(data, &count);
-  uint8_t len = MultiGetByte(data, &count);
-
-  memcpy(message, &data[count], len);
-  count += len;
+  MultiGetString(message, data, &count);
 
   MultiSendMessageFromServer(GR_RGB(0, 128, 255), message, towho);
 }
@@ -5034,7 +5126,11 @@ void MultiDoExecuteDLL(uint8_t *data) {
 
   uint16_t eventnum = MultiGetShort(data, &count);
   int16_t me_objnum = MultiGetShort(data, &count);
+  if (me_objnum != -1 && !MultiValidObjnum(me_objnum))
+    return; // invalid index from the network
   int16_t it_objnum = MultiGetShort(data, &count);
+  if (it_objnum != -1 && !MultiValidObjnum(it_objnum))
+    return; // invalid index from the network
 
   if (MultiGetByte(data, &count)) {
     // we need to extract out parameters
@@ -5131,7 +5227,11 @@ void MultiDoObject(uint8_t *data) {
   // Extract info about this object
   uint8_t announce = MultiGetByte(data, &count);
   int server_objnum = MultiGetUshort(data, &count);
+  if (!MultiValidObjnum(server_objnum))
+    return; // invalid index from the network
   int parent_objnum = MultiGetUshort(data, &count);
+  if (parent_objnum != 65535 && !MultiValidObjnum(parent_objnum))
+    return; // invalid index from the network
 
   if (parent_objnum == server_objnum)
     self_parent = true;
@@ -5221,6 +5321,8 @@ void MultiDoObject(uint8_t *data) {
 
   if (terrain)
     roomnum = MAKE_ROOMNUM(roomnum);
+  if (!MultiValidPacketRoom(roomnum))
+    return; // invalid room from the network
 
   int local_objnum;
 
@@ -5255,9 +5357,7 @@ void MultiDoObject(uint8_t *data) {
 
   if (obj->type == OBJ_MARKER) {
     // Get message if marker
-    uint8_t len = MultiGetByte(data, &count);
-    memcpy(MarkerMessages[obj->id], &data[count], len);
-    count += len;
+    MultiGetMarkerMessage(obj->id, data, &count);
   }
   bool demo_record = false;
 
@@ -5402,6 +5502,8 @@ void MultiDoGuidedInfo(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   uint8_t slot = MultiGetByte(data, &count);
+  if (!MultiValidSlot(slot))
+    return; // invalid index from the network
   uint8_t release = MultiGetByte(data, &count);
 
   if (Players[slot].guided_obj == nullptr)
@@ -5430,6 +5532,8 @@ void MultiDoGuidedInfo(uint8_t *data) {
   roomnum = short_roomnum;
   if (terrain)
     roomnum = MAKE_ROOMNUM(roomnum);
+  if (!MultiValidPacketRoom(roomnum))
+    return; // invalid room from the network
 
   // Get velocity
   vector vel;
@@ -5661,6 +5765,8 @@ void MultiDoRemoveObject(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   uint16_t server_objnum = MultiGetUshort(data, &count);
+  if (!MultiValidObjnum(server_objnum))
+    return; // invalid index from the network
   /* uint8_t type = */ MultiGetByte(data, &count);
 
   uint8_t sound = MultiGetByte(data, &count);
@@ -5747,6 +5853,8 @@ void MultiDoPowerupReposition(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   int server_objnum = MultiGetUshort(data, &count);
+  if (!MultiValidObjnum(server_objnum))
+    return; // invalid index from the network
 
   int local_objnum = Server_object_list[server_objnum];
   if (local_objnum == 65535) {
@@ -5766,6 +5874,8 @@ void MultiDoPowerupReposition(uint8_t *data) {
   int roomnum = short_roomnum;
   if (terrain)
     roomnum = MAKE_ROOMNUM(roomnum);
+  if (!MultiValidPacketRoom(roomnum))
+    return; // invalid room from the network
 
   obj->mtype.phys_info.velocity = vector{};
 
@@ -5779,6 +5889,8 @@ void MultiDoWeaponsLoad(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   int slot = MultiGetByte(data, &count);
+  if (!MultiValidSlot(slot))
+    return; // invalid index from the network
 
   for (int i = 0; i < MAX_SECONDARY_WEAPONS; i++) {
     int num = MultiGetUbyte(data, &count);
@@ -5787,21 +5899,15 @@ void MultiDoWeaponsLoad(uint8_t *data) {
       Players[slot].weapon_ammo[MAX_PRIMARY_WEAPONS + i] = num;
   }
 
-  // Now get small views
-  int objnum = MultiGetShort(data, &count);
-  if (objnum == -1)
-    Players[slot].small_left_obj = -1;
-  else
-    Players[slot].small_left_obj = objnum;
-
-  objnum = MultiGetShort(data, &count);
-
-  if (objnum == -1)
-    Players[slot].small_right_obj = -1;
-  else
-    Players[slot].small_right_obj = objnum;
-
-  Players[slot].small_dll_obj = MultiGetShort(data, &count);
+  // Now get small views. These object numbers are stored and later used to
+  // index Objects every frame, so anything out of range is stored as none (-1).
+  auto small_view_obj = [&]() {
+    int objnum = MultiGetShort(data, &count);
+    return MultiValidObjnum(objnum) ? objnum : -1;
+  };
+  Players[slot].small_left_obj = small_view_obj();
+  Players[slot].small_right_obj = small_view_obj();
+  Players[slot].small_dll_obj = small_view_obj();
 }
 
 // Tells the server about the weapons we're carrying
@@ -5871,8 +5977,12 @@ void MultiDoOnOff(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   uint8_t slot = MultiGetByte(data, &count);
+  if (!MultiValidSlot(slot))
+    return; // invalid index from the network
   uint8_t on = MultiGetByte(data, &count);
   uint8_t wb_index = MultiGetByte(data, &count);
+  if (!MultiValidWB(wb_index))
+    return; // invalid index from the network
   /* uint8_t fire_mask = */ MultiGetByte(data, &count);
 
   if (on) {
@@ -5922,6 +6032,8 @@ void MultiDoAdditionalDamage(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   uint8_t slot = MultiGetByte(data, &count);
+  if (!MultiValidSlot(slot))
+    return; // invalid index from the network
   uint8_t type = MultiGetByte(data, &count);
   float amount = MultiGetFloat(data, &count);
 
@@ -5966,6 +6078,8 @@ void MultiDoRequestShields(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   uint8_t pnum = MultiGetByte(data, &count);
+  if (!MultiValidSlot(pnum))
+    return; // invalid index from the network
   uint8_t type = MultiGetByte(data, &count);
   float amount = MultiGetFloat(data, &count);
 
@@ -6016,6 +6130,8 @@ void MultiDoRequestDamage(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   uint8_t pnum = MultiGetByte(data, &count);
+  if (!MultiValidSlot(pnum))
+    return; // invalid index from the network
   uint8_t type = MultiGetByte(data, &count);
   float amount = MultiGetFloat(data, &count);
 
@@ -6031,6 +6147,8 @@ void MultiDoRequestCountermeasure(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   uint16_t parent_objnum = MultiGetShort(data, &count);
+  if (parent_objnum != 65535 && !MultiValidObjnum(parent_objnum))
+    return; // invalid index from the network
 
   if (Netgame.local_role != LR_SERVER) {
     parent_objnum = Server_object_list[parent_objnum];
@@ -6088,25 +6206,33 @@ void MultiDoObserverChange(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   int slot = MultiGetByte(data, &count);
+  if (!MultiValidSlot(slot))
+    return; // invalid index from the network
   uint8_t mode = MultiGetByte(data, &count);
   uint8_t on = MultiGetByte(data, &count);
+  // A start position: >= 0 indexes Players, < 0 encodes an auto-waypoint.
   int restart_slot = MultiGetShort(data, &count);
+  if (restart_slot >= MAX_PLAYERS)
+    return; // invalid index from the network
   if (mode == OBSERVER_MODE_PIGGYBACK) {
     if (Netgame.local_role == LR_SERVER)
       objnum = MultiGetInt(data, &count);
-    else {
-      objnum = Server_object_list[MultiGetInt(data, &count)];
-      MULTI_ASSERT_NOMESSAGE(objnum != 65535);
-    }
+    else
+      objnum = MultiServerToLocal(MultiGetInt(data, &count));
+    if (!MultiValidObjnum(objnum))
+      return; // invalid or unknown object from the network
   }
 
   if (on)
     PlayerSwitchToObserver(slot, mode, objnum);
   else {
-    Player_pos_fix[slot].active = true;
-    Player_pos_fix[slot].expire_time = Gametime + PLAYER_POS_HACK_TIME;
-    Player_pos_fix[slot].room = Players[restart_slot].start_roomnum;
-    Player_pos_fix[slot].ignored_pos = 0;
+    // The position fix needs a start room; auto-waypoint restarts have none here.
+    if (restart_slot >= 0) {
+      Player_pos_fix[slot].active = true;
+      Player_pos_fix[slot].expire_time = Gametime + PLAYER_POS_HACK_TIME;
+      Player_pos_fix[slot].room = Players[restart_slot].start_roomnum;
+      Player_pos_fix[slot].ignored_pos = 0;
+    }
     PlayerStopObserving(slot);
     PlayerMoveToStartPos(slot, restart_slot);
   }
@@ -6124,6 +6250,8 @@ void MultiDoRequestToObserve(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   uint8_t slot = MultiGetByte(data, &count);
+  if (!MultiValidSlot(slot))
+    return; // invalid index from the network
   uint8_t mode = MultiGetByte(data, &count);
   uint8_t on = MultiGetByte(data, &count);
 
@@ -6263,8 +6391,14 @@ void MultiDoRequestPeerDamage(uint8_t *data, [[maybe_unused]] network_address *f
   SKIP_HEADER(data, &count);
 
   int pnum = MultiGetByte(data, &count);
+  if (!MultiValidSlot(pnum))
+    return; // invalid index from the network
   uint16_t killer_objnum = MultiGetUshort(data, &count);
+  if (killer_objnum != 65535 && !MultiValidObjnum(killer_objnum))
+    return; // invalid index from the network
   uint8_t weapon_id = MultiGetUbyte(data, &count);
+  if (weapon_id != 255 && weapon_id >= MAX_WEAPONS)
+    return; // invalid weapon from the network
   uint8_t damage_type = MultiGetUbyte(data, &count);
   float amount = MultiGetFloat(data, &count);
 
@@ -6731,7 +6865,7 @@ void MultiDoRobotExplode(uint8_t *data) {
   MULTI_ASSERT_NOMESSAGE(Netgame.local_role != LR_SERVER);
 
   SKIP_HEADER(data, &count);
-  hit_objnum = Server_object_list[MultiGetUshort(data, &count)];
+  hit_objnum = MultiServerToLocal(MultiGetUshort(data, &count));
 
   if (hit_objnum == 65535) {
     LOG_FATAL.printf("Bad hit_objnum(%d) MultiDoRobotExplode", hit_objnum);
@@ -6740,6 +6874,8 @@ void MultiDoRobotExplode(uint8_t *data) {
   }
 
   killer_objnum = MultiGetUshort(data, &count);
+  if (killer_objnum != 65535 && !MultiValidObjnum(killer_objnum))
+    return; // invalid index from the network
 
   if (killer_objnum != 65535) {
     killer_objnum = Server_object_list[killer_objnum];
@@ -6800,8 +6936,8 @@ void MultiDoRobotDamage(uint8_t *data) {
 
   MULTI_ASSERT_NOMESSAGE(Netgame.local_role != LR_SERVER);
   SKIP_HEADER(data, &count);
-  hit_objnum = Server_object_list[MultiGetUshort(data, &count)];
-  killer_objnum = Server_object_list[MultiGetUshort(data, &count)];
+  hit_objnum = MultiServerToLocal(MultiGetUshort(data, &count));
+  killer_objnum = MultiServerToLocal(MultiGetUshort(data, &count));
 
   if (hit_objnum == 65535 || killer_objnum == 65535 || !(Objects[hit_objnum].flags & OF_SERVER_OBJECT) ||
       !(Objects[killer_objnum].flags & OF_SERVER_OBJECT)) {
@@ -6811,6 +6947,8 @@ void MultiDoRobotDamage(uint8_t *data) {
 
   damage = MultiGetFloat(data, &count);
   weaponid = MultiGetInt(data, &count);
+  if (weaponid != 255 && (weaponid < 0 || weaponid >= MAX_WEAPONS))
+    return; // invalid weapon from the network
   if ((!((Objects[hit_objnum].flags & OF_DYING) || (Objects[hit_objnum].flags & OF_DEAD))) &&
       Objects[hit_objnum].type != 255)
     if ((!((Objects[killer_objnum].flags & OF_DYING) || (Objects[killer_objnum].flags & OF_DEAD))) &&
@@ -6882,6 +7020,8 @@ void MultiDoObjAnimUpdate(uint8_t *data) {
   MULTI_ASSERT_NOMESSAGE(Netgame.local_role != LR_SERVER);
   SKIP_HEADER(data, &count);
   int serverobjnum = MultiGetUshort(data, &count);
+  if (!MultiValidObjnum(serverobjnum))
+    return; // invalid index from the network
   objnum = Server_object_list[serverobjnum];
   multi_anim_info.server_time = MultiGetFloat(data, &count);
   multi_anim_info.server_anim_frame = MultiGetUshort(data, &count);
@@ -6910,6 +7050,8 @@ void MultiDoPlay3dSound(uint8_t *data) {
 
   SKIP_HEADER(data, &count);
   int serverobjnum = MultiGetUshort(data, &count);
+  if (!MultiValidObjnum(serverobjnum))
+    return; // invalid index from the network
   objnum = Server_object_list[serverobjnum];
 
   soundidx = MultiGetShort(data, &count);
@@ -6989,6 +7131,8 @@ void MultiDoRobotFireSound(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   int serverobjnum = MultiGetUshort(data, &count);
+  if (!MultiValidObjnum(serverobjnum))
+    return; // invalid index from the network
   objnum = Server_object_list[serverobjnum];
   soundidx = MultiGetShort(data, &count);
 
@@ -7072,6 +7216,8 @@ void MultiDoTurretUpdate(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   int serverobjnum = MultiGetUshort(data, &count);
+  if (!MultiValidObjnum(serverobjnum))
+    return; // invalid index from the network
   objnum = Server_object_list[serverobjnum];
 
   if (objnum == 65535 || !(Objects[objnum].flags & OF_SERVER_OBJECT)) {
@@ -7226,6 +7372,8 @@ void MultiDoClientInventoryRemoveItem([[maybe_unused]] int slot, uint8_t *data) 
   type = MultiGetUshort(data, &count);
   hash = MultiGetUint(data, &count);
   pnum = MultiGetByte(data, &count);
+  if (!MultiValidSlot(pnum))
+    return; // invalid index from the network
 
   if (hash == 0xFFFFFFFF) {
     // object given
@@ -7604,6 +7752,8 @@ void MultiDoFileReq(uint8_t *data) {
   uint16_t filenum = MultiGetUshort(data, &count);
   uint16_t filewho = MultiGetUshort(data, &count);
   uint16_t playernum = MultiGetUshort(data, &count);
+  if (!MultiValidSlot(playernum))
+    return; // invalid index from the network
   // If we are the server, someone want's a file. Either start sending it to them, or deny the request
   if (NetPlayers[playernum].file_xfer_flags == NETFILE_NONE) {
     // FIXME!! Figure out what file to open
@@ -7779,6 +7929,8 @@ void MultiDoFileAck(uint8_t *data) {
 
   SKIP_HEADER(data, &count);
   playernum = MultiGetUshort(data, &count);
+  if (!MultiValidSlot(playernum))
+    return; // invalid index from the network
   len_recvd = MultiGetUint(data, &count);
   if (NetPlayers[playernum].file_xfer_flags == NETFILE_SENDING) {
     if (NetPlayers[playernum].file_xfer_pos == len_recvd) {
@@ -7854,6 +8006,8 @@ void MultiDoFileCancelled(uint8_t *data) {
   SKIP_HEADER(data, &count);
   playernum = MultiGetUshort(data, &count);
   filewho = MultiGetUshort(data, &count);
+  if (!MultiValidSlot(filewho))
+    return; // invalid index from the network
   LOG_DEBUG.printf("Got a cancelled packet from %d for %d", playernum, filewho);
   if (NetPlayers[filewho].file_xfer_cfile) {
     char delfile[_MAX_PATH * 2];
@@ -7966,18 +8120,18 @@ void MultiDoCustomPlayerData(uint8_t *data) {
 
   SKIP_HEADER(data, &count);
   playernum = MultiGetUshort(data, &count);
+  if (!MultiValidSlot(playernum))
+    return; // invalid index from the network
   if (playernum == Player_num)
     return;
   LOG_DEBUG << "Got custom data in MultiDoCustomPlayerData()";
   NetPlayers[playernum].custom_file_seq = NETFILE_ID_SHIP_TEX; // First in the sequence of files we will request
-  int16_t logo_len = MultiGetUshort(data, &count);
-  memcpy(NetPlayers[playernum].ship_logo, data + count, logo_len);
-  count += logo_len;
+  MultiGetString16(NetPlayers[playernum].ship_logo, data, &count);
+  MultiSanitizeCustomFileName(NetPlayers[playernum].ship_logo);
   LOG_DEBUG.printf("%s uses custom ship logo %s", Players[playernum].callsign, NetPlayers[playernum].ship_logo);
 
   for (int t = 0; t < 4; t++) {
     char *filename;
-    int16_t vt_len;
 
     switch (t) {
     case 0:
@@ -7994,9 +8148,8 @@ void MultiDoCustomPlayerData(uint8_t *data) {
       break;
     }
 
-    vt_len = MultiGetUshort(data, &count);
-    memcpy(filename, data + count, vt_len);
-    count += vt_len;
+    MultiGetString16(filename, sizeof(NetPlayers[playernum].voice_taunt1), data, &count);
+    MultiSanitizeCustomFileName(filename);
   }
 }
 
@@ -8089,6 +8242,8 @@ void MultiDoGhostObject(uint8_t *data) {
   bool ghost;
 
   server_objnum = MultiGetUshort(data, &count);
+  if (!MultiValidObjnum(server_objnum))
+    return; // invalid index from the network
   ghost = (MultiGetByte(data, &count)) ? true : false;
 
   objnum = Server_object_list[server_objnum];
@@ -8152,6 +8307,8 @@ void MultiDoPong(uint8_t *data) {
 
   SKIP_HEADER(data, &count);
   uint8_t slot = MultiGetByte(data, &count);
+  if (!MultiValidSlot(slot))
+    return; // invalid index from the network
   float pingtime = MultiGetFloat(data, &count);
   NetPlayers[slot].ping_time = timer_GetTime() - pingtime;
 
@@ -8169,6 +8326,8 @@ void MultiDoLagInfo(uint8_t *data) {
   int count = 0;
   SKIP_HEADER(data, &count);
   uint8_t slot = MultiGetByte(data, &count);
+  if (!MultiValidSlot(slot))
+    return; // invalid index from the network
   NetPlayers[slot].ping_time = MultiGetFloat(data, &count);
 }
 
@@ -8353,7 +8512,7 @@ void MultiDoAiWeaponFlags(uint8_t *data) {
 
   int flags;
   int wb_index;
-  int16_t obj_num = Server_object_list[MultiGetUshort(data, &count)];
+  int16_t obj_num = MultiServerToLocal(MultiGetUshort(data, &count));
   flags = MultiGetInt(data, &count);
   wb_index = MultiGetByte(data, &count);
   if (obj_num == -1) {
@@ -8364,6 +8523,8 @@ void MultiDoAiWeaponFlags(uint8_t *data) {
 
   ASSERT(Objects[obj_num].ai_info);
   ASSERT(Objects[obj_num].type != OBJ_NONE);
+  if (!Objects[obj_num].ai_info)
+    return; // the server named an object without AI
 
   Objects[obj_num].ai_info->last_special_wb_firing = wb_index;
   Objects[obj_num].weapon_fire_flags = flags;
@@ -8397,10 +8558,10 @@ void MultiDoAttach(uint8_t *data) {
   int count = 0;
   SKIP_HEADER(data, &count);
 
-  uint16_t parent_num = Server_object_list[MultiGetUshort(data, &count)];
+  uint16_t parent_num = MultiServerToLocal(MultiGetUshort(data, &count));
   parent_ap = MultiGetByte(data, &count);
   parent = &Objects[parent_num];
-  uint16_t child_num = Server_object_list[MultiGetUshort(data, &count)];
+  uint16_t child_num = MultiServerToLocal(MultiGetUshort(data, &count));
   child_ap = MultiGetByte(data, &count);
   child = &Objects[child_num];
   f_aligned = MultiGetByte(data, &count) ? true : false;
@@ -8445,10 +8606,10 @@ void MultiDoAttachRad(uint8_t *data) {
   int count = 0;
   SKIP_HEADER(data, &count);
 
-  uint16_t parent_num = Server_object_list[MultiGetUshort(data, &count)];
+  uint16_t parent_num = MultiServerToLocal(MultiGetUshort(data, &count));
   parent_ap = MultiGetByte(data, &count);
   parent = &Objects[parent_num];
-  uint16_t child_num = Server_object_list[MultiGetUshort(data, &count)];
+  uint16_t child_num = MultiServerToLocal(MultiGetUshort(data, &count));
   rad = MultiGetFloat(data, &count);
   child = &Objects[child_num];
 
@@ -8520,6 +8681,8 @@ void MultiDoThiefSteal(uint8_t *data) {
   SKIP_HEADER(data, &count);
   int item = MultiGetInt(data, &count);
   int player = MultiGetInt(data, &count);
+  if (!MultiValidSlot(player))
+    return; // invalid index from the network
   ThiefStealItem(Objects[Players[player].objnum].handle, item);
 }
 
@@ -8534,6 +8697,8 @@ void MultiDoPermissionToFire(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   int pnum = MultiGetByte(data, &count);
+  if (!MultiValidSlot(pnum))
+    return; // invalid index from the network
   Player_fire_packet[pnum].wb_index = MultiGetByte(data, &count);
   Player_fire_packet[pnum].fire_mask = MultiGetByte(data, &count);
   Player_fire_packet[pnum].damage_scalar = MultiGetByte(data, &count);
@@ -8562,11 +8727,15 @@ void MultiDoPermissionToFire(uint8_t *data) {
     roomnum = MAKE_ROOMNUM(short_roomnum);
   else
     roomnum = short_roomnum;
+  if (!MultiValidPacketRoom(roomnum))
+    return; // invalid room from the network
 
   // Strip out quad data
   int wb_index = Player_fire_packet[pnum].wb_index;
   int quaded = wb_index & MPFF_QUADED;
   wb_index &= ~MPFF_QUADED;
+  if (!MultiValidWB(wb_index))
+    return; // invalid index from the network
 
   // Fire!
   float scalar = (float)Player_fire_packet[pnum].damage_scalar / 64.0;
@@ -8661,9 +8830,14 @@ void MultiDoRequestToFire(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   int pnum = MultiGetByte(data, &count);
+  if (!MultiValidSlot(pnum))
+    return; // invalid index from the network
   Player_fire_packet[pnum].wb_index = MultiGetUbyte(data, &count);
   Player_fire_packet[pnum].fire_mask = MultiGetUbyte(data, &count);
   Player_fire_packet[pnum].damage_scalar = MultiGetUbyte(data, &count);
+  // The index may carry the quad flag; the battery itself must be in range.
+  if (!MultiValidWB(Player_fire_packet[pnum].wb_index & ~MPFF_QUADED))
+    return; // invalid index from the network
 
   // Check to see if this player is firing a weapon he doesn't have
   player *playp = &Players[pnum];
@@ -8724,9 +8898,9 @@ void MultiDoRequestMarker(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   int pnum = MultiGetByte(data, &count);
-  uint8_t len = MultiGetByte(data, &count);
-  memcpy(message, &data[count], len);
-  count += len;
+  if (!MultiValidSlot(pnum))
+    return; // invalid index from the network
+  MultiGetString(message, data, &count);
 
   int limit = 2;
   int cur_marker_num;
@@ -8802,6 +8976,8 @@ void MultiDoAdjustPosition(uint8_t *data) {
   newvel = MultiGetVector(data, &count);
 
   int roomnum = MultiGetInt(data, &count);
+  if (!MultiValidPacketRoom(roomnum))
+    return; // invalid room from the network
 
   object *obj = &Objects[Players[Player_num].objnum];
 
@@ -8912,6 +9088,8 @@ void MultiDoRequestToMove(uint8_t *data) {
   matrix orient;
 
   int slot = MultiGetByte(data, &count);
+  if (!MultiValidSlot(slot))
+    return; // invalid index from the network
   object *obj = &Objects[Players[slot].objnum];
 
   float timestamp = MultiGetFloat(data, &count);
@@ -9032,6 +9210,8 @@ void MultiDoGenericNonVis(uint8_t *data) {
   int num = MultiGetShort(data, &count);
   for (int i = 0; i < num; i++) {
     uint16_t objnum = MultiGetUshort(data, &count);
+    if (objnum != 65535 && !MultiValidObjnum(objnum))
+      return; // invalid index from the network
 
     objnum = Server_object_list[objnum];
     if (objnum == 65535 || !(Objects[objnum].flags & OF_SERVER_OBJECT)) {
@@ -9069,7 +9249,11 @@ void MultiDoBreakGlass(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   int roomnum = MultiGetUshort(data, &count);
+  if (!MultiValidRoom(roomnum))
+    return; // invalid index from the network
   int facenum = MultiGetUshort(data, &count);
+  if (facenum >= Rooms[roomnum].num_faces)
+    return; // invalid face from the network
 
   BreakGlassFace(&Rooms[roomnum], facenum);
 }
@@ -9081,6 +9265,8 @@ void MultiDoChangeRank(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   int pnum = MultiGetByte(data, &count);
+  if (!MultiValidSlot(pnum))
+    return; // invalid index from the network
   MultiGetString(str, data, &count);
   int goodnews = MultiGetByte(data, &count);
   float newrank = MultiGetFloat(data, &count);
@@ -9112,6 +9298,8 @@ void MultiDoStripPlayer(int slot, uint8_t *data) {
   int count = 0;
   SKIP_HEADER(data, &count);
   slot = MultiGetByte(data, &count);
+  if (!MultiValidSlot(slot))
+    return; // invalid index from the network
   if (Game_mode & GM_MULTI && Netgame.local_role != LR_SERVER && (slot != Player_num)) {
     Int3();
     return;
@@ -9202,6 +9390,8 @@ void MultiDoInitialRank(uint8_t *data) {
   SKIP_HEADER(data, &count);
 
   int pnum = MultiGetByte(data, &count);
+  if (!MultiValidSlot(pnum))
+    return; // invalid index from the network
   float rank = MultiGetFloat(data, &count);
 
   LOG_DEBUG.printf("Got initial rank for player %d (%f)", pnum, rank);
@@ -9339,7 +9529,15 @@ void DoPlayerListData(uint8_t *data, int len) {
     return;
   }
   SKIP_HEADER(data, &count);
-  memcpy(Multi_recieved_player_list, data + count, len);
+  // Copy only this packet's payload, bounded by the receive buffer. The list
+  // is NUL-separated callsigns ending with an empty one, so keep two
+  // terminators even when the payload is truncated.
+  int copy = std::min(len - count, MULTI_PLAYER_LIST_SIZE - 2);
+  if (copy < 0)
+    copy = 0;
+  memcpy(Multi_recieved_player_list, data + count, copy);
+  Multi_recieved_player_list[copy] = '\0';
+  Multi_recieved_player_list[copy + 1] = '\0';
   Multi_got_player_list = true;
 }
 
@@ -9438,11 +9636,85 @@ void MultiDoMSafePowerup(uint8_t *data);
   }
 // #define ACCEPT_CONDITION(s,e)
 
+// Message types that only a server sends. A server never acts on them, from
+// any sender: otherwise any address on the network could, for example, send
+// MP_CONNECTION_ACCEPTED and make the server load another mission.
+static bool MultiIsServerOriginated(uint8_t type) {
+  switch (type) {
+  case MP_ADDITIONAL_DAMAGE:
+  case MP_ADJUST_POSITION:
+  case MP_AIWEAP_FLAGS:
+  case MP_ANIM_UPDATE:
+  case MP_ATTACH_OBJ:
+  case MP_ATTACH_RAD_OBJ:
+  case MP_BASHPLAYER_SHIP:
+  case MP_BLOWUP_BUILDING:
+  case MP_BREAK_GLASS:
+  case MP_BUILDING:
+  case MP_CHANGE_RANK:
+  case MP_CONNECTION_ACCEPTED:
+  case MP_CONNECT_BAIL:
+  case MP_CUR_MSN_URLS:
+  case MP_DAMAGE_PLAYER:
+  case MP_DISCONNECT:
+  case MP_DONE_BUILDINGS:
+  case MP_DONE_OBJECTS:
+  case MP_DONE_PLAYERS:
+  case MP_DONE_WORLD_STATES:
+  case MP_EXECUTE_DLL:
+  case MP_GAME_INFO:
+  case MP_GENERIC_NONVIS:
+  case MP_GHOST_OBJECT:
+  case MP_GUIDEBOTMENU_DATA:
+  case MP_HERE_IS_GAMETIME:
+  case MP_INITIAL_RANK:
+  case MP_JOIN_OBJECTS:
+  case MP_JOIN_RESPONSE:
+  case MP_LEVEL_ENDED:
+  case MP_LEVEL_INFO:
+  case MP_MESSAGE_FROM_SERVER:
+  case MP_OBJECT:
+  case MP_OBSERVER_CHANGE:
+  case MP_PERMISSION_TO_FIRE:
+  case MP_PLAYER:
+  case MP_PLAYERLIST_DATA:
+  case MP_PLAYER_DEAD:
+  case MP_PLAYER_ENTERED_GAME:
+  case MP_PLAY_3D_SOUND_FROM_OBJ:
+  case MP_POWERUP_REPOSITION:
+  case MP_REJECTED_CHECKSUM:
+  case MP_REMOVE_INVENTORY_ITEM:
+  case MP_REMOVE_OBJECT:
+  case MP_RENEW_PLAYER:
+  case MP_ROBOT_DAMAGE:
+  case MP_ROBOT_EXPLODE:
+  case MP_ROBOT_FIRE:
+  case MP_ROBOT_FIRE_SOUND:
+  case MP_ROBOT_POS:
+  case MP_SEND_DEMO_OBJECT_FLAGS:
+  case MP_SERVER_AUDIOTAUNT_TIME:
+  case MP_SERVER_PLAY_TAUNT:
+  case MP_SERVER_QUIT:
+  case MP_SERVER_SENT_COUNT:
+  case MP_STRIP_PLAYER:
+  case MP_THIEF_STEAL:
+  case MP_TURRET_UPDATE:
+  case MP_UNATTACH_OBJ:
+  case MP_WORLD_STATES:
+    return true;
+  default:
+    return false;
+  }
+}
+
 // Takes the individual packet types and passes their data to the appropriate routines
 void MultiProcessData(uint8_t *data, int len, int slot, network_address *from_addr) {
   uint8_t type = data[0];
   len = len;
   int sequence = -1;
+
+  if (Netgame.local_role == LR_SERVER && MultiIsServerOriginated(type))
+    return;
 
   // HEY!!!!!  These packets are the only ones that are accepted by non-connected machines
   // (ie people on the netgame join screen)
@@ -9877,6 +10149,9 @@ void MultiProcessData(uint8_t *data, int len, int slot, network_address *from_ad
 
 // Takes a bunch of messages, check them for validity,
 // and pass them to multi_process_data.
+// Zero bytes appended after each sub-packet handed to a handler.
+static constexpr int MULTI_PACKET_READ_PADDING = 512;
+
 void MultiProcessBigData(uint8_t *buf, int len, network_address *from_addr) {
   int type, bytes_processed = 0;
   int16_t sub_len;
@@ -9906,10 +10181,15 @@ void MultiProcessBigData(uint8_t *buf, int len, network_address *from_addr) {
   }
 
   while (bytes_processed < len) {
+    // The 3-byte sub-packet header (type + length) must be present.
+    if ((len - bytes_processed) < 3) {
+      LOG_FATAL.printf("Got a truncated packet header after type %d with length %d", last_type, last_len);
+      return;
+    }
     type = buf[bytes_processed];
     sub_len = INTEL_SHORT((*(int16_t *)(buf + bytes_processed + 1)));
 
-    if (sub_len < 3 || type == 0 || (len - bytes_processed) < 2) {
+    if (sub_len < 3 || type == 0) {
       LOG_FATAL.printf("Got a corrupted packet after type %d with length %d", last_type, last_len);
       Int3();
       return; // just throw the rest out
@@ -9922,7 +10202,20 @@ void MultiProcessBigData(uint8_t *buf, int len, network_address *from_addr) {
       return;
     }
 
-    MultiProcessData(&buf[bytes_processed], sub_len, slot, from_addr);
+    if (sub_len > MAX_RECEIVE_SIZE) {
+      LOG_FATAL.printf("multi_process_bigdata: packet type %d too long (%d)", type, sub_len);
+      return;
+    }
+
+    // Handlers parse fields without knowing the sub-packet length. Give them a
+    // copy followed by zeros so a short or malformed packet reads zeros rather
+    // than the next sub-packet or memory past the receive buffer. The padding
+    // covers the largest single field read (a 256-byte length-prefixed string).
+    uint8_t packet[MAX_RECEIVE_SIZE + MULTI_PACKET_READ_PADDING];
+    memcpy(packet, &buf[bytes_processed], sub_len);
+    memset(packet + sub_len, 0, MULTI_PACKET_READ_PADDING);
+
+    MultiProcessData(packet, sub_len, slot, from_addr);
     bytes_processed += sub_len;
     last_type = type;
     last_len = sub_len;
