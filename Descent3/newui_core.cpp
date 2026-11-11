@@ -847,8 +847,7 @@ void newuiMenu::Create() {
   m_activate_sheet_cb = nullptr;
   m_option_focus_cb = nullptr;
 
-  UIWindow::Create((Max_window_w - m_bkg->width()) / 2, (Max_window_h - m_bkg->height()) / 2, m_bkg->width(),
-                   m_bkg->height());
+  UIWindow::Create(0, 0, m_bkg->width(), m_bkg->height(), UIF_CENTER | UIF_SCALE_TO_SCREEN);
   m_newoptionid = -1;
   m_cursheetidx = -1;
 }
@@ -4084,7 +4083,7 @@ void newuiTiledWindow::Create(const char *title, int16_t x, int16_t y, int16_t w
   w = bk_width * TW_PIECE_WIDTH;
   h = bk_height * TW_PIECE_HEIGHT;
 
-  UIWindow::Create(x, y, w, h, flags | UIF_CENTER);
+  UIWindow::Create(x, y, w, h, flags | UIF_CENTER | UIF_SCALE_TO_SCREEN);
 
   if (title) {
     strcpy(m_title, title);

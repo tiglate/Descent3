@@ -572,9 +572,8 @@ void ui_SetScreenMode(int w, int h) {
   UI_aspect_y = (float)h / (float)FIXED_SCREEN_HEIGHT;
   ddio_MouseReset();
   ddio_MouseSetVCoords(UI_screen_width * kDefaultMouseScale, UI_screen_height * kDefaultMouseScale);
-  // In-game dialogs are scaled up by PopupScale at high resolutions; move the
-  // cursor by the same factor so it feels as fast as in the 640x480 menus.
-  ddio_MouseSetCursorSpeed(ui_scale::PopupScale(w, h));
+  // Move the in-game cursor as fast as it moves across the stretched 640x480 menus.
+  ddio_MouseSetCursorSpeed(ui_scale::MenuScale(w, h));
   UI_input.cur_time = timer_GetTime();
   //	reposition all active open windows to their correct locations in this new resolution
   //@@	tUIWindowNode *wndnode = UIWindowList;

@@ -8,26 +8,40 @@ Small gameplay popups used the `SmallScreen.ogf` artwork and fixed pixel
 coordinates regardless of resolution. At 1920×1080 the Abort Mission
 confirmation therefore occupied only about 330×90 pixels.
 
-`newuiMessageBox` now opts into `UIF_SCALE_TO_SCREEN`. The window uses a
-uniform scale of `max(1, min(screen_width / 640, screen_height / 480))`:
+Every in-game dialog class now opts into `UIF_SCALE_TO_SCREEN`:
+`newuiMessageBox`, `newuiMenu` / `newuiLargeMenu` (Options, controls) and
+`newuiTiledWindow` (F1 help, Guide-Bot menu, save/load, file dialogs,
+`NewUIGameWindow` / `NewUIMessageBox`). The original game drew these 1:1 over
+gameplay, so their size is matched to a 1024×768 display, the common high
+resolution of the time. The window uses a uniform scale of
+`max(1, min(screen_width / 1024, screen_height / 768))`:
 
 | Screen | Scale |
 | --- | ---: |
-| 640×480 | 1× |
-| 1280×720 | 1.5× |
-| 1920×1080 | 2.25× |
-| 2560×1440 | 3× |
-| 3840×2160 | 4.5× |
-| 2560×1080 ultrawide | 2.25× |
+| ≤1024×768, 1280×720, menu mode | 1× |
+| 1280×1024 | 1.25× |
+| 1920×1080 | 1.40625× |
+| 2560×1440 | 1.875× |
+| 3840×2160 | 2.8125× |
+| 2560×1080 ultrawide | 1.40625× |
+
+Because the 640×480 layouts fit inside 1024×768, they always fit the logical
+screen. Menu mode keeps its 640×480 coordinate space, which is stretched to
+the display as before, so the scale there is 1×; `newuiMenu` now centers
+itself with `UIF_CENTER` so it is placed in the scaled coordinate space.
+The UI cursor speed follows the stretched menu scale (`ui_scale::MenuScale`,
+2.25× at 1080p), not the dialog scale.
 
 The background, text, buttons and rectangle fills share the same rendering
 scale. Mouse positions are mapped back to the authored coordinates during
 window input processing. The previous rendering scale and physical mouse
 coordinates are restored afterward. Scaling uses an existing window flag
-field, so `UIWindow`'s object layout is preserved.
+field, so `UIWindow`'s object layout is preserved. Full-screen windows
+(`mmInterface`, multiplayer `NewUIWindow` screens) do not opt in.
 
-Other windows retain their existing rendering behavior. Menu mode still uses
-its 640×480 coordinate space. No pilot format or game assets are changed.
+The first version of this change (2026-10-30, recorded below) scaled only
+message boxes and F1 help, from a 640×480 basis (2.25× at 1080p), which left
+them much larger than the unscaled Options and Guide-Bot windows.
 
 ## Validation
 
