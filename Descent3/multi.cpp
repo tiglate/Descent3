@@ -5582,14 +5582,20 @@ void MultiSendMissileRelease(int slot, bool is_guided) {
 }
 
 // Calls the scripts packet extractor code
-void MultiDoSpecialPacket(uint8_t *data) {
+// len is the length of this sub-packet as validated by MultiProcessBigData.
+static void MultiDoSpecialPacket(uint8_t *data, int len) {
   int count = 0;
-  uint8_t indata[MAX_GAME_DATA_SIZE];
+  // Zeroed so the game module reads zeros, not stale stack data, past `size`.
+  uint8_t indata[MAX_GAME_DATA_SIZE] = {};
 
   SKIP_HEADER(data, &count);
   int size = MultiGetInt(data, &count);
 
-  MULTI_ASSERT_NOMESSAGE(size < MAX_GAME_DATA_SIZE);
+  // size comes from the network: it must fit both the buffer and this packet.
+  if (size < 0 || size > MAX_GAME_DATA_SIZE || size > len - count) {
+    LOG_WARNING.printf("Ignoring special packet with invalid size %d (packet length %d)", size, len);
+    return;
+  }
   memcpy(indata, &data[count], size);
 
   DLLInfo.special_data = indata;
@@ -5607,6 +5613,11 @@ void MultiSendSpecialPacket(int slot, uint8_t *outdata, int size) {
   size_offset = START_DATA(MP_SPECIAL_PACKET, data, &count, 1);
 
   MultiAddInt(size, data, &count);
+
+  if (size < 0 || size > MAX_GAME_DATA_SIZE - count) {
+    LOG_ERROR.printf("Special packet size %d does not fit in a packet", size);
+    return;
+  }
 
   // Send special packet data
   memcpy(&data[count], outdata, size);
@@ -5628,6 +5639,11 @@ void MultiClientSendSpecialPacket(uint8_t *outdata, int size) {
   size_offset = START_DATA(MP_SPECIAL_PACKET, data, &count);
 
   MultiAddInt(size, data, &count);
+
+  if (size < 0 || size > MAX_GAME_DATA_SIZE - count) {
+    LOG_ERROR.printf("Special packet size %d does not fit in a packet", size);
+    return;
+  }
 
   // Send special packet data
   memcpy(&data[count], outdata, size);
@@ -9581,7 +9597,7 @@ void MultiProcessData(uint8_t *data, int len, int slot, network_address *from_ad
     break;
   case MP_SPECIAL_PACKET:
     ACCEPT_CONDITION(NETSEQ_PLAYING, NETSEQ_PLAYING);
-    MultiDoSpecialPacket(data);
+    MultiDoSpecialPacket(data, len);
     break;
   case MP_EXECUTE_DLL:
     MultiDoExecuteDLL(data);
