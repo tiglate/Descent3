@@ -120,6 +120,8 @@ bool AIFindAltPath(object *obj, int i, int j, float *dist) {
       if (next_room <= Highest_room_index && Rooms[next_room].flags & RF_EXTERNAL) {
         int next_portal;
         next_portal = BOA_DetermineStartRoomPortal(BOA_INDEX(next_room), nullptr, BOA_INDEX(cur_node->roomnum), nullptr);
+        if (next_portal < 0)
+          continue; // no portal back to this room; skip it like the check below
 
         int cell = GetTerrainCellFromPos(&Rooms[next_room].portals[next_portal].path_pnt);
         ASSERT(cell != -1); // DAJ -1FIX

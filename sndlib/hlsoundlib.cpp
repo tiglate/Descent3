@@ -952,14 +952,18 @@ bool hlsSystem::ComputePlayInfo(int sound_obj_index, vector *virtual_pos, vector
 
         if (last_room > Highest_room_index) {
           int this_portal = BOA_DetermineStartRoomPortal(cur_room, nullptr, last_room, nullptr);
-          vector pnt = Rooms[cur_room].portals[this_portal].path_pnt;
-          dist += vm_VectorDistance(&Viewer_object->pos, &pnt);
+          if (this_portal >= 0) {
+            vector pnt = Rooms[cur_room].portals[this_portal].path_pnt;
+            dist += vm_VectorDistance(&Viewer_object->pos, &pnt);
+          }
         } else {
           dist += vm_VectorDistance(&Viewer_object->pos, &Rooms[last_room].portals[last_portal].path_pnt);
         }
       } else if ((cur_room != last_room) && (cur_room != BOA_NO_PATH)) {
         int this_portal = BOA_DetermineStartRoomPortal(cur_room, nullptr, last_room, nullptr);
-        dist += BOA_cost_array[last_room][last_portal] + BOA_cost_array[cur_room][this_portal];
+        dist += BOA_cost_array[last_room][last_portal];
+        if (this_portal >= 0) // -1: no connecting portal, as in the branch above
+          dist += BOA_cost_array[cur_room][this_portal];
       }
     } while ((cur_room != ear_seg) && (cur_room != last_room) && (cur_room != BOA_NO_PATH));
     if (cur_room == BOA_NO_PATH) {

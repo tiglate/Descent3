@@ -313,13 +313,18 @@ inline void MultiAddFloat(float element, uint8_t *data, int *count) {
   *count += sizeof(float);
 }
 
+// Writes a length byte followed by the string and its terminator. Strings
+// longer than 254 characters are truncated so the length byte stays exact.
 inline void MultiAddString(const char *str, uint8_t *data, int *count) {
-  size_t len = strlen(str) + 1;
-  assert(len <= 0xFF);
+  size_t len = strlen(str);
+  assert(len + 1 <= 0xFF);
+  if (len > 0xFE)
+    len = 0xFE;
 
-  MultiAddByte((uint8_t)len, data, count);
+  MultiAddByte((uint8_t)(len + 1), data, count);
   memcpy(&data[*count], str, len);
-  *count += static_cast<int>(len);
+  data[*count + len] = '\0';
+  *count += static_cast<int>(len + 1);
 }
 
 inline uint8_t MultiGetUbyte(uint8_t *data, int *count) {
@@ -375,10 +380,25 @@ inline float MultiGetFloat(uint8_t *data, int *count) {
   return INTEL_FLOAT(element);
 }
 
-inline void MultiGetString(char *str, uint8_t *data, int *count) {
+// Reads a string written by MultiAddString into a buffer of str_size bytes.
+// The length byte comes from the network: the copy is bounded by the
+// destination and always terminated, while the read position still advances
+// by the full encoded length so later fields stay aligned.
+inline void MultiGetString(char *str, size_t str_size, uint8_t *data, int *count) {
   uint8_t len = MultiGetByte(data, count);
-  memcpy(str, &data[*count], len);
+  if (str_size == 0) {
+    *count += len;
+    return;
+  }
+  size_t copy = (len < str_size - 1) ? len : str_size - 1;
+  memcpy(str, &data[*count], copy);
+  str[copy] = '\0';
   *count += len;
+}
+
+// Array form: the destination size is taken from the array type.
+template <size_t N> inline void MultiGetString(char (&str)[N], uint8_t *data, int *count) {
+  MultiGetString(str, N, data, count);
 }
 
 inline void MultiAddVector(vector v, uint8_t *data, int *count) {
